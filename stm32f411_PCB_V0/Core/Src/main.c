@@ -49,6 +49,20 @@ DMA_HandleTypeDef hdma_spi1_tx;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
+#define BUFFER_SIZE 256
+#define HALF_BUFFER_SIZE 128
+static uint16_t bufferDMA[BUFFER_SIZE];
+
+#include <math.h>
+#include <stdint.h>
+
+#define SAMPLE_RATE     48000
+#define TONE_FREQ       440.0f
+#define AMPLITUDE       12000.0f     // max ≈ 32767
+
+static float phase = 0.0f;
+static const float phase_inc = 2.0f * (float)M_PI * TONE_FREQ / SAMPLE_RATE;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -84,6 +98,13 @@ MCP23017_HandleTypeDef hmcp21;
 MCP23017_HandleTypeDef hmcp22;
 MCP23017_HandleTypeDef hmcp23;
 
+static void pressure_update_fixed_1khz(void) {
+    HAL_ADC_Start(&hadc1);
+    if (HAL_ADC_PollForConversion(&hadc1, 2) == HAL_OK) {
+        int analog_value = (int16_t)HAL_ADC_GetValue(&hadc1);
+    }
+    HAL_ADC_Stop(&hadc1);
+}
 
 int toBinary(uint8_t a, uint8_t port) {
     uint8_t i;
@@ -126,6 +147,32 @@ static void UI_ScanAndDispatch()
     int8_t raw_idxB23 = (int8_t)toBinary(mcpValueB23, 1);
 }
 
+
+
+void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
+{
+    (void)hi2s;
+    render_audio_block((int16_t *)&bufferDMA[0], HALF_BUFFER_SIZE);
+}
+
+void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
+{
+    (void)hi2s;
+    render_audio_block((int16_t *)&bufferDMA[HALF_BUFFER_SIZE], HALF_BUFFER_SIZE);
+}
+
+void render_audio_block(int16_t *buffer, uint32_t samples)
+{
+    for (uint32_t i = 0; i < samples; i++)
+    {
+        buffer[i] = (int16_t)(AMPLITUDE * sinf(phase));
+
+        phase += phase_inc;
+
+        if (phase >= 2.0f * (float)M_PI)
+            phase -= 2.0f * (float)M_PI;
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -181,11 +228,13 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  for (int i = 0; i < BUFFER_SIZE; i++) bufferDMA[i] = 0;
+  HAL_I2S_Transmit_DMA(&hi2s1, (uint16_t*)bufferDMA, BUFFER_SIZE);
   while (1)
   {
     /* USER CODE END WHILE */
 	  HAL_Delay(10);
-	  UI_ScanAndDispatch()
+	  UI_ScanAndDispatch();
 
     /* USER CODE BEGIN 3 */
   }
