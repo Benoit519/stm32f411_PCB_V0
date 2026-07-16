@@ -1,0 +1,9 @@
+../Core/Src/mcp23017.c:32:6:mcp23017_init	24	static
+../Core/Src/mcp23017.c:38:19:mcp23017_read	40	static
+../Core/Src/mcp23017.c:43:19:mcp23017_write	40	static
+../Core/Src/mcp23017.c:48:19:mcp23017_iodir	24	static
+../Core/Src/mcp23017.c:54:19:mcp23017_ipol	24	static
+../Core/Src/mcp23017.c:60:19:mcp23017_ggpu	24	static
+../Core/Src/mcp23017.c:66:19:mcp23017_read_gpio	24	static
+../Core/Src/mcp23017.c:76:9:mcp23017_read_gpio_int	24	static
+../Core/Src/mcp23017.c:89:19:mcp23017_write_gpio	24	static
