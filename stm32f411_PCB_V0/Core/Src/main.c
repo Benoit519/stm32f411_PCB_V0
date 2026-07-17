@@ -77,6 +77,7 @@ uint8_t mcpValueA22 = 0;
 uint8_t mcpValueB22 = 0;
 uint8_t mcpValueA23 = 0;
 uint8_t mcpValueB23 = 0;
+volatile uint16_t pressure = 0;
 
 MCP23017_HandleTypeDef hmcp20;
 MCP23017_HandleTypeDef hmcp21;
@@ -132,11 +133,18 @@ static void UI_ScanAndDispatch()
     int8_t raw_idxB23 = (int8_t)toBinary(mcpValueB23, 1);
 }
 
-
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+    if (hadc == &hadc1)
+    {
+        pressure = HAL_ADC_GetValue(hadc);
+    }
+}
 
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
     (void)hi2s;
+    HAL_ADC_Start_IT(&hadc1);
     render_audio_block((int16_t *)&bufferDMA[0], HALF_BUFFER_SIZE);
 }
 
