@@ -78,19 +78,12 @@ uint8_t mcpValueB22 = 0;
 uint8_t mcpValueA23 = 0;
 uint8_t mcpValueB23 = 0;
 volatile uint16_t pressure = 0;
+volatile uint8_t note_active = 0;
 
 MCP23017_HandleTypeDef hmcp20;
 MCP23017_HandleTypeDef hmcp21;
 MCP23017_HandleTypeDef hmcp22;
 MCP23017_HandleTypeDef hmcp23;
-
-static void pressure_update_fixed_1khz(void) {
-    HAL_ADC_Start(&hadc1);
-    if (HAL_ADC_PollForConversion(&hadc1, 2) == HAL_OK) {
-        int analog_value = (int16_t)HAL_ADC_GetValue(&hadc1);
-    }
-    HAL_ADC_Stop(&hadc1);
-}
 
 int toBinary(uint8_t a, uint8_t port) {
     uint8_t i;
@@ -111,7 +104,7 @@ int toBinary(uint8_t a, uint8_t port) {
     return -1;
 }
 
-static void UI_ScanAndDispatch()
+static void UI_ScanAndDispatch(void)
 {
     mcpValueA20 = mcp23017_read_gpio_int(&hmcp20, MCP23017_PORTA);
     mcpValueB20 = mcp23017_read_gpio_int(&hmcp20, MCP23017_PORTB);
@@ -131,6 +124,22 @@ static void UI_ScanAndDispatch()
     int8_t raw_idxB21 = (int8_t)toBinary(mcpValueB21, 1);
     int8_t raw_idxB22 = (int8_t)toBinary(mcpValueB22, 1);
     int8_t raw_idxB23 = (int8_t)toBinary(mcpValueB23, 1);
+
+    if ((raw_idxA20 == -1) &&
+        (raw_idxB20 == -1) &&
+        (raw_idxA21 == -1) &&
+        (raw_idxB21 == -1) &&
+        (raw_idxA22 == -1) &&
+        (raw_idxB22 == -1) &&
+        (raw_idxA23 == -1) &&
+        (raw_idxB23 == -1))
+    {
+        note_active = 0;
+    }
+    else
+    {
+        note_active = 1;
+    }
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
@@ -144,18 +153,47 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
     (void)hi2s;
+   if (HAL_ADC_GetState(&hadc1) == HAL_ADC_STATE_READY)
+{
     HAL_ADC_Start_IT(&hadc1);
+}
+
     render_audio_block((int16_t *)&bufferDMA[0], HALF_BUFFER_SIZE);
 }
 
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
     (void)hi2s;
+    if (HAL_ADC_GetState(&hadc1) == HAL_ADC_STATE_READY)
+{
+    HAL_ADC_Start_IT(&hadc1);
+}
+
     render_audio_block((int16_t *)&bufferDMA[HALF_BUFFER_SIZE], HALF_BUFFER_SIZE);
 }
 
 void render_audio_block(int16_t *buffer, uint32_t samples)
 {
+    if (!note_active)
+    {
+        for (uint32_t i = 0; i < samples; i++)
+        {
+            buffer[i] = 0;
+        }
+        return;
+    }
+
+    /* Lecture de la dernière valeur ADC */
+    uint16_t adc = pressure;
+
+    /* Normalisation entre 0 et 1 */
+    float p = (float)adc * (1.0f / 4095.0f);
+
+    /* Exemple : fréquence de 100 à 1000 Hz */
+    float frequency = 100.0f + p * 900.0f;
+
+    phase_inc = (2.0f * (float)M_PI * frequency) / SAMPLE_RATE;
+
     for (uint32_t i = 0; i < samples; i++)
     {
         buffer[i] = (int16_t)(AMPLITUDE * sinf(phase));
@@ -221,14 +259,22 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  for (int i = 0; i < BUFFER_SIZE; i++) bufferDMA[i] = 0;
-  HAL_I2S_Transmit_DMA(&hi2s1, (uint16_t*)bufferDMA, BUFFER_SIZE);
-  while (1)
-  {
-    /* USER CODE END WHILE */
+UI_ScanAndDispatch();
 
-    /* USER CODE BEGIN 3 */
-  }
+for (int i = 0; i < BUFFER_SIZE; i++)
+{
+    bufferDMA[i] = 0;
+}
+
+HAL_I2S_Transmit_DMA(&hi2s1,
+                     (uint16_t*)bufferDMA,
+                     BUFFER_SIZE);
+while (1)
+{
+    UI_ScanAndDispatch();
+
+    HAL_Delay(5);   // scan toutes les 5 ms (~200 Hz)
+}
   /* USER CODE END 3 */
 }
 
@@ -368,11 +414,14 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_84CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
+
+ HAL_NVIC_SetPriority(ADC_IRQn, 1, 0);
+ HAL_NVIC_EnableIRQ(ADC_IRQn);
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
@@ -576,7 +625,10 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void ADC_IRQHandler(void)
+{
+    HAL_ADC_IRQHandler(&hadc1);
+}
 /* USER CODE END 4 */
 
 /**
