@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "mcp23017.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -48,20 +47,6 @@ I2S_HandleTypeDef hi2s1;
 DMA_HandleTypeDef hdma_spi1_tx;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
-
-#define BUFFER_SIZE 256
-#define HALF_BUFFER_SIZE 128
-static uint16_t bufferDMA[BUFFER_SIZE];
-
-#include <math.h>
-#include <stdint.h>
-
-#define SAMPLE_RATE     48000
-#define TONE_FREQ       440.0f
-#define AMPLITUDE       12000.0f     // max ≈ 32767
-
-static float phase = 0.0f;
-static const float phase_inc = 2.0f * (float)M_PI * TONE_FREQ / SAMPLE_RATE;
 
 /* USER CODE BEGIN PV */
 
@@ -233,8 +218,6 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  HAL_Delay(10);
-	  UI_ScanAndDispatch();
 
     /* USER CODE BEGIN 3 */
   }
@@ -247,45 +230,93 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 72;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 3;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    __HAL_RCC_PWR_CLK_ENABLE();
 
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-  {
-    Error_Handler();
-  }
+
+    /*
+       PLL principal
+       HSE 8MHz
+
+       VCO = 8 / 8 * 336 = 336MHz
+       SYSCLK = 336 / 4 = 84MHz
+    */
+
+    RCC_OscInitStruct.OscillatorType =
+        RCC_OSCILLATORTYPE_HSE;
+
+    RCC_OscInitStruct.HSEState =
+        RCC_HSE_ON;
+
+    RCC_OscInitStruct.PLL.PLLState =
+        RCC_PLL_ON;
+
+    RCC_OscInitStruct.PLL.PLLSource =
+        RCC_PLLSOURCE_HSE;
+
+    RCC_OscInitStruct.PLL.PLLM = 8;
+    RCC_OscInitStruct.PLL.PLLN = 336;
+    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+    RCC_OscInitStruct.PLL.PLLQ = 7;
+
+
+    if(HAL_RCC_OscConfig(&RCC_OscInitStruct)!=HAL_OK)
+        Error_Handler();
+
+
+    /*
+       PLLI2S
+
+       8 / 8 * 192 = 192MHz
+       192 / 5 = 38.4MHz I2S clock
+
+       Le prescaler I2S donnera 44.1kHz
+    */
+
+    PeriphClkInitStruct.PeriphClockSelection =
+        RCC_PERIPHCLK_I2S;
+
+    PeriphClkInitStruct.PLLI2S.PLLI2SN = 192;
+    PeriphClkInitStruct.PLLI2S.PLLI2SR = 5;
+
+
+    if(HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct)!=HAL_OK)
+        Error_Handler();
+
+
+
+    RCC_ClkInitStruct.ClockType =
+        RCC_CLOCKTYPE_SYSCLK |
+        RCC_CLOCKTYPE_HCLK |
+        RCC_CLOCKTYPE_PCLK1 |
+        RCC_CLOCKTYPE_PCLK2;
+
+
+    RCC_ClkInitStruct.SYSCLKSource =
+        RCC_SYSCLKSOURCE_PLLCLK;
+
+    RCC_ClkInitStruct.AHBCLKDivider =
+        RCC_SYSCLK_DIV1;
+
+    RCC_ClkInitStruct.APB1CLKDivider =
+        RCC_HCLK_DIV2;
+
+    RCC_ClkInitStruct.APB2CLKDivider =
+        RCC_HCLK_DIV1;
+
+
+    if(HAL_RCC_ClockConfig(
+        &RCC_ClkInitStruct,
+        FLASH_LATENCY_2)!=HAL_OK)
+    {
+        Error_Handler();
+    }
 }
 
 /**
@@ -382,30 +413,50 @@ static void MX_I2C1_Init(void)
 static void MX_I2S1_Init(void)
 {
 
-  /* USER CODE BEGIN I2S1_Init 0 */
+    hi2s1.Instance = SPI1;
 
-  /* USER CODE END I2S1_Init 0 */
 
-  /* USER CODE BEGIN I2S1_Init 1 */
+    hi2s1.Init.Mode =
+        I2S_MODE_MASTER_TX;
 
-  /* USER CODE END I2S1_Init 1 */
-  hi2s1.Instance = SPI1;
-  hi2s1.Init.Mode = I2S_MODE_MASTER_TX;
-  hi2s1.Init.Standard = I2S_STANDARD_PHILIPS;
-  hi2s1.Init.DataFormat = I2S_DATAFORMAT_16B;
-  hi2s1.Init.MCLKOutput = I2S_MCLKOUTPUT_DISABLE;
-  hi2s1.Init.AudioFreq = I2S_AUDIOFREQ_44K;
-  hi2s1.Init.CPOL = I2S_CPOL_LOW;
-  hi2s1.Init.ClockSource = I2S_CLOCK_PLL;
-  hi2s1.Init.FullDuplexMode = I2S_FULLDUPLEXMODE_DISABLE;
-  if (HAL_I2S_Init(&hi2s1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2S1_Init 2 */
 
-  /* USER CODE END I2S1_Init 2 */
+    hi2s1.Init.Standard =
+        I2S_STANDARD_PHILIPS;
 
+
+    hi2s1.Init.DataFormat =
+        I2S_DATAFORMAT_16B;
+
+
+    /*
+       Pas de MCLK pour UDA1334A
+       sauf si ta carte l'utilise
+    */
+
+    hi2s1.Init.MCLKOutput =
+        I2S_MCLKOUTPUT_DISABLE;
+
+
+    hi2s1.Init.AudioFreq =
+        I2S_AUDIOFREQ_44K;
+
+
+    hi2s1.Init.CPOL =
+        I2S_CPOL_LOW;
+
+
+    hi2s1.Init.ClockSource =
+        I2S_CLOCK_PLL;
+
+
+    hi2s1.Init.FullDuplexMode =
+        I2S_FULLDUPLEXMODE_DISABLE;
+
+
+    if(HAL_I2S_Init(&hi2s1)!=HAL_OK)
+    {
+        Error_Handler();
+    }
 }
 
 /**
