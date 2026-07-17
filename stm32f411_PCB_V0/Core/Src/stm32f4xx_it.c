@@ -212,6 +212,11 @@ void DMA2_Stream2_IRQHandler(void)
   /* USER CODE END DMA2_Stream2_IRQn 1 */
 }
 
+void ADC_IRQHandler(void)
+{
+    HAL_ADC_IRQHandler(&hadc1);
+}
+
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
