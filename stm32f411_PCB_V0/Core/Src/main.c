@@ -625,10 +625,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void ADC_IRQHandler(void)
-{
-    HAL_ADC_IRQHandler(&hadc1);
-}
 /* USER CODE END 4 */
 
 /**
