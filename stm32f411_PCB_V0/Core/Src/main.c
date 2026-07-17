@@ -19,7 +19,22 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "mcp23017.h"
+#include <math.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
+
+#define AMPLITUDE 28000.0f
+
+static float phase = 0.0f;
+static float phase_inc = 0.0f;
+
+#define BUFFER_SIZE 256
+#define HALF_BUFFER_SIZE (BUFFER_SIZE / 2)
+
+static int16_t bufferDMA[BUFFER_SIZE];
+static const float SAMPLE_RATE = 44100.0f;
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -143,35 +158,6 @@ static void UI_ScanAndDispatch(void)
     }
 }
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
-{
-    if (hadc == &hadc1)
-    {
-        pressure = HAL_ADC_GetValue(hadc);
-    }
-}
-
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    (void)hi2s;
-if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
-{
-    HAL_ADC_Start_IT(&hadc1);
-}
-
-    render_audio_block((int16_t *)&bufferDMA[0], HALF_BUFFER_SIZE);
-}
-
-void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    (void)hi2s;
-if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
-{
-    HAL_ADC_Start_IT(&hadc1);
-}
-
-    render_audio_block((int16_t *)&bufferDMA[HALF_BUFFER_SIZE], HALF_BUFFER_SIZE);
-}
 
 void render_audio_block(int16_t *buffer, uint32_t samples)
 {
@@ -205,6 +191,37 @@ void render_audio_block(int16_t *buffer, uint32_t samples)
             phase -= 2.0f * (float)M_PI;
     }
 }
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+    if (hadc == &hadc1)
+    {
+        pressure = HAL_ADC_GetValue(hadc);
+    }
+}
+
+void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
+{
+    (void)hi2s;
+if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
+{
+    HAL_ADC_Start_IT(&hadc1);
+}
+
+    render_audio_block((int16_t *)&bufferDMA[0], HALF_BUFFER_SIZE);
+}
+
+void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
+{
+    (void)hi2s;
+if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
+{
+    HAL_ADC_Start_IT(&hadc1);
+}
+
+    render_audio_block((int16_t *)&bufferDMA[HALF_BUFFER_SIZE], HALF_BUFFER_SIZE);
+}
+
 /* USER CODE END 0 */
 
 /**
