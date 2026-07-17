@@ -107,7 +107,7 @@ int toBinary(uint8_t a, uint8_t port) {
     for (i = 0x80; i != 0; i >>= 1) {
         if ((a & i)) {
             if (port == 0) {
-                return 7 - (7 - compteur);
+                return compteur;
             }
             else {
                 return (7 - compteur);
@@ -158,7 +158,6 @@ static void UI_ScanAndDispatch(void)
     }
 }
 
-
 void render_audio_block(int16_t *buffer, uint32_t samples)
 {
     if (!note_active)
@@ -170,20 +169,15 @@ void render_audio_block(int16_t *buffer, uint32_t samples)
         return;
     }
 
-    /* Lecture de la dernière valeur ADC */
-    uint16_t adc = pressure;
+    /* Fréquence fixe : LA = 440 Hz */
+    phase_inc = (2.0f * (float)M_PI * 440.0f) / SAMPLE_RATE;
 
-    /* Normalisation entre 0 et 1 */
-    float p = (float)adc * (1.0f / 4095.0f);
-
-    /* Exemple : fréquence de 100 à 1000 Hz */
-    float frequency = 100.0f + p * 900.0f;
-
-    phase_inc = (2.0f * (float)M_PI * frequency) / SAMPLE_RATE;
+    /* ADC (0..4095) -> gain (0..1) */
+    float gain = (float)pressure / 4095.0f;
 
     for (uint32_t i = 0; i < samples; i++)
     {
-        buffer[i] = (int16_t)(AMPLITUDE * sinf(phase));
+        buffer[i] = (int16_t)(AMPLITUDE * gain * sinf(phase));
 
         phase += phase_inc;
 
