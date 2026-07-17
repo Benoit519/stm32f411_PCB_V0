@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "mcp23017.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -153,7 +154,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
     (void)hi2s;
-   if (HAL_ADC_GetState(&hadc1) == HAL_ADC_STATE_READY)
+if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
 {
     HAL_ADC_Start_IT(&hadc1);
 }
@@ -164,7 +165,7 @@ void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
     (void)hi2s;
-    if (HAL_ADC_GetState(&hadc1) == HAL_ADC_STATE_READY)
+if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
 {
     HAL_ADC_Start_IT(&hadc1);
 }
