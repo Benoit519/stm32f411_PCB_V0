@@ -43,33 +43,20 @@ typedef struct
 {
     uint8_t active;
 
-    uint8_t note;
+    const char *note;
 
     Hand hand;
 
-
-    // fréquence de la note
     float frequency;
 
-
-    // position dans la wavetable
     float phase;
-
-    // vitesse de déplacement dans la table
     float phase_inc;
 
-
-    // volume
     float amplitude;
 
-
-    // pointeur vers la table sonore
     const int16_t *wave;
 
-
-    // taille de la table
     uint16_t wave_size;
-
 
 } Voice;
 
@@ -162,32 +149,97 @@ typedef struct
 Button buttons[] =
 {
 
-// main gauche
+/******** MCP20 - main gauche ********/
 
-{20,0,0,"Do3",HAND_LEFT},
-{20,0,1,"Re3",HAND_LEFT},
-{20,0,2,"Mi3",HAND_LEFT},
+{20,0,0,"Do1",HAND_LEFT},
+{20,0,1,"Re1",HAND_LEFT},
+{20,0,2,"Mi1",HAND_LEFT},
+{20,0,3,"Fa1",HAND_LEFT},
+{20,0,4,"Sol1",HAND_LEFT},
+{20,0,5,"La1",HAND_LEFT},
+{20,0,6,"Si1",HAND_LEFT},
+{20,0,7,"Do2",HAND_LEFT},
+
+{20,1,0,"Re2",HAND_LEFT},
+{20,1,1,"Mi2",HAND_LEFT},
+{20,1,2,"Fa2",HAND_LEFT},
+{20,1,3,"Sol2",HAND_LEFT},
+{20,1,4,"La2",HAND_LEFT},
+{20,1,5,"Si2",HAND_LEFT},
+{20,1,6,"Do3",HAND_LEFT},
+{20,1,7,"Re3",HAND_LEFT},
 
 
-// main droite
 
-{21,0,0,"Do5",HAND_RIGHT},
-{21,0,1,"Re5",HAND_RIGHT},
-{21,0,2,"Mi5",HAND_RIGHT}
+/******** MCP21 - main droite ********/
+
+{21,0,0,"Do4",HAND_RIGHT},
+{21,0,1,"Re4",HAND_RIGHT},
+{21,0,2,"Mi4",HAND_RIGHT},
+{21,0,3,"Fa4",HAND_RIGHT},
+{21,0,4,"Sol4",HAND_RIGHT},
+{21,0,5,"La4",HAND_RIGHT},
+{21,0,6,"Si4",HAND_RIGHT},
+{21,0,7,"Do5",HAND_RIGHT},
+
+{21,1,0,"Re5",HAND_RIGHT},
+{21,1,1,"Mi5",HAND_RIGHT},
+{21,1,2,"Fa5",HAND_RIGHT},
+{21,1,3,"Sol5",HAND_RIGHT},
+{21,1,4,"La5",HAND_RIGHT},
+{21,1,5,"Si5",HAND_RIGHT},
+{21,1,6,"Do6",HAND_RIGHT},
+{21,1,7,"Re6",HAND_RIGHT},
+
+
+
+/******** MCP22 ********/
+
+{22,0,0,"Mi6",HAND_RIGHT},
+{22,0,1,"Fa6",HAND_RIGHT},
+{22,0,2,"Sol6",HAND_RIGHT},
+{22,0,3,"La6",HAND_RIGHT},
+{22,0,4,"Si6",HAND_RIGHT},
+{22,0,5,"Do7",HAND_RIGHT},
+{22,0,6,"Re7",HAND_RIGHT},
+{22,0,7,"Mi7",HAND_RIGHT},
+
+{22,1,0,"Fa7",HAND_RIGHT},
+{22,1,1,"Sol7",HAND_RIGHT},
+{22,1,2,"La7",HAND_RIGHT},
+{22,1,3,"Si7",HAND_RIGHT},
+{22,1,4,"Do8",HAND_RIGHT},
+{22,1,5,"Re8",HAND_RIGHT},
+{22,1,6,"Mi8",HAND_RIGHT},
+{22,1,7,"Fa8",HAND_RIGHT},
+
+
+
+/******** MCP23 ********/
+
+{23,0,0,"Sol8",HAND_RIGHT},
+{23,0,1,"La8",HAND_RIGHT},
+{23,0,2,"Si8",HAND_RIGHT},
+{23,0,3,"Do9",HAND_RIGHT},
+{23,0,4,"Re9",HAND_RIGHT},
+{23,0,5,"Mi9",HAND_RIGHT},
+{23,0,6,"Fa9",HAND_RIGHT},
+{23,0,7,"Sol9",HAND_RIGHT},
+
+{23,1,0,"La9",HAND_RIGHT},
+{23,1,1,"Si9",HAND_RIGHT},
+{23,1,2,"Do10",HAND_RIGHT},
+{23,1,3,"Re10",HAND_RIGHT},
+{23,1,4,"Mi10",HAND_RIGHT},
+{23,1,5,"Fa10",HAND_RIGHT},
+{23,1,6,"Sol10",HAND_RIGHT},
+{23,1,7,"La10",HAND_RIGHT}
 
 };
-
 
 #define NB_BUTTONS (sizeof(buttons)/sizeof(Button))
 
 uint8_t previous_buttons[NB_BUTTONS];
-
-static float midi_to_frequency(uint8_t note)
-{
-    return 440.0f *
-           powf(2.0f,
-           ((float)note - 69.0f) / 12.0f);
-}
 
 void Synth_Init(void)
 {
@@ -200,12 +252,12 @@ void Synth_Init(void)
 
 void NoteOn(const char *note, Hand hand)
 {
-    // éviter doublon
-    for (int i = 0; i < MAX_VOICES; i++)
+    // éviter les doublons
+    for(int i = 0; i < MAX_VOICES; i++)
     {
-        if (voices[i].active &&
-            voices[i].note == note &&
-            voices[i].hand == hand)
+        if(voices[i].active &&
+           strcmp(voices[i].note, note) == 0 &&
+           voices[i].hand == hand)
         {
             return;
         }
@@ -213,33 +265,50 @@ void NoteOn(const char *note, Hand hand)
 
 
     // chercher une voix libre
-    for (int i = 0; i < MAX_VOICES; i++)
+    for(int i = 0; i < MAX_VOICES; i++)
     {
-        if (!voices[i].active)
+        if(!voices[i].active)
         {
             voices[i].active = 1;
 
             voices[i].note = note;
             voices[i].hand = hand;
 
-            voices[i].frequency =
-                    Note_GetFrequency(note);
 
+            // récupération fréquence
+            voices[i].frequency =
+                Note_GetFrequency(note);
+
+
+            // sécurité note inconnue
+            if(voices[i].frequency <= 0)
+            {
+                voices[i].active = 0;
+                return;
+            }
+
+
+            // initialisation phase
             voices[i].phase = 0.0f;
 
+
+            // incrément de lecture wavetable
             voices[i].phase_inc =
                 ((float)WAVETABLE_SIZE *
-                 voices[i].frequency) /
+                 voices[i].frequency)
+                 /
                  SAMPLE_RATE;
 
 
             // wavetable accordéon
-            voices[i].wave = wavetable_accordion;
+            voices[i].wave =
+                wavetable_accordion;
 
-            voices[i].wave_size = WAVETABLE_SIZE;
+            voices[i].wave_size =
+                WAVETABLE_SIZE;
 
 
-            // volume initial
+            // volume
             voices[i].amplitude = 1.0f;
 
 
@@ -248,18 +317,16 @@ void NoteOn(const char *note, Hand hand)
     }
 }
 
-void NoteOff(uint8_t note)
+void NoteOff(const char *note)
 {
-
-    for(int i=0;i<MAX_VOICES;i++)
+    for(int i = 0; i < MAX_VOICES; i++)
     {
         if(voices[i].active &&
-           voices[i].note == note)
+           strcmp(voices[i].note, note) == 0)
         {
             voices[i].active = 0;
         }
     }
-
 }
 
 int toBinary(uint8_t a, uint8_t port) {
@@ -280,51 +347,81 @@ int toBinary(uint8_t a, uint8_t port) {
     }
     return -1;
 }
+static uint8_t mcp_state[4][2];
+
+
+static void MCP_Read_All(void)
+{
+    mcp_state[0][0] =
+        mcp23017_read_gpio_int(&hmcp20, MCP23017_PORTA);
+
+    mcp_state[0][1] =
+        mcp23017_read_gpio_int(&hmcp20, MCP23017_PORTB);
+
+
+
+    mcp_state[1][0] =
+        mcp23017_read_gpio_int(&hmcp21, MCP23017_PORTA);
+
+    mcp_state[1][1] =
+        mcp23017_read_gpio_int(&hmcp21, MCP23017_PORTB);
+
+
+
+    mcp_state[2][0] =
+        mcp23017_read_gpio_int(&hmcp22, MCP23017_PORTA);
+
+    mcp_state[2][1] =
+        mcp23017_read_gpio_int(&hmcp22, MCP23017_PORTB);
+
+
+
+    mcp_state[3][0] =
+        mcp23017_read_gpio_int(&hmcp23, MCP23017_PORTA);
+
+    mcp_state[3][1] =
+        mcp23017_read_gpio_int(&hmcp23, MCP23017_PORTB);
+}
+
+static uint8_t MCP_Index(uint8_t mcp)
+{
+    switch(mcp)
+    {
+        case 20: return 0;
+        case 21: return 1;
+        case 22: return 2;
+        case 23: return 3;
+    }
+
+    return 0;
+}
 
 static void UI_ScanAndDispatch(void)
 {
-
-    uint8_t mcp20A;
-    uint8_t mcp21A;
-
-
-    mcp20A =
-        mcp23017_read_gpio_int(
-        &hmcp20,
-        MCP23017_PORTA);
-
-
-    mcp21A =
-        mcp23017_read_gpio_int(
-        &hmcp21,
-        MCP23017_PORTA);
-
+    MCP_Read_All();
 
 
     for(int i=0;i<NB_BUTTONS;i++)
     {
 
-        uint8_t state = 0;
+        uint8_t mcp_index =
+            MCP_Index(buttons[i].mcp);
 
 
-        if(buttons[i].mcp == 20)
-        {
-            if(buttons[i].port == 0)
-                state =
-                (mcp20A >> buttons[i].bit)&1;
-        }
+        uint8_t port =
+            buttons[i].port;
 
 
-        if(buttons[i].mcp == 21)
-        {
-            if(buttons[i].port == 0)
-                state =
-                (mcp21A >> buttons[i].bit)&1;
-        }
+        uint8_t bit =
+            buttons[i].bit;
+
+
+        uint8_t state =
+            (mcp_state[mcp_index][port] >> bit) & 1;
 
 
 
-        // front montant : appui
+        // appui
 
         if(state && !previous_buttons[i])
         {
@@ -335,18 +432,18 @@ static void UI_ScanAndDispatch(void)
 
 
 
-        // front descendant : relâchement
+        // relâchement
 
         if(!state && previous_buttons[i])
         {
-            NoteOff(buttons[i].note);
+            NoteOff(
+                buttons[i].note);
         }
 
 
-        previous_buttons[i]=state;
 
+        previous_buttons[i] = state;
     }
-
 }
 
 void render_audio_block(int16_t *buffer,
