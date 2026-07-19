@@ -163,29 +163,19 @@ MCP23017_HandleTypeDef hmcp23;
 
 typedef struct
 {
-    uint8_t mcp;
-    uint8_t port;
-    uint8_t bit;
-
-    Hand hand;
-
-    ButtonSound push;
-    ButtonSound pull;
-
-
-} Button;
-#define NB_BUTTONS (sizeof(buttons)/sizeof(Button))
-
-typedef struct
-{
     const char *notes[2];
     WaveTableId wavetable;
 } ButtonSound;
-static ButtonSound *active_sound[NB_BUTTONS];
-uint8_t previous_buttons[NB_BUTTONS];
 
-
-
+typedef struct
+{
+    uint8_t mcp;
+    uint8_t port;
+    uint8_t bit;
+    Hand hand;
+    ButtonSound push;
+    ButtonSound pull;
+} Button;
 Button buttons[] =
 {
 
@@ -269,6 +259,13 @@ Button buttons[] =
 {23,1,7, HAND_RIGHT, {{"La10",  NULL}, WT_ACCORDION}, {{"La10",  NULL}, WT_ACCORDION}}
 
 };
+enum
+{
+    NB_BUTTONS = sizeof(buttons) / sizeof(buttons[0])
+};
+
+static ButtonSound *active_sound[NB_BUTTONS];
+static uint8_t previous_buttons[NB_BUTTONS];
 const int16_t *WaveTablePointer(WaveTableId wt)
 {
     switch(wt)
