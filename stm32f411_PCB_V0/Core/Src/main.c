@@ -27,7 +27,10 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
 #endif
+#define ATTACK_TIME_MS   20.0f
+#define RELEASE_TIME_MS 120.0f
 
+#define SUSTAIN_LEVEL 0.8f
 #define AMPLITUDE 28000.0f
 
 #define MAX_VOICES 16
@@ -54,6 +57,14 @@ typedef enum
     BELLOWS_PULL
 } BellowsDirection;
 
+typedef enum
+{
+    ENV_OFF,
+    ENV_ATTACK,
+    ENV_SUSTAIN,
+    ENV_RELEASE
+
+} EnvelopeState;
 
 typedef struct
 {
@@ -68,14 +79,30 @@ typedef struct
     float phase;
     float phase_inc;
 
+
+    /*
+       enveloppe ADSR
+    */
+
+    EnvelopeState env_state;
+
+    float env_level;
+
+    float attack_step;
+    float release_step;
+
+
+    float sustain_level;
+
+
     float amplitude;
+
 
     const int16_t *wave;
 
     uint16_t wave_size;
 
 } Voice;
-
 
 static Voice voices[MAX_VOICES];
 typedef enum
@@ -268,6 +295,7 @@ static ButtonSound *active_sound[NB_BUTTONS];
 static uint8_t previous_buttons[NB_BUTTONS];
 
 
+
 static void Update_Bellows_Mode(void)
 {
     /*
@@ -343,7 +371,21 @@ void NoteOn(const char *note,
 
             // initialisation phase
             voices[i].phase = 0.0f;
+            voices[i].env_state = ENV_ATTACK;
 
+            voices[i].env_level = 0.0f;
+
+            voices[i].sustain_level = SUSTAIN_LEVEL;
+
+
+            voices[i].attack_step =
+                1.0f /
+                ((ATTACK_TIME_MS * SAMPLE_RATE) / 1000.0f);
+
+
+            voices[i].release_step =
+                1.0f /
+                ((RELEASE_TIME_MS * SAMPLE_RATE) / 1000.0f);
             // incrément de lecture wavetable
             voices[i].phase_inc =
                 ((float)WAVETABLE_SIZE * voices[i].frequency)
@@ -371,10 +413,65 @@ void NoteOff(const char *note,
            strcmp(voices[i].note, note) == 0 &&
            voices[i].hand == hand)
         {
-            voices[i].active = 0;
+        	voices[i].env_state = ENV_RELEASE;
         }
     }
 }
+
+static float Envelope_Update(Voice *v)
+{
+
+    switch(v->env_state)
+    {
+
+    case ENV_ATTACK:
+
+        v->env_level += v->attack_step;
+
+
+        if(v->env_level >= 1.0f)
+        {
+            v->env_level = 1.0f;
+            v->env_state = ENV_SUSTAIN;
+        }
+
+        break;
+
+
+
+    case ENV_SUSTAIN:
+
+        v->env_level = v->sustain_level;
+
+        break;
+
+
+
+    case ENV_RELEASE:
+
+        v->env_level -= v->release_step;
+
+
+        if(v->env_level <= 0.0f)
+        {
+            v->env_level = 0.0f;
+            v->env_state = ENV_OFF;
+            v->active = 0;
+        }
+
+        break;
+
+
+
+    case ENV_OFF:
+
+        break;
+    }
+
+
+    return v->env_level;
+}
+
 int toBinary(uint8_t a, uint8_t port) {
     uint8_t i;
     int compteur = 0;
@@ -572,83 +669,128 @@ void Voice_SetWave(Voice *v, WaveTableId wt)
 void render_audio_block(int16_t *buffer,
                         uint32_t samples)
 {
-
     float gain =
         pressure / 4095.0f;
 
 
-
-    for(uint32_t i=0;i<samples;i++)
+    for(uint32_t i = 0; i < samples; i++)
     {
 
-        float sample=0;
+        float sample = 0.0f;
 
 
-        for(int v=0;v<MAX_VOICES;v++)
+        for(int v = 0; v < MAX_VOICES; v++)
         {
 
-        	if(voices[v].active)
-        	{
+            if(voices[v].active)
+            {
 
-        		uint16_t index = (uint16_t)voices[v].phase;
+                /*
+                    Lecture wavetable interpolation linéaire
+                */
 
-        		float frac =
-        		    voices[v].phase - index;
-
-
-        		uint16_t next =
-        		    index + 1;
-
-        		if(next >= voices[v].wave_size)
-        		    next = 0;
+                uint16_t index =
+                    (uint16_t)voices[v].phase;
 
 
-        		float s1 =
-        		    voices[v].wave[index];
-
-        		float s2 =
-        		    voices[v].wave[next];
+                float frac =
+                    voices[v].phase - index;
 
 
-        		float value =
-        		    s1 + frac*(s2-s1);
+                uint16_t next =
+                    index + 1;
 
 
-        		sample +=
-        		    (value / 32768.0f)
-        		    *
-        		    voices[v].amplitude;
+                if(next >= voices[v].wave_size)
+                    next = 0;
 
 
-        	    // avance dans la wavetable
-        	    voices[v].phase += voices[v].phase_inc;
+
+                float s1 =
+                    voices[v].wave[index];
 
 
-        	    // rebouclage
-        	    if(voices[v].phase >= voices[v].wave_size)
-        	    {
-        	        voices[v].phase -= voices[v].wave_size;
-        	    }
+                float s2 =
+                    voices[v].wave[next];
 
-        	}
+
+
+                float value =
+                    s1 + frac * (s2 - s1);
+
+
+
+                /*
+                    Mise à jour enveloppe ADSR
+                */
+
+                float envelope =
+                    Envelope_Update(&voices[v]);
+
+
+
+                /*
+                    Mixage des voix
+                */
+
+                sample +=
+                    (value / 32768.0f)
+                    *
+                    voices[v].amplitude
+                    *
+                    envelope;
+
+
+
+                /*
+                    Avance phase wavetable
+                */
+
+                voices[v].phase +=
+                    voices[v].phase_inc;
+
+
+
+                if(voices[v].phase >= voices[v].wave_size)
+                {
+                    voices[v].phase -=
+                        voices[v].wave_size;
+                }
+
+            }
+
         }
 
 
-        if(sample>1)
-            sample=1;
 
-        if(sample<-1)
-            sample=-1;
+        /*
+            Saturation soft
+        */
+
+        if(sample > 1.0f)
+            sample = 1.0f;
+
+
+        if(sample < -1.0f)
+            sample = -1.0f;
 
 
 
-        buffer[i]=
-          sample *
-          gain *
-          28000;
+        /*
+            Volume soufflet
+        */
+
+        buffer[i] =
+            (int16_t)
+            (
+                sample *
+                gain *
+                28000.0f
+            );
 
     }
 }
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc == &hadc1)
