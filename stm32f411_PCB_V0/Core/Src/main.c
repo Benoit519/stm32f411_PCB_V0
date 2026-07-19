@@ -31,12 +31,28 @@
 #define AMPLITUDE 28000.0f
 
 #define MAX_VOICES 16
+
+typedef enum
+{
+    MODE_PUSH,
+    MODE_PULL
+
+} BellowsMode;
+
+
+volatile BellowsMode bellows_mode = MODE_PUSH;
 typedef enum
 {
     HAND_LEFT,
     HAND_RIGHT
 
 } Hand;
+
+typedef enum
+{
+    BELLOWS_PUSH,
+    BELLOWS_PULL
+} BellowsDirection;
 
 
 typedef struct
@@ -62,7 +78,16 @@ typedef struct
 
 
 static Voice voices[MAX_VOICES];
+typedef enum
+{
+    WT_ACCORDION,
+    WT_ORGAN,
+    WT_FLUTE,
+    WT_STRINGS
+} WaveTableId;
 
+
+static void Voice_SetWave(Voice *v, WaveTableId wt);
 
 #define BUFFER_SIZE 256
 #define HALF_BUFFER_SIZE (BUFFER_SIZE / 2)
@@ -127,6 +152,7 @@ uint8_t mcpValueA22 = 0;
 uint8_t mcpValueB22 = 0;
 uint8_t mcpValueA23 = 0;
 uint8_t mcpValueB23 = 0;
+static uint8_t mcp_state[4][2];
 volatile uint16_t pressure = 0;
 volatile uint8_t note_active = 0;
 
@@ -141,105 +167,152 @@ typedef struct
     uint8_t port;
     uint8_t bit;
 
-    const char *note;
     Hand hand;
 
+    ButtonSound push;
+    ButtonSound pull;
+
+
 } Button;
+#define NB_BUTTONS (sizeof(buttons)/sizeof(Button))
+
+typedef struct
+{
+    const char *notes[2];
+    WaveTableId wavetable;
+} ButtonSound;
+static ButtonSound *active_sound[NB_BUTTONS];
+uint8_t previous_buttons[NB_BUTTONS];
+
+
 
 Button buttons[] =
 {
 
 /******** MCP20 - main gauche ********/
 
-{20,0,0,"Do1",HAND_LEFT},
-{20,0,1,"Re1",HAND_LEFT},
-{20,0,2,"Mi1",HAND_LEFT},
-{20,0,3,"Fa1",HAND_LEFT},
-{20,0,4,"Sol1",HAND_LEFT},
-{20,0,5,"La1",HAND_LEFT},
-{20,0,6,"Si1",HAND_LEFT},
-{20,0,7,"Do2",HAND_LEFT},
+{20,0,0, HAND_LEFT, {{"Do1",  NULL}, WT_ACCORDION}, {{"Do1",  NULL}, WT_ACCORDION}},
+{20,0,1, HAND_LEFT, {{"Re1",  NULL}, WT_ACCORDION}, {{"Re1",  NULL}, WT_ACCORDION}},
+{20,0,2, HAND_LEFT, {{"Mi1",  NULL}, WT_ACCORDION}, {{"Mi1",  NULL}, WT_ACCORDION}},
+{20,0,3, HAND_LEFT, {{"Fa1",  NULL}, WT_ACCORDION}, {{"Fa1",  NULL}, WT_ACCORDION}},
+{20,0,4, HAND_LEFT, {{"Sol1", NULL}, WT_ACCORDION}, {{"Sol1", NULL}, WT_ACCORDION}},
+{20,0,5, HAND_LEFT, {{"La1",  NULL}, WT_ACCORDION}, {{"La1",  NULL}, WT_ACCORDION}},
+{20,0,6, HAND_LEFT, {{"Si1",  NULL}, WT_ACCORDION}, {{"Si1",  NULL}, WT_ACCORDION}},
+{20,0,7, HAND_LEFT, {{"Do2",  NULL}, WT_ACCORDION}, {{"Do2",  NULL}, WT_ACCORDION}},
 
-{20,1,0,"Re2",HAND_LEFT},
-{20,1,1,"Mi2",HAND_LEFT},
-{20,1,2,"Fa2",HAND_LEFT},
-{20,1,3,"Sol2",HAND_LEFT},
-{20,1,4,"La2",HAND_LEFT},
-{20,1,5,"Si2",HAND_LEFT},
-{20,1,6,"Do3",HAND_LEFT},
-{20,1,7,"Re3",HAND_LEFT},
-
-
+{20,1,0, HAND_LEFT, {{"Re2",  NULL}, WT_ACCORDION}, {{"Re2",  NULL}, WT_ACCORDION}},
+{20,1,1, HAND_LEFT, {{"Mi2",  NULL}, WT_ACCORDION}, {{"Mi2",  NULL}, WT_ACCORDION}},
+{20,1,2, HAND_LEFT, {{"Fa2",  NULL}, WT_ACCORDION}, {{"Fa2",  NULL}, WT_ACCORDION}},
+{20,1,3, HAND_LEFT, {{"Sol2", NULL}, WT_ACCORDION}, {{"Sol2", NULL}, WT_ACCORDION}},
+{20,1,4, HAND_LEFT, {{"La2",  NULL}, WT_ACCORDION}, {{"La2",  NULL}, WT_ACCORDION}},
+{20,1,5, HAND_LEFT, {{"Si2",  NULL}, WT_ACCORDION}, {{"Si2",  NULL}, WT_ACCORDION}},
+{20,1,6, HAND_LEFT, {{"Do3",  NULL}, WT_ACCORDION}, {{"Do3",  NULL}, WT_ACCORDION}},
+{20,1,7, HAND_LEFT, {{"Re3",  NULL}, WT_ACCORDION}, {{"Re3",  NULL}, WT_ACCORDION}},
 
 /******** MCP21 - main droite ********/
 
-{21,0,0,"Do4",HAND_RIGHT},
-{21,0,1,"Re4",HAND_RIGHT},
-{21,0,2,"Mi4",HAND_RIGHT},
-{21,0,3,"Fa4",HAND_RIGHT},
-{21,0,4,"Sol4",HAND_RIGHT},
-{21,0,5,"La4",HAND_RIGHT},
-{21,0,6,"Si4",HAND_RIGHT},
-{21,0,7,"Do5",HAND_RIGHT},
+{21,0,0, HAND_RIGHT, {{"Do4",  NULL}, WT_ACCORDION}, {{"Do4",  NULL}, WT_ACCORDION}},
+{21,0,1, HAND_RIGHT, {{"Re4",  NULL}, WT_ACCORDION}, {{"Re4",  NULL}, WT_ACCORDION}},
+{21,0,2, HAND_RIGHT, {{"Mi4",  NULL}, WT_ACCORDION}, {{"Mi4",  NULL}, WT_ACCORDION}},
+{21,0,3, HAND_RIGHT, {{"Fa4",  NULL}, WT_ACCORDION}, {{"Fa4",  NULL}, WT_ACCORDION}},
+{21,0,4, HAND_RIGHT, {{"Sol4", NULL}, WT_ACCORDION}, {{"Sol4", NULL}, WT_ACCORDION}},
+{21,0,5, HAND_RIGHT, {{"La4",  NULL}, WT_ACCORDION}, {{"La4",  NULL}, WT_ACCORDION}},
+{21,0,6, HAND_RIGHT, {{"Si4",  NULL}, WT_ACCORDION}, {{"Si4",  NULL}, WT_ACCORDION}},
+{21,0,7, HAND_RIGHT, {{"Do5",  NULL}, WT_ACCORDION}, {{"Do5",  NULL}, WT_ACCORDION}},
 
-{21,1,0,"Re5",HAND_RIGHT},
-{21,1,1,"Mi5",HAND_RIGHT},
-{21,1,2,"Fa5",HAND_RIGHT},
-{21,1,3,"Sol5",HAND_RIGHT},
-{21,1,4,"La5",HAND_RIGHT},
-{21,1,5,"Si5",HAND_RIGHT},
-{21,1,6,"Do6",HAND_RIGHT},
-{21,1,7,"Re6",HAND_RIGHT},
-
-
+{21,1,0, HAND_RIGHT, {{"Re5",  NULL}, WT_ACCORDION}, {{"Re5",  NULL}, WT_ACCORDION}},
+{21,1,1, HAND_RIGHT, {{"Mi5",  NULL}, WT_ACCORDION}, {{"Mi5",  NULL}, WT_ACCORDION}},
+{21,1,2, HAND_RIGHT, {{"Fa5",  NULL}, WT_ACCORDION}, {{"Fa5",  NULL}, WT_ACCORDION}},
+{21,1,3, HAND_RIGHT, {{"Sol5", NULL}, WT_ACCORDION}, {{"Sol5", NULL}, WT_ACCORDION}},
+{21,1,4, HAND_RIGHT, {{"La5",  NULL}, WT_ACCORDION}, {{"La5",  NULL}, WT_ACCORDION}},
+{21,1,5, HAND_RIGHT, {{"Si5",  NULL}, WT_ACCORDION}, {{"Si5",  NULL}, WT_ACCORDION}},
+{21,1,6, HAND_RIGHT, {{"Do6",  NULL}, WT_ACCORDION}, {{"Do6",  NULL}, WT_ACCORDION}},
+{21,1,7, HAND_RIGHT, {{"Re6",  NULL}, WT_ACCORDION}, {{"Re6",  NULL}, WT_ACCORDION}},
 
 /******** MCP22 ********/
 
-{22,0,0,"Mi6",HAND_RIGHT},
-{22,0,1,"Fa6",HAND_RIGHT},
-{22,0,2,"Sol6",HAND_RIGHT},
-{22,0,3,"La6",HAND_RIGHT},
-{22,0,4,"Si6",HAND_RIGHT},
-{22,0,5,"Do7",HAND_RIGHT},
-{22,0,6,"Re7",HAND_RIGHT},
-{22,0,7,"Mi7",HAND_RIGHT},
+{22,0,0, HAND_RIGHT, {{"Mi6",  NULL}, WT_ACCORDION}, {{"Mi6",  NULL}, WT_ACCORDION}},
+{22,0,1, HAND_RIGHT, {{"Fa6",  NULL}, WT_ACCORDION}, {{"Fa6",  NULL}, WT_ACCORDION}},
+{22,0,2, HAND_RIGHT, {{"Sol6", NULL}, WT_ACCORDION}, {{"Sol6", NULL}, WT_ACCORDION}},
+{22,0,3, HAND_RIGHT, {{"La6",  NULL}, WT_ACCORDION}, {{"La6",  NULL}, WT_ACCORDION}},
+{22,0,4, HAND_RIGHT, {{"Si6",  NULL}, WT_ACCORDION}, {{"Si6",  NULL}, WT_ACCORDION}},
+{22,0,5, HAND_RIGHT, {{"Do7",  NULL}, WT_ACCORDION}, {{"Do7",  NULL}, WT_ACCORDION}},
+{22,0,6, HAND_RIGHT, {{"Re7",  NULL}, WT_ACCORDION}, {{"Re7",  NULL}, WT_ACCORDION}},
+{22,0,7, HAND_RIGHT, {{"Mi7",  NULL}, WT_ACCORDION}, {{"Mi7",  NULL}, WT_ACCORDION}},
 
-{22,1,0,"Fa7",HAND_RIGHT},
-{22,1,1,"Sol7",HAND_RIGHT},
-{22,1,2,"La7",HAND_RIGHT},
-{22,1,3,"Si7",HAND_RIGHT},
-{22,1,4,"Do8",HAND_RIGHT},
-{22,1,5,"Re8",HAND_RIGHT},
-{22,1,6,"Mi8",HAND_RIGHT},
-{22,1,7,"Fa8",HAND_RIGHT},
-
-
+{22,1,0, HAND_RIGHT, {{"Fa7",  NULL}, WT_ACCORDION}, {{"Fa7",  NULL}, WT_ACCORDION}},
+{22,1,1, HAND_RIGHT, {{"Sol7", NULL}, WT_ACCORDION}, {{"Sol7", NULL}, WT_ACCORDION}},
+{22,1,2, HAND_RIGHT, {{"La7",  NULL}, WT_ACCORDION}, {{"La7",  NULL}, WT_ACCORDION}},
+{22,1,3, HAND_RIGHT, {{"Si7",  NULL}, WT_ACCORDION}, {{"Si7",  NULL}, WT_ACCORDION}},
+{22,1,4, HAND_RIGHT, {{"Do8",  NULL}, WT_ACCORDION}, {{"Do8",  NULL}, WT_ACCORDION}},
+{22,1,5, HAND_RIGHT, {{"Re8",  NULL}, WT_ACCORDION}, {{"Re8",  NULL}, WT_ACCORDION}},
+{22,1,6, HAND_RIGHT, {{"Mi8",  NULL}, WT_ACCORDION}, {{"Mi8",  NULL}, WT_ACCORDION}},
+{22,1,7, HAND_RIGHT, {{"Fa8",  NULL}, WT_ACCORDION}, {{"Fa8",  NULL}, WT_ACCORDION}},
 
 /******** MCP23 ********/
 
-{23,0,0,"Sol8",HAND_RIGHT},
-{23,0,1,"La8",HAND_RIGHT},
-{23,0,2,"Si8",HAND_RIGHT},
-{23,0,3,"Do9",HAND_RIGHT},
-{23,0,4,"Re9",HAND_RIGHT},
-{23,0,5,"Mi9",HAND_RIGHT},
-{23,0,6,"Fa9",HAND_RIGHT},
-{23,0,7,"Sol9",HAND_RIGHT},
+{23,0,0, HAND_RIGHT, {{"Sol8",  NULL}, WT_ACCORDION}, {{"Sol8",  NULL}, WT_ACCORDION}},
+{23,0,1, HAND_RIGHT, {{"La8",   NULL}, WT_ACCORDION}, {{"La8",   NULL}, WT_ACCORDION}},
+{23,0,2, HAND_RIGHT, {{"Si8",   NULL}, WT_ACCORDION}, {{"Si8",   NULL}, WT_ACCORDION}},
+{23,0,3, HAND_RIGHT, {{"Do9",   NULL}, WT_ACCORDION}, {{"Do9",   NULL}, WT_ACCORDION}},
+{23,0,4, HAND_RIGHT, {{"Re9",   NULL}, WT_ACCORDION}, {{"Re9",   NULL}, WT_ACCORDION}},
+{23,0,5, HAND_RIGHT, {{"Mi9",   NULL}, WT_ACCORDION}, {{"Mi9",   NULL}, WT_ACCORDION}},
+{23,0,6, HAND_RIGHT, {{"Fa9",   NULL}, WT_ACCORDION}, {{"Fa9",   NULL}, WT_ACCORDION}},
 
-{23,1,0,"La9",HAND_RIGHT},
-{23,1,1,"Si9",HAND_RIGHT},
-{23,1,2,"Do10",HAND_RIGHT},
-{23,1,3,"Re10",HAND_RIGHT},
-{23,1,4,"Mi10",HAND_RIGHT},
-{23,1,5,"Fa10",HAND_RIGHT},
-{23,1,6,"Sol10",HAND_RIGHT},
-{23,1,7,"La10",HAND_RIGHT}
+{23,1,0, HAND_RIGHT, {{"La9",   NULL}, WT_ACCORDION}, {{"La9",   NULL}, WT_ACCORDION}},
+{23,1,1, HAND_RIGHT, {{"Si9",   NULL}, WT_ACCORDION}, {{"Si9",   NULL}, WT_ACCORDION}},
+{23,1,2, HAND_RIGHT, {{"Do10",  NULL}, WT_ACCORDION}, {{"Do10",  NULL}, WT_ACCORDION}},
+{23,1,3, HAND_RIGHT, {{"Re10",  NULL}, WT_ACCORDION}, {{"Re10",  NULL}, WT_ACCORDION}},
+{23,1,4, HAND_RIGHT, {{"Mi10",  NULL}, WT_ACCORDION}, {{"Mi10",  NULL}, WT_ACCORDION}},
+{23,1,5, HAND_RIGHT, {{"Fa10",  NULL}, WT_ACCORDION}, {{"Fa10",  NULL}, WT_ACCORDION}},
+{23,1,6, HAND_RIGHT, {{"Sol10", NULL}, WT_ACCORDION}, {{"Sol10", NULL}, WT_ACCORDION}},
+{23,1,7, HAND_RIGHT, {{"La10",  NULL}, WT_ACCORDION}, {{"La10",  NULL}, WT_ACCORDION}}
 
 };
+const int16_t *WaveTablePointer(WaveTableId wt)
+{
+    switch(wt)
+    {
+        case WT_ACCORDION:
+            return wavetable_accordion;
 
-#define NB_BUTTONS (sizeof(buttons)/sizeof(Button))
+        case WT_ORGAN:
+            return wavetable_accordion;
 
-uint8_t previous_buttons[NB_BUTTONS];
+        case WT_FLUTE:
+            return wavetable_accordion;
+
+        case WT_STRINGS:
+            return wavetable_accordion;
+
+        default:
+            return wavetable_accordion;
+    }
+}
+
+static void Update_Bellows_Mode(void)
+{
+    /*
+       MCP23
+       GPA7 = bit 7 du port A
+
+       0 = PUSH
+       1 = PULL
+    */
+
+    uint8_t gpa7 =
+        (mcp_state[3][0] >> 7) & 1;
+
+
+    if(gpa7)
+    {
+        bellows_mode = MODE_PULL;
+    }
+    else
+    {
+        bellows_mode = MODE_PUSH;
+    }
+}
 
 void Synth_Init(void)
 {
@@ -247,10 +320,17 @@ void Synth_Init(void)
     {
         voices[i].active = 0;
     }
+
+    for(int i = 0; i < NB_BUTTONS; i++)
+    {
+        previous_buttons[i] = 0;
+        active_sound[i] = NULL;
+    }
 }
 
-
-void NoteOn(const char *note, Hand hand)
+void NoteOn(const char *note,
+            Hand hand,
+            WaveTableId wavetable)
 {
     // éviter les doublons
     for(int i = 0; i < MAX_VOICES; i++)
@@ -263,7 +343,6 @@ void NoteOn(const char *note, Hand hand)
         }
     }
 
-
     // chercher une voix libre
     for(int i = 0; i < MAX_VOICES; i++)
     {
@@ -274,58 +353,47 @@ void NoteOn(const char *note, Hand hand)
             voices[i].note = note;
             voices[i].hand = hand;
 
-
             // récupération fréquence
-            voices[i].frequency =
-                Note_GetFrequency(note);
-
+            voices[i].frequency = Note_GetFrequency(note);
 
             // sécurité note inconnue
-            if(voices[i].frequency <= 0)
+            if(voices[i].frequency <= 0.0f)
             {
                 voices[i].active = 0;
                 return;
             }
 
-
             // initialisation phase
             voices[i].phase = 0.0f;
 
-
             // incrément de lecture wavetable
             voices[i].phase_inc =
-                ((float)WAVETABLE_SIZE *
-                 voices[i].frequency)
-                 /
-                 SAMPLE_RATE;
+                ((float)WAVETABLE_SIZE * voices[i].frequency)
+                / SAMPLE_RATE;
 
-
-            // wavetable accordéon
-            voices[i].wave =
-                wavetable_accordion;
-
-            voices[i].wave_size =
-                WAVETABLE_SIZE;
-
+            Voice_SetWave(&voices[i], wavetable);
 
             // volume
             voices[i].amplitude = 1.0f;
-
 
             return;
         }
     }
 }
 
-void NoteOff(const char *note)
+void NoteOff(const char *note,
+             Hand hand,
+             WaveTableId wavetable)
 {
     for(int i = 0; i < MAX_VOICES; i++)
     {
-        if(voices[i].active &&
-           strcmp(voices[i].note, note) == 0)
-        {
-            voices[i].active = 0;
-        }
+    	if(voices[i].active &&
+    	   strcmp(voices[i].note, note)==0 &&
+    	   voices[i].hand==hand &&
+    	   voices[i].wave == WaveTablePointer(wavetable))
+    	{
+    	    voices[i].active = 0;
+    	}
     }
 }
 
@@ -347,7 +415,7 @@ int toBinary(uint8_t a, uint8_t port) {
     }
     return -1;
 }
-static uint8_t mcp_state[4][2];
+
 
 
 static void MCP_Read_All(void)
@@ -395,25 +463,31 @@ static uint8_t MCP_Index(uint8_t mcp)
 
     return 0;
 }
-
+static ButtonSound *Button_GetCurrentSound(Button *button)
+{
+    if(bellows_mode == MODE_PUSH)
+    {
+        return &button->push;
+    }
+    else
+    {
+        return &button->pull;
+    }
+}
 static void UI_ScanAndDispatch(void)
 {
     MCP_Read_All();
 
+    // Lecture du sens du soufflet via MCP23 GPA7
+    Update_Bellows_Mode();
 
-    for(int i=0;i<NB_BUTTONS;i++)
+
+    for(int i = 0; i < NB_BUTTONS; i++)
     {
+        uint8_t mcp_index = MCP_Index(buttons[i].mcp);
 
-        uint8_t mcp_index =
-            MCP_Index(buttons[i].mcp);
-
-
-        uint8_t port =
-            buttons[i].port;
-
-
-        uint8_t bit =
-            buttons[i].bit;
+        uint8_t port = buttons[i].port;
+        uint8_t bit  = buttons[i].bit;
 
 
         uint8_t state =
@@ -421,28 +495,101 @@ static void UI_ScanAndDispatch(void)
 
 
 
-        // appui
+        /*
+            APPUI
+        */
 
         if(state && !previous_buttons[i])
         {
-            NoteOn(
-                buttons[i].note,
-                buttons[i].hand);
+            /*
+                On capture le son correspondant
+                au sens du soufflet AU MOMENT de l'appui
+            */
+
+            if(bellows_mode == MODE_PUSH)
+            {
+                active_sound[i] = &buttons[i].push;
+            }
+            else
+            {
+                active_sound[i] = &buttons[i].pull;
+            }
+
+
+            ButtonSound *sound = active_sound[i];
+
+
+            for(int n = 0; n < 2; n++)
+            {
+                if(sound->notes[n] != NULL)
+                {
+                    NoteOn(
+                        sound->notes[n],
+                        buttons[i].hand,
+                        sound->wavetable
+                    );
+                }
+            }
         }
 
 
 
-        // relâchement
+        /*
+            RELACHEMENT
+        */
 
-        if(!state && previous_buttons[i])
+        else if(!state && previous_buttons[i])
         {
-            NoteOff(
-                buttons[i].note);
-        }
 
+            ButtonSound *sound = active_sound[i];
+
+
+            if(sound != NULL)
+            {
+                for(int n = 0; n < 2; n++)
+                {
+                    if(sound->notes[n] != NULL)
+                    {
+                        NoteOff(
+                            sound->notes[n],
+                            buttons[i].hand,
+                            sound->wavetable
+                        );
+                    }
+                }
+            }
+
+
+            active_sound[i] = NULL;
+        }
 
 
         previous_buttons[i] = state;
+    }
+}
+void Voice_SetWave(Voice *v, WaveTableId wt)
+{
+    switch(wt)
+    {
+        case WT_ACCORDION:
+            v->wave = wavetable_accordion;
+            v->wave_size = WAVETABLE_SIZE;
+            break;
+
+        case WT_ORGAN:
+            v->wave = wavetable_accordion;
+            v->wave_size = WAVETABLE_SIZE;
+            break;
+
+        case WT_FLUTE:
+            v->wave = wavetable_accordion;
+            v->wave_size = WAVETABLE_SIZE;
+            break;
+
+        case WT_STRINGS:
+            v->wave = wavetable_accordion;
+            v->wave_size = WAVETABLE_SIZE;
+            break;
     }
 }
 
@@ -596,7 +743,7 @@ int main(void)
     mcp23017_iodir(&hmcp20, MCP23017_PORTA, MCP23017_IODIR_ALL_INPUT);
     mcp23017_iodir(&hmcp20, MCP23017_PORTB, MCP23017_IODIR_ALL_INPUT);
 
-    mcp23017_init(&hmcp21, &hi2c1, MCP23017_ADDRESS_27);
+    mcp23017_init(&hmcp21, &hi2c1, MCP23017_ADDRESS_21);
     mcp23017_iodir(&hmcp21, MCP23017_PORTA, MCP23017_IODIR_ALL_INPUT);
     mcp23017_iodir(&hmcp21, MCP23017_PORTB, MCP23017_IODIR_ALL_INPUT);
 
