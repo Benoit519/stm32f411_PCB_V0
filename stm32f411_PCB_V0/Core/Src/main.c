@@ -266,26 +266,7 @@ enum
 
 static ButtonSound *active_sound[NB_BUTTONS];
 static uint8_t previous_buttons[NB_BUTTONS];
-const int16_t *WaveTablePointer(WaveTableId wt)
-{
-    switch(wt)
-    {
-        case WT_ACCORDION:
-            return wavetable_accordion;
 
-        case WT_ORGAN:
-            return wavetable_accordion;
-
-        case WT_FLUTE:
-            return wavetable_accordion;
-
-        case WT_STRINGS:
-            return wavetable_accordion;
-
-        default:
-            return wavetable_accordion;
-    }
-}
 
 static void Update_Bellows_Mode(void)
 {
@@ -382,18 +363,18 @@ void NoteOff(const char *note,
              Hand hand,
              WaveTableId wavetable)
 {
+    (void)wavetable;   // paramètre inutilisé
+
     for(int i = 0; i < MAX_VOICES; i++)
     {
-    	if(voices[i].active &&
-    	   strcmp(voices[i].note, note)==0 &&
-    	   voices[i].hand==hand &&
-    	   voices[i].wave == WaveTablePointer(wavetable))
-    	{
-    	    voices[i].active = 0;
-    	}
+        if(voices[i].active &&
+           strcmp(voices[i].note, note) == 0 &&
+           voices[i].hand == hand)
+        {
+            voices[i].active = 0;
+        }
     }
 }
-
 int toBinary(uint8_t a, uint8_t port) {
     uint8_t i;
     int compteur = 0;
@@ -568,25 +549,23 @@ void Voice_SetWave(Voice *v, WaveTableId wt)
 {
     switch(wt)
     {
-        case WT_ACCORDION:
-            v->wave = wavetable_accordion;
-            v->wave_size = WAVETABLE_SIZE;
-            break;
+    case WT_ACCORDION:
 
-        case WT_ORGAN:
-            v->wave = wavetable_accordion;
-            v->wave_size = WAVETABLE_SIZE;
-            break;
+        if(v->frequency < 330.0f)
+        {
+            v->wave = wavetable_accordion_low;
+        }
+        else if(v->frequency < 660.0f)
+        {
+            v->wave = wavetable_accordion_mid;
+        }
+        else
+        {
+            v->wave = wavetable_accordion_high;
+        }
 
-        case WT_FLUTE:
-            v->wave = wavetable_accordion;
-            v->wave_size = WAVETABLE_SIZE;
-            break;
-
-        case WT_STRINGS:
-            v->wave = wavetable_accordion;
-            v->wave_size = WAVETABLE_SIZE;
-            break;
+        v->wave_size = WAVETABLE_SIZE;
+        break;
     }
 }
 

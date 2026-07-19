@@ -1,3 +1,4 @@
+"./Core/Src/accordion_tables.o"
 "./Core/Src/main.o"
 "./Core/Src/mcp23017.o"
 "./Core/Src/note.o"

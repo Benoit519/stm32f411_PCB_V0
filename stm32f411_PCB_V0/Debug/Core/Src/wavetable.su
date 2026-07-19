@@ -1,1 +1,2 @@
-../Core/Src/wavetable.c:10:6:Wavetable_Init	32	static
+../Core/Src/wavetable.c:26:13:LoadWavetable	64	static
+../Core/Src/wavetable.c:103:6:Wavetable_Init	16	static
