@@ -7,23 +7,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         00006b5c  08000198  08000198  00010198  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00000b64  08006cf4  08006cf4  00016cf4  2**2
+  2 .rodata       00000bc0  08006cf4  08006cf4  00016cf4  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  08007858  08007858  000206f0  2**0
+  3 .ARM.extab    00000000  080078b4  080078b4  000206f0  2**0
                   CONTENTS
-  4 .ARM          00000008  08007858  08007858  00017858  2**2
+  4 .ARM          00000008  080078b4  080078b4  000178b4  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  5 .preinit_array 00000000  08007860  08007860  000206f0  2**0
+  5 .preinit_array 00000000  080078bc  080078bc  000206f0  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  08007860  08007860  00017860  2**2
+  6 .init_array   00000004  080078bc  080078bc  000178bc  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  7 .fini_array   00000004  08007864  08007864  00017864  2**2
+  7 .fini_array   00000004  080078c0  080078c0  000178c0  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  8 .data         000006f0  20000000  08007868  00020000  2**2
+  8 .data         000006f0  20000000  080078c4  00020000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          0000175c  200006f0  08007f58  000206f0  2**2
+  9 .bss          0000175c  200006f0  08007fb4  000206f0  2**2
                   ALLOC
- 10 ._user_heap_stack 00000604  20001e4c  08007f58  00021e4c  2**0
+ 10 ._user_heap_stack 00000604  20001e4c  08007fb4  00021e4c  2**0
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  000206f0  2**0
                   CONTENTS, READONLY
@@ -3203,19 +3203,19 @@ if (status == HAL_OK)
 #define NOTE_COUNT (sizeof(note_table)/sizeof(NoteEntry))
 
 
-float Note_GetFrequency(const char *name)
+float Note_GetFrequency(const char* name)
 {
  8001620:	b580      	push	{r7, lr}
  8001622:	b084      	sub	sp, #16
  8001624:	af00      	add	r7, sp, #0
  8001626:	6078      	str	r0, [r7, #4]
 
-    for(int i=0;i<NOTE_COUNT;i++)
+    for (int i = 0;i < NOTE_COUNT;i++)
  8001628:	2300      	movs	r3, #0
  800162a:	60fb      	str	r3, [r7, #12]
  800162c:	e014      	b.n	8001658 <Note_GetFrequency+0x38>
     {
-        if(strcmp(note_table[i].name,name)==0)
+        if (strcmp(note_table[i].name, name) == 0)
  800162e:	4a10      	ldr	r2, [pc, #64]	; (8001670 <Note_GetFrequency+0x50>)
  8001630:	68fb      	ldr	r3, [r7, #12]
  8001632:	f852 3033 	ldr.w	r3, [r2, r3, lsl #3]
@@ -3234,7 +3234,7 @@ float Note_GetFrequency(const char *name)
  800164c:	3304      	adds	r3, #4
  800164e:	681b      	ldr	r3, [r3, #0]
  8001650:	e007      	b.n	8001662 <Note_GetFrequency+0x42>
-    for(int i=0;i<NOTE_COUNT;i++)
+    for (int i = 0;i < NOTE_COUNT;i++)
  8001652:	68fb      	ldr	r3, [r7, #12]
  8001654:	3301      	adds	r3, #1
  8001656:	60fb      	str	r3, [r7, #12]
@@ -3254,7 +3254,7 @@ float Note_GetFrequency(const char *name)
  800166a:	3710      	adds	r7, #16
  800166c:	46bd      	mov	sp, r7
  800166e:	bd80      	pop	{r7, pc}
- 8001670:	08007238 	.word	0x08007238
+ 8001670:	08007294 	.word	0x08007294
 
 08001674 <HAL_MspInit>:
 /* USER CODE END 0 */
@@ -4361,11 +4361,11 @@ void Wavetable_Init(void)
  8001ca4:	47000000 	.word	0x47000000
  8001ca8:	20001648 	.word	0x20001648
  8001cac:	20001848 	.word	0x20001848
- 8001cb0:	08006f7c 	.word	0x08006f7c
+ 8001cb0:	08006fd8 	.word	0x08006fd8
  8001cb4:	20001a48 	.word	0x20001a48
- 8001cb8:	0800710c 	.word	0x0800710c
+ 8001cb8:	08007168 	.word	0x08007168
  8001cbc:	20001c48 	.word	0x20001c48
- 8001cc0:	080071d4 	.word	0x080071d4
+ 8001cc0:	08007230 	.word	0x08007230
 
 08001cc4 <Reset_Handler>:
 
@@ -4452,7 +4452,7 @@ LoopFillZerobss:
   ldr r1, =_edata
  8001d04:	200006f0 	.word	0x200006f0
   ldr r2, =_sidata
- 8001d08:	08007868 	.word	0x08007868
+ 8001d08:	080078c4 	.word	0x080078c4
   ldr r2, =_sbss
  8001d0c:	200006f0 	.word	0x200006f0
   ldr r4, =_ebss
@@ -7842,7 +7842,7 @@ static uint32_t DMA_CalcBaseAndBitshift(DMA_HandleTypeDef *hdma)
  8002f34:	4770      	bx	lr
  8002f36:	bf00      	nop
  8002f38:	aaaaaaab 	.word	0xaaaaaaab
- 8002f3c:	08007480 	.word	0x08007480
+ 8002f3c:	080074dc 	.word	0x080074dc
 
 08002f40 <DMA_CheckFifoParam>:
   * @param  hdma       pointer to a DMA_HandleTypeDef structure that contains
@@ -14759,7 +14759,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  80056c6:	bf00      	nop
  80056c8:	40023c00 	.word	0x40023c00
  80056cc:	40023800 	.word	0x40023800
- 80056d0:	08007468 	.word	0x08007468
+ 80056d0:	080074c4 	.word	0x080074c4
  80056d4:	200006e4 	.word	0x200006e4
  80056d8:	200006e8 	.word	0x200006e8
 
@@ -15061,7 +15061,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  800591c:	4618      	mov	r0, r3
  800591e:	bd80      	pop	{r7, pc}
  8005920:	40023800 	.word	0x40023800
- 8005924:	08007478 	.word	0x08007478
+ 8005924:	080074d4 	.word	0x080074d4
 
 08005928 <HAL_RCCEx_PeriphCLKConfig>:
   *        domain (RTC and RCC_BDCR register expect BKPSRAM) will be reset
@@ -16643,10 +16643,10 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  80061fe:	4798      	blx	r3
  8006200:	3601      	adds	r6, #1
  8006202:	e7f2      	b.n	80061ea <__libc_init_array+0x1e>
- 8006204:	08007860 	.word	0x08007860
- 8006208:	08007860 	.word	0x08007860
- 800620c:	08007860 	.word	0x08007860
- 8006210:	08007864 	.word	0x08007864
+ 8006204:	080078bc 	.word	0x080078bc
+ 8006208:	080078bc 	.word	0x080078bc
+ 800620c:	080078bc 	.word	0x080078bc
+ 8006210:	080078c0 	.word	0x080078c0
 
 08006214 <memset>:
  8006214:	4402      	add	r2, r0
@@ -16891,11 +16891,11 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  8006508:	2e85a308 	.word	0x2e85a308
  800650c:	43490f80 	.word	0x43490f80
  8006510:	3f22f984 	.word	0x3f22f984
- 8006514:	08007488 	.word	0x08007488
+ 8006514:	080074e4 	.word	0x080074e4
  8006518:	2e85a300 	.word	0x2e85a300
  800651c:	248d3132 	.word	0x248d3132
  8006520:	43800000 	.word	0x43800000
- 8006524:	08007508 	.word	0x08007508
+ 8006524:	08007564 	.word	0x08007564
 
 08006528 <__kernel_cosf>:
  8006528:	ee10 3a10 	vmov	r3, s0
@@ -17217,8 +17217,8 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  80068de:	e7ec      	b.n	80068ba <__kernel_rem_pio2f+0x2d2>
  80068e0:	3c01      	subs	r4, #1
  80068e2:	e775      	b.n	80067d0 <__kernel_rem_pio2f+0x1e8>
- 80068e4:	0800784c 	.word	0x0800784c
- 80068e8:	08007820 	.word	0x08007820
+ 80068e4:	080078a8 	.word	0x080078a8
+ 80068e8:	0800787c 	.word	0x0800787c
  80068ec:	43800000 	.word	0x43800000
  80068f0:	3b800000 	.word	0x3b800000
  80068f4:	00000000 	.word	0x00000000
