@@ -19,6 +19,27 @@ typedef struct
 */
 
 
+#include "note.h"
+#include <string.h>
+
+
+typedef struct
+{
+    const char* name;
+    float frequency;
+
+} NoteEntry;
+
+
+/*
+   Accordage standard A4 = 440 Hz
+
+   Do1 = C1
+   ...
+   Do10 = C10
+*/
+
+
 static const NoteEntry note_table[] =
 {
 
@@ -112,6 +133,26 @@ static const NoteEntry note_table[] =
     {"Si10",31608.53f}
 
 };
+
+
+#define NOTE_COUNT (sizeof(note_table)/sizeof(NoteEntry))
+
+
+float Note_GetFrequency(const char* name)
+{
+
+    for (int i = 0;i < NOTE_COUNT;i++)
+    {
+        if (strcmp(note_table[i].name, name) == 0)
+        {
+            return note_table[i].frequency;
+        }
+    }
+
+
+    // note inconnue
+    return 0.0f;
+}
 
 
 #define NOTE_COUNT (sizeof(note_table)/sizeof(NoteEntry))
