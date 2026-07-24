@@ -102,6 +102,10 @@ typedef struct
 
     uint16_t wave_size;
 
+   float lfo_phase;
+   float lfo_inc;
+   float vibrato_depth;
+
 } Voice;
 
 static Voice voices[MAX_VOICES];
@@ -339,7 +343,7 @@ void NoteOn(const char *note,
             Hand hand,
             WaveTableId wavetable)
 {
-    // éviter les doublons
+    /* éviter les doublons */
     for(int i = 0; i < MAX_VOICES; i++)
     {
         if(voices[i].active &&
@@ -350,7 +354,7 @@ void NoteOn(const char *note,
         }
     }
 
-    // chercher une voix libre
+    /* chercher une voix libre */
     for(int i = 0; i < MAX_VOICES; i++)
     {
         if(!voices[i].active)
@@ -360,41 +364,46 @@ void NoteOn(const char *note,
             voices[i].note = note;
             voices[i].hand = hand;
 
-            // récupération fréquence
+            /* récupération fréquence */
             voices[i].frequency = Note_GetFrequency(note);
 
-            // sécurité note inconnue
+            /* sécurité note inconnue */
             if(voices[i].frequency <= 0.0f)
             {
                 voices[i].active = 0;
                 return;
             }
 
-            // initialisation phase
+            /* Oscillateur de vibrato */
+
+            voices[i].lfo_phase = 0.0f;
+            voices[i].lfo_inc = 5.0f / SAMPLE_RATE;
+            voices[i].vibrato_depth = 0.0020f;   /* profondeur de base */
+
+            /* Oscillateur principal */
+
             voices[i].phase = 0.0f;
+
+            voices[i].phase_inc =
+                ((float)WAVETABLE_SIZE * voices[i].frequency)
+                / SAMPLE_RATE;
+
+            /* Enveloppe */
+
             voices[i].env_state = ENV_ATTACK;
-
             voices[i].env_level = 0.0f;
-
             voices[i].sustain_level = SUSTAIN_LEVEL;
-
 
             voices[i].attack_step =
                 1.0f /
                 ((ATTACK_TIME_MS * SAMPLE_RATE) / 1000.0f);
 
-
             voices[i].release_step =
                 1.0f /
                 ((RELEASE_TIME_MS * SAMPLE_RATE) / 1000.0f);
-            // incrément de lecture wavetable
-            voices[i].phase_inc =
-                ((float)WAVETABLE_SIZE * voices[i].frequency)
-                / SAMPLE_RATE;
 
             Voice_SetWave(&voices[i], wavetable);
 
-            // volume
             voices[i].amplitude = 1.0f;
 
             return;
@@ -666,129 +675,90 @@ void Voice_SetWave(Voice *v, WaveTableId wt)
         break;
     }
 }
-
 void render_audio_block(int16_t *buffer,
                         uint32_t samples)
 {
-    float gain =
-        pressure / 4095.0f;
+    float gain = pressure / 4095.0f;
 
+    /* Filtre dépendant de la pression */
     float alpha = 0.15f + 0.30f * gain;
+
     for(uint32_t i = 0; i < samples; i++)
     {
-
         float sample = 0.0f;
-
 
         for(int v = 0; v < MAX_VOICES; v++)
         {
-
             if(voices[v].active)
             {
+                /* Lecture wavetable */
 
-                /*
-                    Lecture wavetable interpolation linéaire
-                */
+                uint16_t index = (uint16_t)voices[v].phase;
+                float frac = voices[v].phase - index;
 
-                uint16_t index =
-                    (uint16_t)voices[v].phase;
-
-
-                float frac =
-                    voices[v].phase - index;
-
-
-                uint16_t next =
-                    index + 1;
-
-
+                uint16_t next = index + 1;
                 if(next >= voices[v].wave_size)
                     next = 0;
 
+                float s1 = voices[v].wave[index];
+                float s2 = voices[v].wave[next];
 
+                float value = s1 + frac * (s2 - s1);
 
-                float s1 =
-                    voices[v].wave[index];
-
-
-                float s2 =
-                    voices[v].wave[next];
-
-
-
-                float value =
-                    s1 + frac * (s2 - s1);
-
-
-
-                /*
-                    Mise à jour enveloppe ADSR
-                */
+                /* ADSR */
 
                 float envelope =
                     Envelope_Update(&voices[v]);
 
-
-
-                /*
-                    Mixage des voix
-                */
+                /* Mixage */
 
                 sample +=
-                    (value / 32768.0f)
-                    *
-                    voices[v].amplitude
-                    *
+                    (value / 32768.0f) *
+                    voices[v].amplitude *
                     envelope;
 
+                /* Vibrato dépendant de la pression */
 
+                float mod =
+                    sinf(2.0f * M_PI * voices[v].lfo_phase);
 
-                /*
-                    Avance phase wavetable
-                */
+                float depth =
+                    voices[v].vibrato_depth *
+                    (0.5f + gain);
 
                 voices[v].phase +=
-                    voices[v].phase_inc;
+                    voices[v].phase_inc *
+                    (1.0f + mod * depth);
 
+                voices[v].lfo_phase +=
+                    voices[v].lfo_inc;
 
+                if(voices[v].lfo_phase >= 1.0f)
+                    voices[v].lfo_phase -= 1.0f;
 
-                if(voices[v].phase >= voices[v].wave_size)
-                {
-                    voices[v].phase -=
-                        voices[v].wave_size;
-                }
+                /* Bouclage wavetable */
 
+                while(voices[v].phase >= voices[v].wave_size)
+                    voices[v].phase -= voices[v].wave_size;
             }
-
         }
 
+        /* Passe-bas */
 
+        filter_state +=
+            alpha * (sample - filter_state);
 
-        /*
-            Saturation soft
-        */
+        sample = filter_state;
 
-       /* Passe-bas */
-       
-       filter_state += alpha * (sample - filter_state);
-       sample = filter_state;
-       
-       /* Saturation douce */
-       
-       sample = sample / (1.0f + fabsf(sample));
+        /* Saturation douce */
 
-        /*
-            Volume soufflet
-        */
+        sample =
+            sample / (1.0f + fabsf(sample));
+
+        /* Volume */
 
         buffer[i] =
-            (int16_t)
-            (
-                sample *
-                gain *
-                28000.0f
-            );
-
+            (int16_t)(sample * gain * 28000.0f);
     }
 }
 
