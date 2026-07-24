@@ -121,6 +121,7 @@ static void Voice_SetWave(Voice *v, WaveTableId wt);
 
 static int16_t bufferDMA[BUFFER_SIZE];
 static const float SAMPLE_RATE = 44100.0f;
+static float filter_state = 0.0f;
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -672,7 +673,7 @@ void render_audio_block(int16_t *buffer,
     float gain =
         pressure / 4095.0f;
 
-
+    float alpha = 0.15f + 0.30f * gain;
     for(uint32_t i = 0; i < samples; i++)
     {
 
@@ -767,14 +768,14 @@ void render_audio_block(int16_t *buffer,
             Saturation soft
         */
 
-        if(sample > 1.0f)
-            sample = 1.0f;
-
-
-        if(sample < -1.0f)
-            sample = -1.0f;
-
-
+       /* Passe-bas */
+       
+       filter_state += alpha * (sample - filter_state);
+       sample = filter_state;
+       
+       /* Saturation douce */
+       
+       sample = sample / (1.0f + fabsf(sample));
 
         /*
             Volume soufflet
