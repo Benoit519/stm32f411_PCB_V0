@@ -578,8 +578,8 @@ static void UI_ScanAndDispatch(void)
         uint8_t state =
             (mcp_state[mcp_index][port] >> bit) & 1;
 
-
-
+        state = !state;
+     
         /*
             APPUI
         */
