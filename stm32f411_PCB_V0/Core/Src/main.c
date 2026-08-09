@@ -24,9 +24,6 @@
 #include <string.h>
 #include "note.h"
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846f
-#endif
 #define ATTACK_TIME_MS   20.0f
 #define RELEASE_TIME_MS 120.0f
 
@@ -53,12 +50,6 @@ typedef enum
 
 typedef enum
 {
-    BELLOWS_PUSH,
-    BELLOWS_PULL
-} BellowsDirection;
-
-typedef enum
-{
     ENV_OFF,
     ENV_ATTACK,
     ENV_SUSTAIN,
@@ -76,8 +67,13 @@ typedef struct
 
     float frequency;
 
-    float phase;
-    float phase_inc;
+    /* Accumulateur DDS 32 bits :
+       bits [31:24] = index wavetable (0-255)
+       bits [23:16] = fraction Q8 pour interpolation
+       bits [15: 0] = sous-fraction (precision supplementaire)
+       Wrap naturel par debordement uint32_t, pas de modulo. */
+    uint32_t phase_acc;
+    uint32_t phase_inc_nom;   /* increment nominal (sans vibrato) */
 
 
     /*
@@ -99,8 +95,6 @@ typedef struct
 
 
     const int16_t *wave;
-
-    uint16_t wave_size;
 
    float vibrato_depth;
 
@@ -124,9 +118,9 @@ static void Voice_SetWave(Voice *v, WaveTableId wt);
 static int16_t bufferDMA[BUFFER_SIZE];
 static const float SAMPLE_RATE = 44100.0f;
 static float filter_state = 0.0f;
-/* LFO global partage entre toutes les voix (vibrato) */
-static float global_lfo_phase = 0.0f;
-static const float global_lfo_inc = 5.0f / 44100.0f;
+/* LFO global DDS 32 bits : lookup wavetable_sine, zero sinf() dans la boucle audio */
+static uint32_t global_lfo_acc = 0;
+static const uint32_t global_lfo_inc_dds = (uint32_t)(5.0f * 4294967296.0f / 44100.0f);
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -177,17 +171,8 @@ static void MX_ADC1_Init(void);
 /* -------------------------------------------------------------------------- */
 /* Hardware / UI logic: periodic scan (from previous optimized version)         */
 /* -------------------------------------------------------------------------- */
-uint8_t mcpValueA20 = 0;
-uint8_t mcpValueB20 = 0;
-uint8_t mcpValueA21 = 0;
-uint8_t mcpValueB21 = 0;
-uint8_t mcpValueA22 = 0;
-uint8_t mcpValueB22 = 0;
-uint8_t mcpValueA23 = 0;
-uint8_t mcpValueB23 = 0;
 static uint8_t mcp_state[4][2];
 volatile uint16_t pressure = 0;
-volatile uint8_t note_active = 0;
 
 MCP23017_HandleTypeDef hmcp20;
 MCP23017_HandleTypeDef hmcp21;
@@ -344,70 +329,102 @@ void NoteOn(const char *note,
             Hand hand,
             WaveTableId wavetable)
 {
-    /* éviter les doublons */
+    /* eviter les doublons ; retrigger si la voix est en RELEASE */
     for(int i = 0; i < MAX_VOICES; i++)
     {
         if(voices[i].active &&
            strcmp(voices[i].note, note) == 0 &&
            voices[i].hand == hand)
         {
+            if(voices[i].env_state == ENV_RELEASE)
+            {
+                /* retrigger : reprendre l'attaque depuis le niveau actuel */
+                voices[i].env_state = ENV_ATTACK;
+            }
             return;
         }
     }
 
     /* chercher une voix libre */
+    int slot = -1;
     for(int i = 0; i < MAX_VOICES; i++)
     {
         if(!voices[i].active)
         {
-            voices[i].active = 1;
-
-            voices[i].note = note;
-            voices[i].hand = hand;
-
-            /* récupération fréquence */
-            voices[i].frequency = Note_GetFrequency(note);
-
-            /* sécurité note inconnue */
-            if(voices[i].frequency <= 0.0f)
-            {
-                voices[i].active = 0;
-                return;
-            }
-
-            /* Oscillateur de vibrato (LFO global, profondeur par voix) */
-
-            voices[i].vibrato_depth = 0.0020f;   /* profondeur de base */
-
-            /* Oscillateur principal */
-
-            voices[i].phase = 0.0f;
-
-            voices[i].phase_inc =
-                ((float)WAVETABLE_SIZE * voices[i].frequency)
-                / SAMPLE_RATE;
-
-            /* Enveloppe */
-
-            voices[i].env_state = ENV_ATTACK;
-            voices[i].env_level = 0.0f;
-            voices[i].sustain_level = SUSTAIN_LEVEL;
-
-            voices[i].attack_step =
-                1.0f /
-                ((ATTACK_TIME_MS * SAMPLE_RATE) / 1000.0f);
-
-            voices[i].release_step =
-                1.0f /
-                ((RELEASE_TIME_MS * SAMPLE_RATE) / 1000.0f);
-
-            Voice_SetWave(&voices[i], wavetable);
-
-            voices[i].amplitude = 1.0f;
-
-            return;
+            slot = i;
+            break;
         }
     }
+
+    /* voice stealing : priorité aux voix en RELEASE */
+    if(slot == -1)
+    {
+        for(int i = 0; i < MAX_VOICES; i++)
+        {
+            if(voices[i].env_state == ENV_RELEASE)
+            {
+                slot = i;
+                break;
+            }
+        }
+    }
+
+    /* fallback : voix 0 (la plus ancienne) */
+    if(slot == -1)
+    {
+        slot = 0;
+    }
+
+    /* sécurité note inconnue */
+    float freq = Note_GetFrequency(note);
+    if(freq <= 0.0f)
+    {
+        return;
+    }
+
+    /* Desactivation d'abord : si voice stealing, l'ISR DMA verra active=0
+       et sautera cette voix pendant toute la reinitialisation. */
+    voices[slot].active = 0;
+
+    /* Initialisation complete avant reactivation */
+
+    voices[slot].note      = note;
+    voices[slot].hand      = hand;
+    voices[slot].frequency = freq;
+
+    /* Oscillateur de vibrato (LFO global, profondeur par voix) */
+
+    voices[slot].vibrato_depth = 0.0020f;
+
+    /* Oscillateur principal DDS 32 bits */
+
+    voices[slot].phase_acc = 0;
+
+    /* increment = f * 2^32 / fs  (calcul flottant a la note-on, pas dans la boucle audio) */
+    voices[slot].phase_inc_nom =
+        (uint32_t)(freq * 4294967296.0f / SAMPLE_RATE);
+
+    /* Enveloppe : attaque directement jusqu'au sustain (pas de discontinuité 1.0→0.8) */
+
+    voices[slot].env_state     = ENV_ATTACK;
+    voices[slot].env_level     = 0.0f;
+    voices[slot].sustain_level = SUSTAIN_LEVEL;
+
+    voices[slot].attack_step =
+        SUSTAIN_LEVEL /
+        ((ATTACK_TIME_MS * SAMPLE_RATE) / 1000.0f);
+
+    /* SUSTAIN_LEVEL / duree : la release part du niveau sustain -> 0 en RELEASE_TIME_MS */
+    voices[slot].release_step =
+        SUSTAIN_LEVEL /
+        ((RELEASE_TIME_MS * SAMPLE_RATE) / 1000.0f);
+
+    Voice_SetWave(&voices[slot], wavetable);
+
+    voices[slot].amplitude = 1.0f;
+
+    /* Activation en dernier : la voix est prête avant d'être visible par l'ISR audio */
+    voices[slot].active = 1;
 }
 
 void NoteOff(const char *note,
@@ -437,10 +454,9 @@ static float Envelope_Update(Voice *v)
 
         v->env_level += v->attack_step;
 
-
-        if(v->env_level >= 1.0f)
+        if(v->env_level >= v->sustain_level)
         {
-            v->env_level = 1.0f;
+            v->env_level = v->sustain_level;
             v->env_state = ENV_SUSTAIN;
         }
 
@@ -480,27 +496,6 @@ static float Envelope_Update(Voice *v)
 
     return v->env_level;
 }
-
-int toBinary(uint8_t a, uint8_t port) {
-    uint8_t i;
-    int compteur = 0;
-    for (i = 0x80; i != 0; i >>= 1) {
-        if ((a & i)) {
-            if (port == 0) {
-                return compteur;
-            }
-            else {
-                return (7 - compteur);
-            }
-        }
-        else {
-            compteur = compteur + 1;
-        }
-    }
-    return -1;
-}
-
-
 
 static void MCP_Read_All(void)
 {
@@ -547,16 +542,27 @@ static uint8_t MCP_Index(uint8_t mcp)
 
     return 0;
 }
-static ButtonSound *Button_GetCurrentSound(Button *button)
+/* Renvoie 1 si un autre bouton encore presse tient deja la meme note+main.
+   Evite de couper une note partagee entre deux boutons lors d'un NoteOff partiel. */
+static uint8_t IsNoteHeldByOtherButton(int except_i, const char *note, Hand hand)
 {
-    if(bellows_mode == MODE_PUSH)
+    for(int j = 0; j < NB_BUTTONS; j++)
     {
-        return &button->push;
+        if(j == except_i) continue;
+        if(previous_buttons[j] && active_sound[j] != NULL)
+        {
+            for(int n = 0; n < 2; n++)
+            {
+                if(active_sound[j]->notes[n] != NULL &&
+                   strcmp(active_sound[j]->notes[n], note) == 0 &&
+                   buttons[j].hand == hand)
+                {
+                    return 1;
+                }
+            }
+        }
     }
-    else
-    {
-        return &button->pull;
-    }
+    return 0;
 }
 static void UI_ScanAndDispatch(void)
 {
@@ -632,7 +638,8 @@ static void UI_ScanAndDispatch(void)
             {
                 for(int n = 0; n < 2; n++)
                 {
-                    if(sound->notes[n] != NULL)
+                    if(sound->notes[n] != NULL &&
+                       !IsNoteHeldByOtherButton(i, sound->notes[n], buttons[i].hand))
                     {
                         NoteOff(
                             sound->notes[n],
@@ -651,7 +658,7 @@ static void UI_ScanAndDispatch(void)
         previous_buttons[i] = state;
     }
 }
-void Voice_SetWave(Voice *v, WaveTableId wt)
+static void Voice_SetWave(Voice *v, WaveTableId wt)
 {
     switch(wt)
     {
@@ -670,7 +677,10 @@ void Voice_SetWave(Voice *v, WaveTableId wt)
             v->wave = wavetable_accordion_high;
         }
 
-        v->wave_size = WAVETABLE_SIZE;
+        break;
+
+    default:
+        v->wave = wavetable_accordion_mid;
         break;
     }
 }
@@ -682,30 +692,34 @@ void render_audio_block(int16_t *buffer,
     /* Filtre dépendant de la pression */
     float alpha = 0.15f + 0.30f * gain;
 
+    /* Gain de mixage adaptatif : 1/sqrt(N) evite la saturation avec N voix simultanees */
+    int active_count = 0;
+    for(int vc = 0; vc < MAX_VOICES; vc++)
+        if(voices[vc].active) active_count++;
+    float mix_gain = (active_count > 1) ? (1.0f / sqrtf((float)active_count)) : 1.0f;
+
     for(uint32_t i = 0; i < samples; i++)
     {
         float sample = 0.0f;
 
-        /* LFO global : calcul unique par echantillon (vs. 1 sinf par voix avant) */
-        float global_lfo_mod = sinf(2.0f * M_PI * global_lfo_phase);
+        /* LFO global DDS : lookup dans wavetable_sine, aucun sinf() dans la boucle */
+        float global_lfo_mod = wavetable_sine[global_lfo_acc >> 24] * (1.0f / 32768.0f);
 
         for(int v = 0; v < MAX_VOICES; v++)
         {
             if(voices[v].active)
             {
-                /* Lecture wavetable */
+                /* Lecture wavetable DDS en virgule fixe Q8 */
 
-                uint16_t index = (uint16_t)voices[v].phase;
-                float frac = voices[v].phase - index;
+                uint8_t index = (uint8_t)(voices[v].phase_acc >> 24); /* bits [31:24] */
+                uint8_t next  = index + 1;   /* wrap 255->0 gratuit (uint8_t) */
+                uint8_t frac8 = (uint8_t)(voices[v].phase_acc >> 16); /* bits [23:16] */
 
-                uint16_t next = index + 1;
-                if(next >= voices[v].wave_size)
-                    next = 0;
+                int32_t s1 = voices[v].wave[index];
+                int32_t s2 = voices[v].wave[next];
 
-                float s1 = voices[v].wave[index];
-                float s2 = voices[v].wave[next];
-
-                float value = s1 + frac * (s2 - s1);
+                /* interpolation lineaire entiere : pas de cast float, pas de division flottante */
+                int32_t value = s1 + (((s2 - s1) * (int32_t)frac8) >> 8);
 
                 /* ADSR */
 
@@ -719,27 +733,28 @@ void render_audio_block(int16_t *buffer,
                     voices[v].amplitude *
                     envelope;
 
-                /* Vibrato dependant de la pression (LFO global partage) */
+                /* Vibrato dependant de la pression (delta DDS, un mul float/voix) */
 
                 float depth =
                     voices[v].vibrato_depth *
                     (0.5f + gain);
 
-                voices[v].phase +=
-                    voices[v].phase_inc *
-                    (1.0f + global_lfo_mod * depth);
+                int32_t lfo_delta =
+                    (int32_t)((float)voices[v].phase_inc_nom * global_lfo_mod * depth);
 
-                /* Bouclage wavetable */
+                /* Avance DDS : int64 evite le cast uint32->int32 errone pour les notes aiguës */
+                int64_t phase_inc_eff =
+                    (int64_t)voices[v].phase_inc_nom + (int64_t)lfo_delta;
 
-                while(voices[v].phase >= voices[v].wave_size)
-                    voices[v].phase -= voices[v].wave_size;
+                voices[v].phase_acc += (uint32_t)phase_inc_eff;
             }
         }
 
-        /* Avance phase LFO global une seule fois par echantillon */
-        global_lfo_phase += global_lfo_inc;
-        if(global_lfo_phase >= 1.0f)
-            global_lfo_phase -= 1.0f;
+        /* Avance LFO DDS : wrap uint32_t automatique, aucune comparaison */
+        global_lfo_acc += global_lfo_inc_dds;
+
+        /* Gain de mixage adaptatif avant le passe-bas */
+        sample *= mix_gain;
 
         /* Passe-bas */
 
@@ -756,7 +771,7 @@ void render_audio_block(int16_t *buffer,
         /* Volume */
 
         buffer[i] =
-            (int16_t)(sample * gain * 28000.0f);
+            (int16_t)(sample * gain * AMPLITUDE);
     }
 }
 
