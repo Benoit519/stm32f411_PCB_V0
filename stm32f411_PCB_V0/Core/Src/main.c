@@ -102,8 +102,6 @@ typedef struct
 
     uint16_t wave_size;
 
-   float lfo_phase;
-   float lfo_inc;
    float vibrato_depth;
 
 } Voice;
@@ -126,6 +124,9 @@ static void Voice_SetWave(Voice *v, WaveTableId wt);
 static int16_t bufferDMA[BUFFER_SIZE];
 static const float SAMPLE_RATE = 44100.0f;
 static float filter_state = 0.0f;
+/* LFO global partage entre toutes les voix (vibrato) */
+static float global_lfo_phase = 0.0f;
+static const float global_lfo_inc = 5.0f / 44100.0f;
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -374,10 +375,8 @@ void NoteOn(const char *note,
                 return;
             }
 
-            /* Oscillateur de vibrato */
+            /* Oscillateur de vibrato (LFO global, profondeur par voix) */
 
-            voices[i].lfo_phase = 0.0f;
-            voices[i].lfo_inc = 5.0f / SAMPLE_RATE;
             voices[i].vibrato_depth = 0.0020f;   /* profondeur de base */
 
             /* Oscillateur principal */
@@ -687,6 +686,9 @@ void render_audio_block(int16_t *buffer,
     {
         float sample = 0.0f;
 
+        /* LFO global : calcul unique par echantillon (vs. 1 sinf par voix avant) */
+        float global_lfo_mod = sinf(2.0f * M_PI * global_lfo_phase);
+
         for(int v = 0; v < MAX_VOICES; v++)
         {
             if(voices[v].active)
@@ -717,10 +719,7 @@ void render_audio_block(int16_t *buffer,
                     voices[v].amplitude *
                     envelope;
 
-                /* Vibrato dépendant de la pression */
-
-                float mod =
-                    sinf(2.0f * M_PI * voices[v].lfo_phase);
+                /* Vibrato dependant de la pression (LFO global partage) */
 
                 float depth =
                     voices[v].vibrato_depth *
@@ -728,13 +727,7 @@ void render_audio_block(int16_t *buffer,
 
                 voices[v].phase +=
                     voices[v].phase_inc *
-                    (1.0f + mod * depth);
-
-                voices[v].lfo_phase +=
-                    voices[v].lfo_inc;
-
-                if(voices[v].lfo_phase >= 1.0f)
-                    voices[v].lfo_phase -= 1.0f;
+                    (1.0f + global_lfo_mod * depth);
 
                 /* Bouclage wavetable */
 
@@ -742,6 +735,11 @@ void render_audio_block(int16_t *buffer,
                     voices[v].phase -= voices[v].wave_size;
             }
         }
+
+        /* Avance phase LFO global une seule fois par echantillon */
+        global_lfo_phase += global_lfo_inc;
+        if(global_lfo_phase >= 1.0f)
+            global_lfo_phase -= 1.0f;
 
         /* Passe-bas */
 
