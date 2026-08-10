@@ -808,5 +808,5 @@ def extraire_wavetable(
 if __name__ == "__main__":
 
     extraire_wavetable(
-        "la3.wav"
+        "fa4.wav"
     )
