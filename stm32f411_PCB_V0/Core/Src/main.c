@@ -68,9 +68,9 @@ typedef struct
     float frequency;
 
     /* Accumulateur DDS 32 bits :
-       bits [31:24] = index wavetable (0-255)
-       bits [23:16] = fraction Q8 pour interpolation
-       bits [15: 0] = sous-fraction (precision supplementaire)
+       bits [31:23] = index wavetable (0-511)   WAVETABLE_SIZE = 512 = 2^9
+       bits [22:15] = fraction Q8 pour interpolation
+       bits [14: 0] = sous-fraction (precision supplementaire)
        Wrap naturel par debordement uint32_t, pas de modulo. */
     uint32_t phase_acc;
     uint32_t phase_inc_nom;   /* increment nominal (sans vibrato) */
@@ -658,29 +658,42 @@ static void UI_ScanAndDispatch(void)
         previous_buttons[i] = state;
     }
 }
+/* Selectionne la position musicale (wave_index) d'apres la frequence.
+   Points de reference : do3=130.81  sol3=196  do4=261.63  sol4=392  do5=523.25  sol5=783.99
+   Seuils = moyennes geometriques entre positions adjacentes. */
+static int get_wave_index(float frequency)
+{
+    if(frequency < 160.0f)  return 0;   /* do3  */
+    if(frequency < 226.0f)  return 1;   /* sol3 */
+    if(frequency < 320.0f)  return 2;   /* do4  */
+    if(frequency < 453.0f)  return 3;   /* sol4 */
+    if(frequency < 640.0f)  return 4;   /* do5  */
+    return 5;                            /* sol5 */
+}
+
+/* Selectionne le niveau band-limited (bl_index) d'apres la frequence de lecture.
+   Plus la frequence est haute, moins d'harmoniques sont conservees. */
+static int get_bl_index(float frequency)
+{
+    if(frequency < 500.0f)  return 0;   /* BL0 : plein spectre */
+    if(frequency < 2000.0f) return 1;   /* BL1 : reduit        */
+    if(frequency < 8000.0f) return 2;   /* BL2 : tres reduit   */
+    return 3;                            /* BL3 : quasi-sinus   */
+}
+
 static void Voice_SetWave(Voice *v, WaveTableId wt)
 {
     switch(wt)
     {
     case WT_ACCORDION:
-
-        if(v->frequency < 330.0f)
-        {
-            v->wave = wavetable_accordion_low;
-        }
-        else if(v->frequency < 660.0f)
-        {
-            v->wave = wavetable_accordion_mid;
-        }
-        else
-        {
-            v->wave = wavetable_accordion_high;
-        }
-
+    {
+        int wi = get_wave_index(v->frequency);
+        int bi = get_bl_index(v->frequency);
+        v->wave = wavetable_accordion[wi][bi];
         break;
-
+    }
     default:
-        v->wave = wavetable_accordion_mid;
+        v->wave = wavetable_accordion[0][0];
         break;
     }
 }
@@ -709,11 +722,11 @@ void render_audio_block(int16_t *buffer,
         {
             if(voices[v].active)
             {
-                /* Lecture wavetable DDS en virgule fixe Q8 */
+                /* Lecture wavetable DDS en virgule fixe Q8 (WAVETABLE_SIZE=512 = 2^9) */
 
-                uint8_t index = (uint8_t)(voices[v].phase_acc >> 24); /* bits [31:24] */
-                uint8_t next  = index + 1;   /* wrap 255->0 gratuit (uint8_t) */
-                uint8_t frac8 = (uint8_t)(voices[v].phase_acc >> 16); /* bits [23:16] */
+                uint16_t index = (uint16_t)(voices[v].phase_acc >> 23); /* bits [31:23] = 0-511 */
+                uint16_t next  = (index + 1) & (WAVETABLE_SIZE - 1);    /* wrap 511->0 */
+                uint8_t  frac8 = (uint8_t)(voices[v].phase_acc >> 15);  /* bits [22:15] = frac Q8 */
 
                 int32_t s1 = voices[v].wave[index];
                 int32_t s2 = voices[v].wave[next];
