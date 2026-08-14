@@ -87,7 +87,7 @@ static void fft_inverse(float *re, float *im, int n)
  *   max_harmonic : conserver harmoniques 1..max_harmonic
  * ========================================================================== */
 static void generate_bl_wavetable(
-    const int16_t *source, int source_size,
+    const int16_t * const source, int source_size,
     int16_t *output, int max_harmonic)
 {
     int n = WAVETABLE_SIZE;
@@ -351,12 +351,13 @@ void Wavetable_Init(void)
     }
 
 
-    /* -- Sources (placeholder sinusoides, remplacer par vraies formes d'onde) */
-    Accordion_Tables_Init();
-
     /* -- Generation des 6 x 4 = 24 wavetables band-limited ---------------- */
-    int16_t * const sources[ACCORDION_NUM_WAVES] = {
+    const int16_t * const sources[ACCORDION_NUM_WAVES] = {
         do3, sol3, do4, sol4, do5, sol5
+    };
+
+    static const int source_sizes[ACCORDION_NUM_WAVES] = {
+        DO3_SIZE, SOL3_SIZE, DO4_SIZE, SOL4_SIZE, DO5_SIZE, SOL5_SIZE
     };
 
     for(int w = 0; w < ACCORDION_NUM_WAVES; w++)
@@ -364,7 +365,7 @@ void Wavetable_Init(void)
         for(int b = 0; b < ACCORDION_NUM_BL; b++)
         {
             generate_bl_wavetable(
-                sources[w], SOURCE_SIZE,
+                sources[w], source_sizes[w],
                 wavetable_accordion[w][b],
                 bl_max_harmonic[b]);
         }

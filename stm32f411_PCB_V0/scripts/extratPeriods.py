@@ -13,7 +13,7 @@ SAMPLE_RATE = 44100
 
 # Nombre minimum / maximum de périodes testées
 MIN_PERIODES = 1
-MAX_PERIODES = 200
+MAX_PERIODES = 4
 
 # Taille minimale / maximale de la wavetable
 MIN_TABLE_SIZE = 64
@@ -97,14 +97,6 @@ def frequence_depuis_nom(fichier):
         12 * (octave + 1)
         + NOTE_SEMITONES[note]
     )
-
-    # Notre convention :
-    #
-    # La2 = 440 Hz
-    #
-    # La2 standard MIDI = 220 Hz.
-    # On décale donc d'une octave.
-    midi += 12
 
     frequence = (
         440.0
@@ -808,5 +800,5 @@ def extraire_wavetable(
 if __name__ == "__main__":
 
     extraire_wavetable(
-        "fa4.wav"
+        "do5.wav"
     )
