@@ -9,21 +9,72 @@ import soundfile as sf
 # CONFIGURATION
 # ============================================================
 
+# Taux d'échantillonnage attendu du WAV source.
 SAMPLE_RATE = 44100
 
-# Nombre minimum / maximum de périodes testées
-MIN_PERIODES = 1
-MAX_PERIODES = 4
+# Nombre de périodes utilisées pour construire la période
+# représentative.
+NOMBRE_PERIODES_MOYENNE = 4
 
-# Taille minimale / maximale de la wavetable
-MIN_TABLE_SIZE = 64
+# Taille minimale / maximale de la période finale.
+MIN_TABLE_SIZE = 40
 MAX_TABLE_SIZE = 4096
 
-# Niveau maximal du int16
+# Amplitude maximale de sortie.
 INT16_MAX = 32767
-
-# Marge pour éviter exactement +32767 / -32768
 AMPLITUDE = 0.95
+
+# ------------------------------------------------------------
+# Détection de fréquence
+# ------------------------------------------------------------
+
+# True :
+#   mesure la fréquence réelle du fichier.
+#
+# False :
+#   utilise uniquement la fréquence donnée par le nom.
+#
+# Pour un accordéon réel, True est recommandé.
+UTILISER_FREQUENCE_REELLE = True
+
+# Tolérance autour de la fréquence théorique.
+# Exemple :
+#   Do3 théorique = 130.81 Hz
+#   recherche entre 0.95 et 1.05 fois cette fréquence.
+FREQUENCE_MIN_RATIO = 0.90
+FREQUENCE_MAX_RATIO = 1.10
+
+# ------------------------------------------------------------
+# Recherche de zone stable
+# ------------------------------------------------------------
+
+DEBUT_RECHERCHE_SECONDES = 0.10
+
+# ------------------------------------------------------------
+# Alignement de phase
+# ------------------------------------------------------------
+
+# Recherche de correction de phase autour de chaque période.
+ALIGNEMENT_PHASE = True
+
+# Nombre de points utilisés pour calculer la corrélation
+# autour du début de période.
+ALIGNEMENT_ZONE = 64
+
+# ------------------------------------------------------------
+# Optimisation du raccord final
+# ------------------------------------------------------------
+
+RACCORD_ZONE_MAX = 32
+
+# Nombre de positions testées autour de la position finale.
+RACCORD_RECHERCHE = 20
+
+# ------------------------------------------------------------
+# Export
+# ------------------------------------------------------------
+
+EXPORT_INT16 = True
 
 
 # ============================================================
@@ -57,17 +108,10 @@ NOTE_SEMITONES = {
 
 def frequence_depuis_nom(fichier):
     """
-    Convention utilisée :
-
-        la1 = 220 Hz
-        la2 = 440 Hz
-        la3 = 880 Hz
-        la4 = 1760 Hz
-
     Exemples :
 
         la2.wav
-        do2.wav
+        do3.wav
         fa#3.wav
         sib1.wav
     """
@@ -92,150 +136,360 @@ def frequence_depuis_nom(fichier):
             f"Note inconnue : {note}"
         )
 
-    # Numéro MIDI standard
     midi = (
         12 * (octave + 1)
         + NOTE_SEMITONES[note]
     )
 
-    frequence = (
+    return (
         440.0
         * 2 ** ((midi - 69) / 12)
     )
 
-    return frequence
+
+# ============================================================
+# EXTRACTION INTERPOLEE
+# ============================================================
+
+def extraire_periode_interpolee(
+    signal,
+    position,
+    periode,
+    taille
+):
+    """
+    Extrait une période sans dupliquer le premier échantillon
+    à la fin.
+
+    Les positions couvrent :
+
+        position
+        ...
+        position + periode * (taille - 1) / taille
+
+    Le point :
+
+        position + periode
+
+    est implicitement équivalent au début de la période.
+
+    IMPORTANT :
+    L'interpolation est cyclique uniquement dans la wavetable
+    finale. Ici, on travaille sur le signal réel.
+    """
+
+    positions = (
+        position
+        + np.arange(taille, dtype=np.float64)
+        * periode
+        / taille
+    )
+
+    indices = np.arange(
+        len(signal),
+        dtype=np.float64
+    )
+
+    return np.interp(
+        positions,
+        indices,
+        signal
+    )
 
 
 # ============================================================
-# RECHERCHE DU NOMBRE DE PERIODES
+# EXTRACTION DE PLUSIEURS PERIODES
 # ============================================================
 
-def trouver_meilleure_table(
-    frequence,
+def extraire_plusieurs_periodes(
+    signal,
+    position,
+    periode,
+    nombre_periodes,
+    taille
+):
+    """
+    Retourne :
+
+        [nombre_periodes, taille]
+    """
+
+    periodes = []
+
+    for p in range(nombre_periodes):
+
+        position_p = (
+            position
+            + p * periode
+        )
+
+        cycle = extraire_periode_interpolee(
+            signal,
+            position_p,
+            periode,
+            taille
+        )
+
+        periodes.append(cycle)
+
+    return np.asarray(
+        periodes,
+        dtype=np.float64
+    )
+
+
+# ============================================================
+# AUTOCORRELATION
+# ============================================================
+
+def estimer_frequence_reelle(
+    signal,
+    frequence_theorique,
     sr
 ):
     """
-    Cherche automatiquement un nombre de périodes donnant
-    une longueur entière d'échantillons.
+    Estime la fréquence fondamentale autour de la fréquence
+    théorique donnée par le nom du fichier.
 
-    On minimise l'erreur entre :
+    Utilise l'autocorrélation.
 
-        N * période
-
-    et une longueur entière.
+    La recherche est limitée à une plage autour de la
+    fréquence théorique afin d'éviter de choisir une
+    harmonique.
     """
 
-    periode = sr / frequence
-
-    candidats = []
-
-    for n in range(
-        MIN_PERIODES,
-        MAX_PERIODES + 1
-    ):
-
-        longueur_exacte = (
-            n * periode
-        )
-
-        longueur = round(
-            longueur_exacte
-        )
-
-        if longueur < MIN_TABLE_SIZE:
-            continue
-
-        if longueur > MAX_TABLE_SIZE:
-            continue
-
-        erreur_echantillons = abs(
-            longueur_exacte - longueur
-        )
-
-        # Fréquence réellement représentée
-        frequence_reelle = (
-            n * sr / longueur
-        )
-
-        erreur_frequence = abs(
-            frequence_reelle - frequence
-        )
-
-        candidats.append(
-            (
-                erreur_echantillons,
-                erreur_frequence,
-                n,
-                longueur,
-                frequence_reelle
-            )
-        )
-
-    if not candidats:
-        raise ValueError(
-            "Impossible de trouver une taille "
-            "de wavetable valide."
-        )
-
-    # Priorité à la précision de la longueur.
-    candidats.sort(
-        key=lambda x: (
-            x[0],
-            x[1]
-        )
+    signal = np.asarray(
+        signal,
+        dtype=np.float64
     )
 
-    return candidats[0]
+    # --------------------------------------------------------
+    # On utilise une portion située après l'attaque.
+    # --------------------------------------------------------
+
+    debut = int(
+        0.20 * sr
+    )
+
+    duree = int(
+        0.25 * sr
+    )
+
+    fin = min(
+        len(signal),
+        debut + duree
+    )
+
+    if fin - debut < sr * 0.05:
+        raise ValueError(
+            "Signal trop court pour mesurer "
+            "la fréquence fondamentale."
+        )
+
+    x = signal[
+        debut:fin
+    ].copy()
+
+    # --------------------------------------------------------
+    # Suppression DC
+    # --------------------------------------------------------
+
+    x -= np.mean(x)
+
+    # --------------------------------------------------------
+    # Fenêtre Hann
+    # --------------------------------------------------------
+
+    x *= np.hanning(
+        len(x)
+    )
+
+    energie = np.sum(
+        x * x
+    )
+
+    if energie < 1e-12:
+        raise ValueError(
+            "Signal trop faible pour mesurer "
+            "la fréquence."
+        )
+
+    # --------------------------------------------------------
+    # Périodes recherchées
+    # --------------------------------------------------------
+
+    f_min = (
+        frequence_theorique
+        * FREQUENCE_MIN_RATIO
+    )
+
+    f_max = (
+        frequence_theorique
+        * FREQUENCE_MAX_RATIO
+    )
+
+    periode_min = int(
+        np.floor(sr / f_max)
+    )
+
+    periode_max = int(
+        np.ceil(sr / f_min)
+    )
+
+    if periode_min < 2:
+        periode_min = 2
+
+    # --------------------------------------------------------
+    # Autocorrélation
+    # --------------------------------------------------------
+
+    correlation = np.correlate(
+        x,
+        x,
+        mode="full"
+    )
+
+    correlation = correlation[
+        len(x) - 1:
+    ]
+
+    correlation /= (
+        energie + 1e-20
+    )
+
+    periode_max = min(
+        periode_max,
+        len(correlation) - 1
+    )
+
+    if periode_min >= periode_max:
+        raise ValueError(
+            "Plage de recherche de fréquence invalide."
+        )
+
+    zone = correlation[
+        periode_min:
+        periode_max + 1
+    ]
+
+    index_local = int(
+        np.argmax(zone)
+    )
+
+    lag = (
+        periode_min
+        + index_local
+    )
+
+    # --------------------------------------------------------
+    # Interpolation parabolique autour du maximum
+    # --------------------------------------------------------
+
+    if (
+        lag > 0
+        and lag < len(correlation) - 1
+    ):
+
+        y1 = correlation[lag - 1]
+        y2 = correlation[lag]
+        y3 = correlation[lag + 1]
+
+        denom = (
+            y1
+            - 2.0 * y2
+            + y3
+        )
+
+        if abs(denom) > 1e-12:
+
+            delta = (
+                0.5
+                * (y1 - y3)
+                / denom
+            )
+
+        else:
+
+            delta = 0.0
+
+    else:
+
+        delta = 0.0
+
+    periode_reelle = (
+        lag + delta
+    )
+
+    if periode_reelle <= 0:
+        raise ValueError(
+            "Impossible d'estimer la période."
+        )
+
+    frequence_reelle = (
+        sr / periode_reelle
+    )
+
+    return frequence_reelle
 
 
 # ============================================================
-# EXTRACTION D'UNE PORTION STABLE
+# RECHERCHE D'UNE ZONE STABLE
 # ============================================================
 
 def trouver_zone_stable(
     signal,
     frequence,
     sr,
-    longueur
+    nombre_periodes
 ):
     """
-    Cherche une zone du fichier où le signal est suffisamment
-    stable et périodique.
-
-    On compare la portion candidate avec la même portion
-    décalée d'environ une période.
+    Recherche une zone où plusieurs périodes consécutives
+    se ressemblent le plus.
     """
 
-    periode = sr / frequence
-
-    n_periode = int(
-        round(periode)
+    periode = (
+        sr / frequence
     )
 
-    # On ignore l'attaque.
+    taille_analyse = max(
+        MIN_TABLE_SIZE,
+        int(round(periode))
+    )
+
+    if taille_analyse > MAX_TABLE_SIZE:
+        raise ValueError(
+            f"Période trop longue : "
+            f"{taille_analyse} échantillons."
+        )
+
     debut_recherche = int(
-        0.1 * sr
+        DEBUT_RECHERCHE_SECONDES * sr
     )
 
-    # On ne peut pas dépasser la fin.
-    fin_recherche = (
+    longueur_recherche = (
+        nombre_periodes * periode
+    )
+
+    fin_recherche = int(
         len(signal)
-        - longueur
-        - n_periode
+        - longueur_recherche
+        - 2
     )
 
     if fin_recherche <= debut_recherche:
         raise ValueError(
-            "Le fichier est trop court."
+            "Le fichier est trop court pour extraire "
+            f"{nombre_periodes} périodes."
         )
 
-    meilleur_score = np.inf
-    meilleur_position = debut_recherche
-
-    # Recherche assez fine
     pas = max(
         1,
-        n_periode // 4
+        int(round(periode / 4.0))
+    )
+
+    meilleur_score = np.inf
+    meilleure_position = float(
+        debut_recherche
     )
 
     for position in range(
@@ -244,142 +498,446 @@ def trouver_zone_stable(
         pas
     ):
 
-        a = signal[
-            position:
-            position + longueur
-        ]
+        periodes = extraire_plusieurs_periodes(
+            signal,
+            float(position),
+            periode,
+            nombre_periodes,
+            taille_analyse
+        )
 
-        b = signal[
-            position + n_periode:
-            position + n_periode + longueur
-        ]
+        moyenne = np.mean(
+            periodes,
+            axis=0
+        )
 
-        if len(a) != longueur:
-            continue
-
-        if len(b) != longueur:
-            continue
-
-        # Erreur normalisée
         erreur = np.mean(
-            (a - b) ** 2
+            (periodes - moyenne) ** 2
         )
 
         energie = np.mean(
-            a ** 2
+            moyenne ** 2
         )
 
         if energie > 1e-12:
             erreur /= energie
 
         if erreur < meilleur_score:
+
             meilleur_score = erreur
-            meilleur_position = position
 
-    return meilleur_position, meilleur_score
-
-
-# ============================================================
-# OPTIMISATION DU RACCORDEMENT
-# ============================================================
-
-def optimiser_raccordement(
-    signal,
-    position,
-    longueur,
-    recherche=20
-):
-    """
-    Cherche un léger déplacement de la position de départ
-    afin de minimiser la différence entre le début et la fin
-    de la table.
-
-    On compare :
-
-        signal[position]
-
-    avec :
-
-        signal[position + longueur]
-
-    ainsi que les échantillons autour.
-    """
-
-    meilleur_position = position
-    meilleur_score = np.inf
-
-    debut = max(
-        0,
-        position - recherche
-    )
-
-    fin = min(
-        len(signal) - longueur - 1,
-        position + recherche
-    )
-
-    # Taille de la zone de comparaison
-    zone = min(
-        32,
-        longueur // 10
-    )
-
-    for pos in range(
-        debut,
-        fin + 1
-    ):
-
-        a = signal[
-            pos:
-            pos + zone
-        ]
-
-        b = signal[
-            pos + longueur:
-            pos + longueur + zone
-        ]
-
-        if len(a) != zone:
-            continue
-
-        if len(b) != zone:
-            continue
-
-        # Erreur de raccordement
-        erreur_amplitude = np.mean(
-            (a - b) ** 2
-        )
-
-        # Comparaison également des pentes
-        da = np.diff(a)
-        db = np.diff(b)
-
-        erreur_pente = np.mean(
-            (da - db) ** 2
-        )
-
-        score = (
-            erreur_amplitude
-            + 0.5 * erreur_pente
-        )
-
-        if score < meilleur_score:
-            meilleur_score = score
-            meilleur_position = pos
+            meilleure_position = float(
+                position
+            )
 
     return (
-        meilleur_position,
+        meilleure_position,
         meilleur_score
     )
 
 
 # ============================================================
-# CONVERSION EN INT16
+# ALIGNEMENT DE PHASE
 # ============================================================
 
-def convertir_int16(signal):
+def aligner_periode_sur_reference(
+    periode,
+    reference,
+    recherche=ALIGNEMENT_ZONE
+):
     """
-    Convertit le signal float [-1, +1] en int16.
+    Aligne une période sur une référence par recherche du
+    meilleur décalage circulaire.
+
+    Cela évite de moyenner des périodes légèrement décalées
+    en phase.
+    """
+
+    n = len(periode)
+
+    if n < 4:
+        return periode.copy()
+
+    zone = min(
+        recherche,
+        n // 4
+    )
+
+    if zone < 4:
+        return periode.copy()
+
+    # --------------------------------------------------------
+    # On compare principalement une zone autour du début.
+    # --------------------------------------------------------
+
+    ref = reference[
+        :zone
+    ]
+
+    meilleur_score = np.inf
+    meilleur_shift = 0
+
+    for shift in range(
+        -zone,
+        zone + 1
+    ):
+
+        candidate = np.roll(
+            periode,
+            shift
+        )
+
+        c = candidate[
+            :zone
+        ]
+
+        score = np.mean(
+            (c - ref) ** 2
+        )
+
+        if score < meilleur_score:
+
+            meilleur_score = score
+            meilleur_shift = shift
+
+    return np.roll(
+        periode,
+        meilleur_shift
+    )
+
+
+# ============================================================
+# MOYENNE AVEC ALIGNEMENT
+# ============================================================
+
+def construire_periode_moyenne(
+    signal,
+    position,
+    frequence,
+    sr,
+    nombre_periodes
+):
+    """
+    Extrait plusieurs périodes, les aligne en phase,
+    puis les moyenne.
+    """
+
+    periode = (
+        sr / frequence
+    )
+
+    taille = int(
+        round(periode)
+    )
+
+    if taille < MIN_TABLE_SIZE:
+        raise ValueError(
+            f"Période trop courte : {taille}"
+        )
+
+    if taille > MAX_TABLE_SIZE:
+        raise ValueError(
+            f"Période trop longue : {taille}"
+        )
+
+    periodes = extraire_plusieurs_periodes(
+        signal,
+        position,
+        periode,
+        nombre_periodes,
+        taille
+    )
+
+    # --------------------------------------------------------
+    # Référence initiale
+    # --------------------------------------------------------
+
+    reference = periodes[0].copy()
+
+    periodes_alignees = []
+
+    for p in periodes:
+
+        if ALIGNEMENT_PHASE:
+
+            p_alignee = (
+                aligner_periode_sur_reference(
+                    p,
+                    reference
+                )
+            )
+
+        else:
+
+            p_alignee = p.copy()
+
+        periodes_alignees.append(
+            p_alignee
+        )
+
+    periodes_alignees = np.asarray(
+        periodes_alignees,
+        dtype=np.float64
+    )
+
+    periode_moyenne = np.mean(
+        periodes_alignees,
+        axis=0
+    )
+
+    return (
+        periode_moyenne,
+        periodes_alignees
+    )
+
+
+# ============================================================
+# OPTIMISATION DU RACCORDEMENT FINAL
+# ============================================================
+
+def score_raccordement(
+    periode
+):
+    """
+    Mesure la qualité du raccord périodique.
+
+    On compare les zones de début et de fin.
+
+    Le score tient compte :
+
+        1. amplitude
+        2. pente
+        3. pente directement au raccord
+    """
+
+    n = len(periode)
+
+    zone = min(
+        RACCORD_ZONE_MAX,
+        max(8, n // 10)
+    )
+
+    if n < 2 * zone + 2:
+        return np.inf
+
+    debut = periode[
+        :zone
+    ]
+
+    fin = periode[
+        -zone:
+    ]
+
+    # --------------------------------------------------------
+    # Différence de forme
+    # --------------------------------------------------------
+
+    erreur_amplitude = np.mean(
+        (debut - fin) ** 2
+    )
+
+    # --------------------------------------------------------
+    # Pentes locales
+    # --------------------------------------------------------
+
+    pente_debut = np.diff(
+        debut
+    )
+
+    pente_fin = np.diff(
+        fin
+    )
+
+    erreur_pente = np.mean(
+        (pente_debut - pente_fin) ** 2
+    )
+
+    # --------------------------------------------------------
+    # Pente exacte du raccord circulaire
+    # --------------------------------------------------------
+
+    pente_raccord = (
+        periode[0]
+        - periode[-1]
+    )
+
+    pente_avant = (
+        periode[-1]
+        - periode[-2]
+    )
+
+    pente_apres = (
+        periode[1]
+        - periode[0]
+    )
+
+    erreur_pente_raccord = (
+        (pente_raccord - pente_avant) ** 2
+        +
+        (pente_raccord - pente_apres) ** 2
+    )
+
+    # --------------------------------------------------------
+    # Pondération
+    # --------------------------------------------------------
+
+    return (
+        erreur_amplitude
+        + 0.5 * erreur_pente
+        + 2.0 * erreur_pente_raccord
+    )
+
+
+def optimiser_raccordement_final(
+    signal,
+    position,
+    frequence,
+    sr,
+    nombre_periodes,
+    recherche=RACCORD_RECHERCHE
+):
+    """
+    Optimise directement le raccord de la période MOYENNE
+    finale.
+
+    C'est volontairement fait APRÈS la moyenne.
+    """
+
+    periode = (
+        sr / frequence
+    )
+
+    longueur = int(
+        round(periode)
+    )
+
+    positions = np.linspace(
+        position - recherche,
+        position + recherche,
+        recherche * 8 + 1
+    )
+
+    meilleure_position = position
+    meilleur_score = np.inf
+
+    for pos in positions:
+
+        moyenne, _ = construire_periode_moyenne(
+            signal,
+            pos,
+            frequence,
+            sr,
+            nombre_periodes
+        )
+
+        score = score_raccordement(
+            moyenne
+        )
+
+        if score < meilleur_score:
+
+            meilleur_score = score
+            meilleure_position = pos
+
+    return (
+        meilleure_position,
+        meilleur_score
+    )
+
+
+# ============================================================
+# CORRECTION LEGERE DU RACCORDEMENT
+# ============================================================
+
+def corriger_raccordement_doucement(
+    wavetable
+):
+    """
+    Applique une correction douce aux extrémités afin de
+    réduire une éventuelle discontinuité.
+
+    IMPORTANT :
+
+    On ne force PAS :
+
+        dernier = premier
+
+    On distribue progressivement la correction sur une zone
+    afin d'éviter une cassure locale.
+    """
+
+    x = wavetable.copy()
+
+    n = len(x)
+
+    zone = min(
+        16,
+        max(4, n // 16)
+    )
+
+    if n < 2 * zone + 2:
+        return x
+
+    # --------------------------------------------------------
+    # Différence au raccord.
+    # --------------------------------------------------------
+
+    difference = (
+        x[0]
+        - x[-1]
+    )
+
+    if abs(difference) < 1e-12:
+        return x
+
+    # --------------------------------------------------------
+    # Correction progressive.
+    #
+    # Début : correction négative
+    # Fin   : correction positive
+    #
+    # La correction est répartie sur plusieurs points.
+    # --------------------------------------------------------
+
+    t = np.linspace(
+        0.0,
+        1.0,
+        zone
+    )
+
+    fenetre = (
+        0.5
+        - 0.5 * np.cos(
+            np.pi * t
+        )
+    )
+
+    # Début
+    x[:zone] -= (
+        difference
+        * 0.5
+        * (1.0 - fenetre)
+    )
+
+    # Fin
+    x[-zone:] += (
+        difference
+        * 0.5
+        * fenetre
+    )
+
+    return x
+
+
+# ============================================================
+# CONVERSION INT16
+# ============================================================
+
+def convertir_int16(
+    signal
+):
+    """
+    Float [-1,+1] -> int16.
     """
 
     signal = np.clip(
@@ -390,28 +948,32 @@ def convertir_int16(signal):
 
     return np.round(
         signal * INT16_MAX
-    ).astype(np.int16)
+    ).astype(
+        np.int16
+    )
 
 
 # ============================================================
-# NOM VALIDE POUR LE C
+# NOM C VALIDE
 # ============================================================
 
-def nom_c_valide(fichier):
-    """
-    la3.wav -> la3
-    Casse conservée pour le nom du tableau,
-    et version majuscule pour LA3_SIZE.
-    """
+def nom_c_valide(
+    fichier
+):
+    nom = Path(
+        fichier
+    ).stem
 
-    nom = Path(fichier).stem
-
-    # Remplace les caractères non valides
     nom = re.sub(
         r"[^a-zA-Z0-9_]",
         "_",
         nom
     )
+
+    if not nom:
+        raise ValueError(
+            "Nom de fichier invalide."
+        )
 
     if nom[0].isdigit():
         nom = "_" + nom
@@ -420,7 +982,7 @@ def nom_c_valide(fichier):
 
 
 # ============================================================
-# GENERATION DU FICHIER C
+# GENERATION FICHIER C
 # ============================================================
 
 def generer_fichier_c(
@@ -429,9 +991,11 @@ def generer_fichier_c(
     fichier_sortie=None
 ):
     """
-    Génère :
+    Génère par exemple :
 
-        const int16_t la3[LA3_SIZE] =
+        #define DO3_SIZE 734
+
+        const int16_t do3[DO3_SIZE] =
         {
             ...
         };
@@ -454,11 +1018,17 @@ def generer_fichier_c(
         signal_int16
     )
 
-    # --------------------------------------------------------
-    # Construction du texte
-    # --------------------------------------------------------
-
     lignes = []
+
+    lignes.append(
+        "#ifndef GENERATED_WAVETABLE_H"
+    )
+
+    lignes.append(
+        "#define GENERATED_WAVETABLE_H"
+    )
+
+    lignes.append("")
 
     lignes.append(
         "#include <stdint.h>"
@@ -478,7 +1048,6 @@ def generer_fichier_c(
 
     lignes.append("{")
 
-    # 10 valeurs par ligne
     valeurs_par_ligne = 10
 
     for i in range(
@@ -498,21 +1067,25 @@ def generer_fichier_c(
         )
 
         lignes.append(
-            f"{texte},"
+            f"    {texte},"
         )
 
-    # Supprimer la dernière virgule
     if len(lignes) > 2:
         lignes[-1] = (
             lignes[-1].rstrip(",")
         )
 
-    lignes.append("};")
+    lignes.append(
+        "};"
+    )
+
     lignes.append("")
 
-    # --------------------------------------------------------
-    # Écriture
-    # --------------------------------------------------------
+    lignes.append(
+        "#endif"
+    )
+
+    lignes.append("")
 
     with open(
         fichier_sortie,
@@ -528,6 +1101,58 @@ def generer_fichier_c(
 
 
 # ============================================================
+# ANALYSE DU RACCORDEMENT
+# ============================================================
+
+def analyser_raccord(
+    signal
+):
+    """
+    Retourne plusieurs mesures du raccord.
+    """
+
+    if len(signal) < 3:
+        return {
+            "difference_amplitude": 0.0,
+            "pente_raccord": 0.0,
+            "pente_avant": 0.0,
+            "pente_apres": 0.0,
+        }
+
+    difference = (
+        signal[0]
+        - signal[-1]
+    )
+
+    pente_raccord = difference
+
+    pente_avant = (
+        signal[-1]
+        - signal[-2]
+    )
+
+    pente_apres = (
+        signal[1]
+        - signal[0]
+    )
+
+    return {
+        "difference_amplitude": float(
+            difference
+        ),
+        "pente_raccord": float(
+            pente_raccord
+        ),
+        "pente_avant": float(
+            pente_avant
+        ),
+        "pente_apres": float(
+            pente_apres
+        ),
+    }
+
+
+# ============================================================
 # TRAITEMENT PRINCIPAL
 # ============================================================
 
@@ -535,24 +1160,14 @@ def extraire_wavetable(
     fichier_entree,
     fichier_sortie=None
 ):
-    """
-    Transforme :
 
-        la3.wav
-
-    en :
-
-        la3.h
-
-    contenant un tableau int16_t utilisable en C/C++.
-    """
-
-    # --------------------------------------------------------
-    # Lecture
-    # --------------------------------------------------------
+    # ========================================================
+    # LECTURE
+    # ========================================================
 
     signal, sr = sf.read(
-        fichier_entree
+        fichier_entree,
+        always_2d=False
     )
 
     print()
@@ -569,19 +1184,20 @@ def extraire_wavetable(
         f"Sample rate   : {sr} Hz"
     )
 
-    # --------------------------------------------------------
-    # Vérification
-    # --------------------------------------------------------
+    # ========================================================
+    # SAMPLE RATE
+    # ========================================================
 
     if sr != SAMPLE_RATE:
+
         raise ValueError(
             f"Le fichier doit être à "
             f"{SAMPLE_RATE} Hz."
         )
 
-    # --------------------------------------------------------
-    # Stéréo -> mono
-    # --------------------------------------------------------
+    # ========================================================
+    # STEREO -> MONO
+    # ========================================================
 
     if signal.ndim == 2:
 
@@ -594,161 +1210,237 @@ def extraire_wavetable(
             axis=1
         )
 
-    # --------------------------------------------------------
-    # Float64
-    # --------------------------------------------------------
+    # ========================================================
+    # FLOAT64
+    # ========================================================
 
     signal = signal.astype(
         np.float64
     )
 
-    # --------------------------------------------------------
-    # Suppression DC
-    # --------------------------------------------------------
+    # ========================================================
+    # DC
+    # ========================================================
 
-    signal -= np.mean(signal)
+    signal -= np.mean(
+        signal
+    )
 
-    # --------------------------------------------------------
-    # Fréquence
-    # --------------------------------------------------------
+    # ========================================================
+    # FREQUENCE THEORIQUE
+    # ========================================================
 
-    frequence = frequence_depuis_nom(
-        fichier_entree
+    frequence_theorique = (
+        frequence_depuis_nom(
+            fichier_entree
+        )
     )
 
     print(
-        f"Fréquence     : "
-        f"{frequence:.9f} Hz"
+        f"Fréquence nom : "
+        f"{frequence_theorique:.9f} Hz"
     )
+
+    # ========================================================
+    # FREQUENCE REELLE
+    # ========================================================
+
+    if UTILISER_FREQUENCE_REELLE:
+
+        frequence = (
+            estimer_frequence_reelle(
+                signal,
+                frequence_theorique,
+                sr
+            )
+        )
+
+        print(
+            f"Fréquence mes : "
+            f"{frequence:.9f} Hz"
+        )
+
+    else:
+
+        frequence = (
+            frequence_theorique
+        )
+
+    # ========================================================
+    # PERIODE
+    # ========================================================
 
     periode = (
-        SAMPLE_RATE / frequence
+        sr / frequence
+    )
+
+    longueur = int(
+        round(periode)
     )
 
     print(
-        f"Période       : "
+        f"Période        : "
         f"{periode:.9f} échantillons"
     )
 
-    # --------------------------------------------------------
-    # Meilleure longueur
-    # --------------------------------------------------------
-
-    (
-        erreur_echantillons,
-        erreur_frequence,
-        nombre_periodes,
-        longueur,
-        frequence_reelle
-    ) = trouver_meilleure_table(
-        frequence,
-        sr
-    )
-
-    print()
     print(
-        f"Périodes      : "
-        f"{nombre_periodes}"
-    )
-
-    print(
-        f"Taille table  : "
+        f"Taille période : "
         f"{longueur} échantillons"
     )
 
     print(
-        f"Fréquence table : "
-        f"{frequence_reelle:.9f} Hz"
+        f"Moyenne        : "
+        f"{NOMBRE_PERIODES_MOYENNE} périodes"
     )
 
-    print(
-        f"Erreur longueur : "
-        f"{erreur_echantillons:.9f}"
-    )
+    # ========================================================
+    # VERIFICATION
+    # ========================================================
 
-    # --------------------------------------------------------
-    # Recherche de la meilleure zone
-    # --------------------------------------------------------
+    if longueur < MIN_TABLE_SIZE:
 
-    position, score = trouver_zone_stable(
-        signal,
-        frequence,
-        sr,
-        longueur
+        raise ValueError(
+            f"Période trop courte : "
+            f"{longueur}"
+        )
+
+    if longueur > MAX_TABLE_SIZE:
+
+        raise ValueError(
+            f"Période trop longue : "
+            f"{longueur}"
+        )
+
+    # ========================================================
+    # ZONE STABLE
+    # ========================================================
+
+    position, score_stable = (
+        trouver_zone_stable(
+            signal,
+            frequence,
+            sr,
+            NOMBRE_PERIODES_MOYENNE
+        )
     )
 
     print()
+
     print(
-        f"Position initiale : "
-        f"{position / sr:.4f} s"
+        f"Position stable : "
+        f"{position / sr:.6f} s"
     )
 
     print(
-        f"Score périodique  : "
-        f"{score:.8f}"
+        f"Score stabilité : "
+        f"{score_stable:.10f}"
     )
 
-    # --------------------------------------------------------
-    # Optimisation du raccordement
-    # --------------------------------------------------------
+    # ========================================================
+    # PREMIERE CONSTRUCTION
+    # ========================================================
 
-    position, score_raccord = (
-        optimiser_raccordement(
+    wavetable, periodes = (
+        construire_periode_moyenne(
             signal,
             position,
-            longueur
+            frequence,
+            sr,
+            NOMBRE_PERIODES_MOYENNE
+        )
+    )
+
+    # ========================================================
+    # OPTIMISATION DU RACCORDEMENT FINAL
+    # ========================================================
+
+    position_optimisee, score_raccord = (
+        optimiser_raccordement_final(
+            signal,
+            position,
+            frequence,
+            sr,
+            NOMBRE_PERIODES_MOYENNE
         )
     )
 
     print(
-        f"Position optimisée: "
-        f"{position / sr:.4f} s"
+        f"Position raccord: "
+        f"{position_optimisee / sr:.6f} s"
     )
 
     print(
-        f"Score raccordement : "
-        f"{score_raccord:.8f}"
+        f"Score raccord   : "
+        f"{score_raccord:.10f}"
     )
 
-    # --------------------------------------------------------
-    # Extraction
-    # --------------------------------------------------------
+    # ========================================================
+    # RECONSTRUCTION A LA POSITION OPTIMISEE
+    # ========================================================
 
-    wavetable = signal[
-        position:
-        position + longueur
-    ].copy()
-
-    if len(wavetable) != longueur:
-        raise ValueError(
-            "Impossible d'extraire la table complète."
+    wavetable, periodes = (
+        construire_periode_moyenne(
+            signal,
+            position_optimisee,
+            frequence,
+            sr,
+            NOMBRE_PERIODES_MOYENNE
         )
+    )
 
-    # --------------------------------------------------------
-    # Ajustement du niveau
-    # --------------------------------------------------------
+    # ========================================================
+    # DC RESIDUEL
+    # ========================================================
+
+    wavetable -= np.mean(
+        wavetable
+    )
+
+    # ========================================================
+    # CORRECTION DOUCE DU RACCORDEMENT
+    # ========================================================
+
+    wavetable = (
+        corriger_raccordement_doucement(
+            wavetable
+        )
+    )
+
+    # ========================================================
+    # DC APRES CORRECTION
+    # ========================================================
+
+    wavetable -= np.mean(
+        wavetable
+    )
+
+    # ========================================================
+    # NORMALISATION
+    # ========================================================
 
     amplitude = np.max(
         np.abs(wavetable)
     )
 
-    if amplitude > 0:
+    if amplitude > 1e-12:
 
         wavetable /= amplitude
 
         wavetable *= AMPLITUDE
 
-    # --------------------------------------------------------
-    # Conversion int16
-    # --------------------------------------------------------
+    # ========================================================
+    # INT16
+    # ========================================================
 
-    wavetable_int16 = convertir_int16(
-        wavetable
+    wavetable_int16 = (
+        convertir_int16(
+            wavetable
+        )
     )
 
-    # --------------------------------------------------------
-    # Génération du fichier C
-    # --------------------------------------------------------
+    # ========================================================
+    # EXPORT C
+    # ========================================================
 
     fichier = generer_fichier_c(
         fichier_entree,
@@ -756,37 +1448,108 @@ def extraire_wavetable(
         fichier_sortie
     )
 
-    # --------------------------------------------------------
-    # Vérification du raccord
-    # --------------------------------------------------------
+    # ========================================================
+    # ANALYSE DU RACCORDEMENT
+    # ========================================================
 
-    premier = int(
-        wavetable_int16[0]
+    raccord = analyser_raccord(
+        wavetable_int16.astype(
+            np.float64
+        )
     )
 
-    dernier = int(
-        wavetable_int16[-1]
+    # ========================================================
+    # FREQUENCE DE LA TABLE
+    # ========================================================
+
+    frequence_table = (
+        sr / longueur
     )
+
+    erreur_frequence = (
+        frequence_table
+        - frequence
+    )
+
+    # ========================================================
+    # RESULTATS
+    # ========================================================
 
     print()
     print("------------------------------------------")
     print("Résultat")
     print("------------------------------------------")
+
     print(
-        f"Fichier C     : {fichier}"
+        f"Fichier C          : {fichier}"
     )
+
     print(
-        f"Taille        : {longueur}"
+        f"Sample rate source : {sr} Hz"
     )
+
     print(
-        f"Premier       : {premier}"
+        f"Fréquence théorique: "
+        f"{frequence_theorique:.9f} Hz"
     )
+
     print(
-        f"Dernier       : {dernier}"
+        f"Fréquence mesurée  : "
+        f"{frequence:.9f} Hz"
     )
+
     print(
-        f"Différence    : {dernier - premier}"
+        f"Période exacte     : "
+        f"{periode:.9f}"
     )
+
+    print(
+        f"Taille table       : "
+        f"{longueur}"
+    )
+
+    print(
+        f"Fréquence table    : "
+        f"{frequence_table:.9f} Hz"
+    )
+
+    print(
+        f"Erreur fréquence   : "
+        f"{erreur_frequence:+.9f} Hz"
+    )
+
+    print()
+
+    print(
+        f"Premier            : "
+        f"{int(wavetable_int16[0])}"
+    )
+
+    print(
+        f"Dernier            : "
+        f"{int(wavetable_int16[-1])}"
+    )
+
+    print(
+        f"Différence         : "
+        f"{raccord['difference_amplitude']:+.3f}"
+    )
+
+    print(
+        f"Pente raccord      : "
+        f"{raccord['pente_raccord']:+.3f}"
+    )
+
+    print(
+        f"Pente avant        : "
+        f"{raccord['pente_avant']:+.3f}"
+    )
+
+    print(
+        f"Pente après        : "
+        f"{raccord['pente_apres']:+.3f}"
+    )
+
     print("------------------------------------------")
     print()
 
