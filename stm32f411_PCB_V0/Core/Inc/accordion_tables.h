@@ -4,12 +4,12 @@
 #include <stdint.h>
 
 /* Taille de chaque periode source (echantillons mesures) */
-#define DO3_SIZE   337
+#define DO3_SIZE   336
 #define SOL3_SIZE  225
-#define DO4_SIZE   337
-#define SOL4_SIZE  225
-#define DO5_SIZE   337
-#define SOL5_SIZE  225
+#define DO4_SIZE   144
+#define SOL4_SIZE  111
+#define DO5_SIZE   72
+#define SOL5_SIZE  51
 
 /* Frequences de reference des 6 positions musicales :
    do3  = 130.81 Hz   sol3 = 196.00 Hz
