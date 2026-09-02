@@ -69,11 +69,9 @@ typedef struct
 
     /* Accumulateur DDS 32 bits :
        bits [31:23] = index wavetable (0-511)   WAVETABLE_SIZE = 512 = 2^9
-       bits [22:15] = fraction Q8 pour interpolation
-       bits [14: 0] = sous-fraction (precision supplementaire)
        Wrap naturel par debordement uint32_t, pas de modulo. */
     uint32_t phase_acc;
-    uint32_t phase_inc_nom;   /* increment nominal (sans vibrato) */
+    uint32_t phase_inc_nom;
 
 
     /*
@@ -96,8 +94,6 @@ typedef struct
 
     const int16_t *wave;
 
-   float vibrato_depth;
-
 } Voice;
 
 static Voice voices[MAX_VOICES];
@@ -117,10 +113,6 @@ static void Voice_SetWave(Voice *v, WaveTableId wt);
 
 static int16_t bufferDMA[BUFFER_SIZE];
 static const float SAMPLE_RATE = 44100.0f;
-static float filter_state = 0.0f;
-/* LFO global DDS 32 bits : lookup wavetable_sine, zero sinf() dans la boucle audio */
-static uint32_t global_lfo_acc = 0;
-static const uint32_t global_lfo_inc_dds = (uint32_t)(5.0f * 4294967296.0f / 44100.0f);
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -391,10 +383,6 @@ void NoteOn(const char *note,
     voices[slot].note      = note;
     voices[slot].hand      = hand;
     voices[slot].frequency = freq;
-
-    /* Oscillateur de vibrato (LFO global, profondeur par voix) */
-
-    voices[slot].vibrato_depth = 0.0020f;
 
     /* Oscillateur principal DDS 32 bits */
 
@@ -702,89 +690,35 @@ void render_audio_block(int16_t *buffer,
 {
     float gain = pressure / 4095.0f;
 
-    /* Filtre dépendant de la pression */
-    float alpha = 0.15f + 0.30f * gain;
-
-    /* Gain de mixage adaptatif : 1/sqrt(N) evite la saturation avec N voix simultanees */
-    int active_count = 0;
-    for(int vc = 0; vc < MAX_VOICES; vc++)
-        if(voices[vc].active) active_count++;
-    float mix_gain = (active_count > 1) ? (1.0f / sqrtf((float)active_count)) : 1.0f;
-
     for(uint32_t i = 0; i < samples; i++)
     {
         float sample = 0.0f;
-
-        /* LFO global DDS : lookup dans wavetable_sine, aucun sinf() dans la boucle */
-        float global_lfo_mod = wavetable_sine[global_lfo_acc >> 24] * (1.0f / 32768.0f);
 
         for(int v = 0; v < MAX_VOICES; v++)
         {
             if(voices[v].active)
             {
-                /* Lecture wavetable DDS en virgule fixe Q8 (WAVETABLE_SIZE=512 = 2^9) */
-
-                uint16_t index = (uint16_t)(voices[v].phase_acc >> 23); /* bits [31:23] = 0-511 */
-                uint16_t next  = (index + 1) & (WAVETABLE_SIZE - 1);    /* wrap 511->0 */
-                uint8_t  frac8 = (uint8_t)(voices[v].phase_acc >> 15);  /* bits [22:15] = frac Q8 */
-
-                int32_t s1 = voices[v].wave[index];
-                int32_t s2 = voices[v].wave[next];
-
-                /* interpolation lineaire entiere : pas de cast float, pas de division flottante */
-                int32_t value = s1 + (((s2 - s1) * (int32_t)frac8) >> 8);
-
-                /* ADSR */
+                /* Lecture wavetable DDS, index seul (pas d'interpolation) : bits [31:23] = 0-511 */
+                uint16_t index = (uint16_t)(voices[v].phase_acc >> 23);
 
                 float envelope =
                     Envelope_Update(&voices[v]);
 
-                /* Mixage */
-
                 sample +=
-                    (value / 32768.0f) *
+                    (voices[v].wave[index] / 32768.0f) *
                     voices[v].amplitude *
                     envelope;
 
-                /* Vibrato dependant de la pression (delta DDS, un mul float/voix) */
-
-                float depth =
-                    voices[v].vibrato_depth *
-                    (0.5f + gain);
-
-                int32_t lfo_delta =
-                    (int32_t)((float)voices[v].phase_inc_nom * global_lfo_mod * depth);
-
-                /* Avance DDS : int64 evite le cast uint32->int32 errone pour les notes aiguës */
-                int64_t phase_inc_eff =
-                    (int64_t)voices[v].phase_inc_nom + (int64_t)lfo_delta;
-
-                voices[v].phase_acc += (uint32_t)phase_inc_eff;
+                voices[v].phase_acc += voices[v].phase_inc_nom;
             }
         }
 
-        /* Avance LFO DDS : wrap uint32_t automatique, aucune comparaison */
-        global_lfo_acc += global_lfo_inc_dds;
+        float output = sample * gain * AMPLITUDE;
 
-        /* Gain de mixage adaptatif avant le passe-bas */
-        sample *= mix_gain;
+        if(output > 32767.0f)  output = 32767.0f;
+        if(output < -32768.0f) output = -32768.0f;
 
-        /* Passe-bas */
-
-        filter_state +=
-            alpha * (sample - filter_state);
-
-        sample = filter_state;
-
-        /* Saturation douce */
-
-        sample =
-            sample / (1.0f + fabsf(sample));
-
-        /* Volume */
-
-        buffer[i] =
-            (int16_t)(sample * gain * AMPLITUDE);
+        buffer[i] = (int16_t)output;
     }
 }
 

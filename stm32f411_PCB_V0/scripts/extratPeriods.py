@@ -1563,5 +1563,5 @@ def extraire_wavetable(
 if __name__ == "__main__":
 
     extraire_wavetable(
-        "do5.wav"
+        "sol5.wav"
     )
