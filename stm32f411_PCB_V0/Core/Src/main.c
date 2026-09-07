@@ -859,7 +859,10 @@ void render_audio_block(int16_t *buffer,
 {
     float gain = pressure / 4095.0f;
 
-    for(uint32_t i = 0; i < samples; i++)
+    /* I2S = trames stereo L/R : 2 entrees buffer par echantillon audio.
+       N'avancer le DDS qu'une fois par trame, sinon la frequence percue double
+       (octave trop aigue) puisque la phase progresserait 2x plus vite que le temps reel. */
+    for(uint32_t i = 0; i < samples; i += 2)
     {
         float sample = 0.0f;
 
@@ -867,14 +870,24 @@ void render_audio_block(int16_t *buffer,
         {
             if(voices[v].active)
             {
-                /* Lecture wavetable DDS, index seul (pas d'interpolation) : bits [31:23] = 0-511 */
-                uint16_t index = (uint16_t)(voices[v].phase_acc >> 23);
+                /* Lecture wavetable DDS avec interpolation lineaire :
+                   bits [31:23] = index (0-511), bits [22:0] = fraction inter-echantillon.
+                   Supprime le bruit de quantification "en escalier" du nearest-neighbor,
+                   surtout audible sur les notes aigues (grand phase_inc_nom). */
+                uint32_t acc = voices[v].phase_acc;
+                uint16_t index = (uint16_t)(acc >> 23);
+                uint16_t index_next = (index + 1) & (WAVETABLE_SIZE - 1);
+                float frac = (float)(acc & 0x7FFFFFu) * (1.0f / 8388608.0f);
+
+                float s0 = (float)voices[v].wave[index];
+                float s1 = (float)voices[v].wave[index_next];
+                float wave_sample = s0 + (s1 - s0) * frac;
 
                 float envelope =
                     Envelope_Update(&voices[v]);
 
                 sample +=
-                    (voices[v].wave[index] / 32768.0f) *
+                    (wave_sample / 32768.0f) *
                     voices[v].amplitude *
                     envelope;
 
@@ -887,7 +900,9 @@ void render_audio_block(int16_t *buffer,
         if(output > 32767.0f)  output = 32767.0f;
         if(output < -32768.0f) output = -32768.0f;
 
-        buffer[i] = (int16_t)output;
+        int16_t out16 = (int16_t)output;
+        buffer[i]     = out16;   /* canal gauche */
+        buffer[i + 1] = out16;   /* canal droit (duplication mono -> stereo) */
     }
 }
 
