@@ -19,7 +19,7 @@
 #define MIDI_EPIN_SIZE                 0x40U   /* 64 B, full-speed bulk max packet */
 #define MIDI_EPOUT_SIZE                0x40U
 
-#define USB_MIDI_CONFIG_DESC_SIZ       88U
+#define USB_MIDI_CONFIG_DESC_SIZ       96U
 
 /* USB-MIDI Code Index Number (CIN) values used by the accordion */
 #define MIDI_CIN_NOTE_OFF              0x08U

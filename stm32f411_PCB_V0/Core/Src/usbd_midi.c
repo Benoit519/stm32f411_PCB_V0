@@ -65,6 +65,19 @@ __ALIGN_BEGIN static uint8_t USBD_MIDI_CfgDesc[USB_MIDI_CONFIG_DESC_SIZ] __ALIGN
     0x80,                       /* bmAttributes: bus powered */
     0x32,                       /* bMaxPower: 100 mA */
 
+    /* ---- Interface Association Descriptor ----
+       Without this, Windows' composite USB driver (usbccgp) may enumerate
+       the AudioControl and MIDIStreaming interfaces as two unrelated
+       functions instead of grouping them, causing usbaudio.sys to fail
+       to start (Code 10) on the AudioControl child device. */
+    0x08, 0x0B,                 /* bLength, INTERFACE_ASSOCIATION */
+    0x00,                       /* bFirstInterface */
+    0x02,                       /* bInterfaceCount */
+    0x01,                       /* bFunctionClass: AUDIO */
+    0x00,                       /* bFunctionSubClass */
+    0x00,                       /* bFunctionProtocol */
+    0x00,                       /* iFunction */
+
     /* ---- Interface 0: Standard Audio Control ---- */
     0x09, USB_DESC_TYPE_INTERFACE,
     0x00,                       /* bInterfaceNumber */
