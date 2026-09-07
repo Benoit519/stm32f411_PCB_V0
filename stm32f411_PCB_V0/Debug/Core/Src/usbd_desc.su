@@ -1,0 +1,9 @@
+../Core/Src/usbd_desc.c:87:17:USBD_MIDI_DeviceDescriptor	16	static
+../Core/Src/usbd_desc.c:94:17:USBD_MIDI_LangIDStrDescriptor	16	static
+../Core/Src/usbd_desc.c:101:17:USBD_MIDI_ManufacturerStrDescriptor	16	static
+../Core/Src/usbd_desc.c:108:17:USBD_MIDI_ProductStrDescriptor	16	static
+../Core/Src/usbd_desc.c:115:17:USBD_MIDI_SerialStrDescriptor	16	static
+../Core/Src/usbd_desc.c:123:17:USBD_MIDI_ConfigStrDescriptor	16	static
+../Core/Src/usbd_desc.c:130:17:USBD_MIDI_InterfaceStrDescriptor	16	static
+../Core/Src/usbd_desc.c:137:13:Get_SerialNum	24	static
+../Core/Src/usbd_desc.c:154:13:IntToUnicode	32	static

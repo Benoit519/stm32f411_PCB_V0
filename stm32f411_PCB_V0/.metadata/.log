@@ -1,0 +1,93 @@
+!SESSION 2026-08-15 18:51:46.335 -----------------------------------------------
+eclipse.buildId=Version 1.11.0
+java.version=11.0.16
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=fr_FR
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2026-08-15 18:52:39.651
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-08-15 18:52:39.752
+!MESSAGE Log4j initialized with config file C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.metadata\.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-08-15 18:52:45.383
+!MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2026-08-15 18:53:08.605 -----------------------------------------------
+eclipse.buildId=Version 1.11.0
+java.version=11.0.16
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=fr_FR
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2026-08-15 18:53:29.503
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-08-15 18:53:29.580
+!MESSAGE Log4j initialized with config file C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.metadata\.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-08-15 18:53:34.365
+!MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2026-08-15 18:54:09.119 -----------------------------------------------
+eclipse.buildId=Version 1.11.0
+java.version=11.0.16
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=fr_FR
+Framework arguments:  C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.project
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.project
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2026-08-15 18:54:21.712
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-08-15 18:54:21.792
+!MESSAGE Log4j initialized with config file C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.metadata\.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-08-15 18:54:27.086
+!MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2026-09-02 16:17:49.324 -----------------------------------------------
+eclipse.buildId=Version 1.11.0
+java.version=11.0.16
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=fr_FR
+Framework arguments:  C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.project
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.project
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2026-09-02 16:18:28.370
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-09-02 16:18:28.442
+!MESSAGE Log4j initialized with config file C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.metadata\.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-09-02 16:18:32.309
+!MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2026-09-07 14:01:16.872 -----------------------------------------------
+eclipse.buildId=Version 1.11.0
+java.version=11.0.16
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=fr_FR
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2026-09-07 14:04:06.221
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-09-07 14:04:06.373
+!MESSAGE Log4j initialized with config file C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.metadata\.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-09-07 14:04:13.287
+!MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2026-09-07 14:07:07.260 -----------------------------------------------
+eclipse.buildId=Version 1.11.0
+java.version=11.0.16
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=fr_FR
+Framework arguments:  C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.cproject
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.cproject
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2026-09-07 14:07:18.172
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-09-07 14:07:18.291
+!MESSAGE Log4j initialized with config file C:\Users\benoi\source\repos\stm32f411_PCB_V0\stm32f411_PCB_V0\.metadata\.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-09-07 14:07:23.441
+!MESSAGE Started RMI Server, listening on port 41337

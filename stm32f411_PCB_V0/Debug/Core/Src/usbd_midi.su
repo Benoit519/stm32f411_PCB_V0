@@ -1,0 +1,10 @@
+../Core/Src/usbd_midi.c:164:16:USBD_MIDI_Init	16	static
+../Core/Src/usbd_midi.c:186:16:USBD_MIDI_DeInit	16	static
+../Core/Src/usbd_midi.c:204:16:USBD_MIDI_Setup	16	static
+../Core/Src/usbd_midi.c:218:16:USBD_MIDI_DataIn	16	static
+../Core/Src/usbd_midi.c:227:16:USBD_MIDI_DataOut	16	static
+../Core/Src/usbd_midi.c:237:17:USBD_MIDI_GetFSCfgDesc	16	static
+../Core/Src/usbd_midi.c:243:17:USBD_MIDI_GetHSCfgDesc	16	static
+../Core/Src/usbd_midi.c:250:17:USBD_MIDI_GetOtherSpeedCfgDesc	16	static
+../Core/Src/usbd_midi.c:256:17:USBD_MIDI_GetDeviceQualifierDesc	16	static
+../Core/Src/usbd_midi.c:271:20:USBD_MIDI_SendPacket	16	static

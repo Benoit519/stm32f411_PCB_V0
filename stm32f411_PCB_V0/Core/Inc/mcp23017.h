@@ -71,3 +71,10 @@ HAL_StatusTypeDef	mcp23017_ggpu(MCP23017_HandleTypeDef *hdev, uint8_t port, uint
 HAL_StatusTypeDef	mcp23017_read_gpio(MCP23017_HandleTypeDef *hdev, uint8_t port);
 HAL_StatusTypeDef	mcp23017_write_gpio(MCP23017_HandleTypeDef *hdev, uint8_t port);
 uint8_t        mcp23017_read_gpio_int(MCP23017_HandleTypeDef *hdev, uint8_t port);
+
+// Interrupt-on-change configuration (hardware IRQ wiring: MCP23017 INTA/INTB -> STM32 EXTI)
+HAL_StatusTypeDef	mcp23017_gpinten(MCP23017_HandleTypeDef *hdev, uint8_t port, uint8_t mask);
+HAL_StatusTypeDef	mcp23017_intcon(MCP23017_HandleTypeDef *hdev, uint8_t port, uint8_t mask);
+
+// Register addresses exposed for boot-time readback/diagnostics (see mcp23017_read())
+#define MCP23017_REG_GPINTENA		0x04

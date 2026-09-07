@@ -22,7 +22,10 @@
 #include <math.h>
 #include "wavetable.h"
 #include <string.h>
+#include <stdio.h>
 #include "note.h"
+#include "usbd_desc.h"
+#include "usbd_midi.h"
 
 #define ATTACK_TIME_MS   20.0f
 #define RELEASE_TIME_MS 120.0f
@@ -141,6 +144,9 @@ I2S_HandleTypeDef hi2s1;
 DMA_HandleTypeDef hdma_spi1_tx;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
+USBD_HandleTypeDef hUsbDeviceFS;
+
+UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
@@ -152,8 +158,9 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_I2S1_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_USART2_UART_Init(void);
+static void MX_USB_DEVICE_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -161,7 +168,7 @@ static void MX_ADC1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 /* -------------------------------------------------------------------------- */
-/* Hardware / UI logic: periodic scan (from previous optimized version)         */
+/* Hardware / UI logic: IRQ-driven scan (MCP23017 INTA/INTB -> EXTI)          */
 /* -------------------------------------------------------------------------- */
 static uint8_t mcp_state[4][2];
 volatile uint16_t pressure = 0;
@@ -530,6 +537,107 @@ static uint8_t MCP_Index(uint8_t mcp)
 
     return 0;
 }
+
+/* -------------------------------------------------------------------------- */
+/* IRQ-driven button scan (matches the final PCB wiring, verified from the    */
+/* routed netlist): each MCP23017's INTA/INTB pin has its own dedicated EXTI  */
+/* line, so a falling edge tells us exactly which chip+port to re-read -      */
+/* no more blind polling of all 4 chips every 5 ms.                          */
+/*                                                                            */
+/*   PA10 (EXTI10) -> MCP20 INTA   PC0  (EXTI0)  -> MCP20 INTB               */
+/*   PB12 (EXTI12) -> MCP21 INTA   PC1  (EXTI1)  -> MCP21 INTB               */
+/*   PA8  (EXTI8)  -> MCP22 INTA   PC2  (EXTI2)  -> MCP22 INTB               */
+/*   PC13 (EXTI13) -> MCP23 INTA   PC3  (EXTI3)  -> MCP23 INTB               */
+/* -------------------------------------------------------------------------- */
+#define MCP_DIRTY_BIT(mcp_idx, port) (1u << ((mcp_idx) * 2 + (port)))
+
+static volatile uint8_t s_mcp_dirty_mask;
+static volatile uint8_t s_scan_pending;
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    switch(GPIO_Pin)
+    {
+    case GPIO_PIN_10: s_mcp_dirty_mask |= MCP_DIRTY_BIT(0, MCP23017_PORTA); break; /* MCP20 INTA */
+    case GPIO_PIN_0:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(0, MCP23017_PORTB); break; /* MCP20 INTB */
+    case GPIO_PIN_12: s_mcp_dirty_mask |= MCP_DIRTY_BIT(1, MCP23017_PORTA); break; /* MCP21 INTA */
+    case GPIO_PIN_1:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(1, MCP23017_PORTB); break; /* MCP21 INTB */
+    case GPIO_PIN_8:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(2, MCP23017_PORTA); break; /* MCP22 INTA */
+    case GPIO_PIN_2:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(2, MCP23017_PORTB); break; /* MCP22 INTB */
+    case GPIO_PIN_13: s_mcp_dirty_mask |= MCP_DIRTY_BIT(3, MCP23017_PORTA); break; /* MCP23 INTA */
+    case GPIO_PIN_3:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(3, MCP23017_PORTB); break; /* MCP23 INTB */
+    default: return;
+    }
+
+    s_scan_pending = 1;
+}
+
+/* Scanne le bus I2C1 (adresses 7 bits 0x03-0x77) et imprime qui repond.
+   Sert a verifier que les 4 MCP23017 sont bien vus a 0x20/0x21/0x22/0x23
+   (un strap A0/A1/A2 faux ferait repondre la puce a une autre adresse,
+   ou en collision avec une autre puce deja presente). */
+static void I2C_ScanBus(void)
+{
+    printf("Scan I2C1...\r\n");
+    uint8_t found = 0;
+
+    for(uint16_t addr7 = 0x03; addr7 <= 0x77; addr7++)
+    {
+        if(HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)(addr7 << 1), 2, 5) == HAL_OK)
+        {
+            printf("  -> peripherique repond en 0x%02X\r\n", addr7);
+            found++;
+        }
+    }
+
+    printf("Scan I2C1 termine : %u peripherique(s) detecte(s) (4 attendus: 0x20,0x21,0x22,0x23)\r\n", found);
+}
+
+/* Initialise un MCP23017 et arme l'IRQ sur ses 16 broches, puis relit GPINTEN
+   pour confirmer par I2C que la config a bien ete prise (glitch bus au power-up,
+   adresse fausse, etc. sinon aucune touche de cette puce ne remontera jamais). */
+static void MCP_Init_WithIRQ(MCP23017_HandleTypeDef *hdev, uint16_t addr, const char *label)
+{
+    mcp23017_init(hdev, &hi2c1, addr);
+    mcp23017_iodir(hdev, MCP23017_PORTA, MCP23017_IODIR_ALL_INPUT);
+    mcp23017_iodir(hdev, MCP23017_PORTB, MCP23017_IODIR_ALL_INPUT);
+    mcp23017_intcon(hdev, MCP23017_PORTA, 0x00);
+    mcp23017_intcon(hdev, MCP23017_PORTB, 0x00);
+    mcp23017_gpinten(hdev, MCP23017_PORTA, 0xFF);
+    mcp23017_gpinten(hdev, MCP23017_PORTB, 0xFF);
+
+    uint8_t gpintenA = 0, gpintenB = 0;
+    HAL_StatusTypeDef stA = mcp23017_read(hdev, MCP23017_REG_GPINTENA | MCP23017_PORTA, &gpintenA);
+    HAL_StatusTypeDef stB = mcp23017_read(hdev, MCP23017_REG_GPINTENA | MCP23017_PORTB, &gpintenB);
+
+    if(stA != HAL_OK || stB != HAL_OK || gpintenA != 0xFF || gpintenB != 0xFF)
+    {
+        printf("ATTENTION MCP%s (0x%02X): IRQ non confirmee ! GPINTENA=0x%02X(st%d) GPINTENB=0x%02X(st%d)\r\n",
+               label, addr, gpintenA, stA, gpintenB, stB);
+    }
+    else
+    {
+        printf("MCP%s (0x%02X) OK, IRQ armee sur les 16 broches\r\n", label, addr);
+    }
+}
+
+/* Relit uniquement les ports MCP signales par l'IRQ (mask = bits MCP_DIRTY_BIT) */
+static void MCP_Read_Dirty(uint8_t mask)
+{
+    MCP23017_HandleTypeDef *chips[4] = { &hmcp20, &hmcp21, &hmcp22, &hmcp23 };
+
+    for(int i = 0; i < 4; i++)
+    {
+        if(mask & MCP_DIRTY_BIT(i, MCP23017_PORTA))
+        {
+            mcp_state[i][MCP23017_PORTA] = mcp23017_read_gpio_int(chips[i], MCP23017_PORTA);
+        }
+        if(mask & MCP_DIRTY_BIT(i, MCP23017_PORTB))
+        {
+            mcp_state[i][MCP23017_PORTB] = mcp23017_read_gpio_int(chips[i], MCP23017_PORTB);
+        }
+    }
+}
 /* Renvoie 1 si un autre bouton encore presse tient deja la meme note+main.
    Evite de couper une note partagee entre deux boutons lors d'un NoteOff partiel. */
 static uint8_t IsNoteHeldByOtherButton(int except_i, const char *note, Hand hand)
@@ -552,10 +660,50 @@ static uint8_t IsNoteHeldByOtherButton(int except_i, const char *note, Hand hand
     }
     return 0;
 }
-static void UI_ScanAndDispatch(void)
+/* Convertit un nom de note (table note.c, La4=440Hz) en numero MIDI standard
+   (60 = Do4 = C4). Renvoie 0xFF si la note est inconnue. */
+static uint8_t NoteNameToMidi(const char *name)
 {
-    MCP_Read_All();
+    float freq = Note_GetFrequency(name);
+    if(freq <= 0.0f)
+    {
+        return 0xFF;
+    }
 
+    int midi = (int)(69.0f + 12.0f * log2f(freq / 440.0f) + 0.5f);
+    if(midi < 0)   midi = 0;
+    if(midi > 127) midi = 127;
+
+    return (uint8_t)midi;
+}
+
+/* Main gauche -> canal MIDI 0, main droite -> canal MIDI 1.
+   Velocite derivee de la pression du soufflet (expressivite). */
+static void MIDI_NoteEvent(const char *note, Hand hand, uint8_t note_on)
+{
+    uint8_t midi_note = NoteNameToMidi(note);
+    if(midi_note == 0xFF)
+    {
+        return;
+    }
+
+    uint8_t channel  = (hand == HAND_LEFT) ? 0 : 1;
+    uint8_t velocity = (uint8_t)(1 + (pressure * 126u) / 4095u);
+
+    if(note_on)
+    {
+        USBD_MIDI_SendPacket(&hUsbDeviceFS, 0, MIDI_CIN_NOTE_ON,
+                              MIDI_STATUS_NOTE_ON | channel, midi_note, velocity);
+    }
+    else
+    {
+        USBD_MIDI_SendPacket(&hUsbDeviceFS, 0, MIDI_CIN_NOTE_OFF,
+                              MIDI_STATUS_NOTE_OFF | channel, midi_note, 0);
+    }
+}
+
+static void Dispatch_Buttons(void)
+{
     // Lecture du sens du soufflet via MCP23 GPA7
     Update_Bellows_Mode();
 
@@ -596,6 +744,15 @@ static void UI_ScanAndDispatch(void)
 
             ButtonSound *sound = active_sound[i];
 
+            printf("Bouton %d presse (MCP%d port%c bit%d, main %s) -> %s%s%s\r\n",
+                   i,
+                   buttons[i].mcp,
+                   (port == MCP23017_PORTA) ? 'A' : 'B',
+                   bit,
+                   (buttons[i].hand == HAND_LEFT) ? "gauche" : "droite",
+                   sound->notes[0] ? sound->notes[0] : "",
+                   sound->notes[1] ? "+" : "",
+                   sound->notes[1] ? sound->notes[1] : "");
 
             for(int n = 0; n < 2; n++)
             {
@@ -606,6 +763,8 @@ static void UI_ScanAndDispatch(void)
                         buttons[i].hand,
                         sound->wavetable
                     );
+
+                    MIDI_NoteEvent(sound->notes[n], buttons[i].hand, 1);
                 }
             }
         }
@@ -634,6 +793,8 @@ static void UI_ScanAndDispatch(void)
                             buttons[i].hand,
                             sound->wavetable
                         );
+
+                        MIDI_NoteEvent(sound->notes[n], buttons[i].hand, 0);
                     }
                 }
             }
@@ -645,6 +806,14 @@ static void UI_ScanAndDispatch(void)
 
         previous_buttons[i] = state;
     }
+}
+
+/* Scan complet (lecture I2C des 4 MCP + dispatch) : utilise uniquement pour
+   l'etat initial, avant que les IRQ EXTI ne prennent le relais. */
+static void UI_ScanAndDispatch(void)
+{
+    MCP_Read_All();
+    Dispatch_Buttons();
 }
 /* Selectionne la position musicale (wave_index) d'apres la frequence.
    Points de reference : do3=130.81  sol3=196  do4=261.63  sol4=392  do5=523.25  sol5=783.99
@@ -722,6 +891,13 @@ void render_audio_block(int16_t *buffer,
     }
 }
 
+/* Redirige printf() vers l'UART2 (115200 8N1) - cf. syscalls.c: _write() -> __io_putchar() */
+int __io_putchar(int ch)
+{
+    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+    return ch;
+}
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc == &hadc1)
@@ -785,24 +961,20 @@ int main(void)
   MX_DMA_Init();
   MX_I2S1_Init();
   MX_I2C1_Init();
-  MX_USB_OTG_FS_PCD_Init();
   MX_ADC1_Init();
+  MX_USART2_UART_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-    mcp23017_init(&hmcp20, &hi2c1, MCP23017_ADDRESS_20);
-    mcp23017_iodir(&hmcp20, MCP23017_PORTA, MCP23017_IODIR_ALL_INPUT);
-    mcp23017_iodir(&hmcp20, MCP23017_PORTB, MCP23017_IODIR_ALL_INPUT);
-
-    mcp23017_init(&hmcp21, &hi2c1, MCP23017_ADDRESS_21);
-    mcp23017_iodir(&hmcp21, MCP23017_PORTA, MCP23017_IODIR_ALL_INPUT);
-    mcp23017_iodir(&hmcp21, MCP23017_PORTB, MCP23017_IODIR_ALL_INPUT);
-
-    mcp23017_init(&hmcp22, &hi2c1, MCP23017_ADDRESS_22);
-    mcp23017_iodir(&hmcp22, MCP23017_PORTA, MCP23017_IODIR_ALL_INPUT);
-    mcp23017_iodir(&hmcp22, MCP23017_PORTB, MCP23017_IODIR_ALL_INPUT);
-
-    mcp23017_init(&hmcp23, &hi2c1, MCP23017_ADDRESS_23);
-    mcp23017_iodir(&hmcp23, MCP23017_PORTA, MCP23017_IODIR_ALL_INPUT);
-    mcp23017_iodir(&hmcp23, MCP23017_PORTB, MCP23017_IODIR_ALL_INPUT);
+    printf("Hello world\r\n");
+    I2C_ScanBus();
+    MCP_Init_WithIRQ(&hmcp20, MCP23017_ADDRESS_20, "20");
+    /* Strapping A2/A1/A0 reel sur le PCB (verifie sur le netlist route) = 1/0/0
+       => adresse I2C reelle 0x24, pas 0x21 comme l'etiquette schema le laisse
+       penser. On garde le handle/l'index logique "21" (table de boutons,
+       MCP_Index()) et on adresse juste la vraie puce. */
+    MCP_Init_WithIRQ(&hmcp21, MCP23017_ADDRESS_24, "21 (adresse reelle 0x24)");
+    MCP_Init_WithIRQ(&hmcp22, MCP23017_ADDRESS_22, "22");
+    MCP_Init_WithIRQ(&hmcp23, MCP23017_ADDRESS_23, "23");
 
     Wavetable_Init();
     Synth_Init();
@@ -810,7 +982,9 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-UI_ScanAndDispatch();
+UI_ScanAndDispatch();   /* etat initial, avant que les IRQ ne prennent le relais */
+s_mcp_dirty_mask = 0;
+s_scan_pending = 0;
 
 for (int i = 0; i < BUFFER_SIZE; i++)
 {
@@ -820,11 +994,34 @@ for (int i = 0; i < BUFFER_SIZE; i++)
 HAL_I2S_Transmit_DMA(&hi2s1,
                      (uint16_t*)bufferDMA,
                      BUFFER_SIZE);
+uint32_t last_full_scan = HAL_GetTick();
+
 while (1)
 {
-    UI_ScanAndDispatch();
+    if (s_scan_pending)
+    {
+        __disable_irq();
+        uint8_t mask = s_mcp_dirty_mask;
+        s_mcp_dirty_mask = 0;
+        s_scan_pending = 0;
+        __enable_irq();
 
-    HAL_Delay(5);   // scan toutes les 5 ms (~200 Hz)
+        MCP_Read_Dirty(mask);
+        Dispatch_Buttons();
+    }
+
+    /* Filet de securite : un rebalayage complet toutes les 50 ms, au cas ou
+       une IRQ aurait ete manquee (glitch I2C au boot, edge EXTI rate, etc.).
+       Garantit qu'aucune touche ne reste jamais "bloquee", tout en restant
+       ~100x moins bavard sur le bus I2C que l'ancien polling a 5 ms. */
+    if ((HAL_GetTick() - last_full_scan) >= 50)
+    {
+        last_full_scan = HAL_GetTick();
+        MCP_Read_All();
+        Dispatch_Buttons();
+    }
+
+    __WFI();   /* dort jusqu'a la prochaine IRQ (bouton MCP, audio I2S/DMA, ADC) */
 }
   /* USER CODE END 3 */
 }
@@ -980,6 +1177,48 @@ static void MX_ADC1_Init(void)
 }
 
 /**
+  * @brief USART2 Initialization Function (debug console, 115200 8N1)
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief USB Device (MIDI class) Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USB_DEVICE_Init(void)
+{
+    if (USBD_Init(&hUsbDeviceFS, &MIDI_Desc, 0) != USBD_OK)
+    {
+        Error_Handler();
+    }
+    if (USBD_RegisterClass(&hUsbDeviceFS, USBD_MIDI_CLASS) != USBD_OK)
+    {
+        Error_Handler();
+    }
+    if (USBD_Start(&hUsbDeviceFS) != USBD_OK)
+    {
+        Error_Handler();
+    }
+}
+
+/**
   * @brief I2C1 Initialization Function
   * @param None
   * @retval None
@@ -1068,41 +1307,6 @@ static void MX_I2S1_Init(void)
 }
 
 /**
-  * @brief USB_OTG_FS Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USB_OTG_FS_PCD_Init(void)
-{
-
-  /* USER CODE BEGIN USB_OTG_FS_Init 0 */
-
-  /* USER CODE END USB_OTG_FS_Init 0 */
-
-  /* USER CODE BEGIN USB_OTG_FS_Init 1 */
-
-  /* USER CODE END USB_OTG_FS_Init 1 */
-  hpcd_USB_OTG_FS.Instance = USB_OTG_FS;
-  hpcd_USB_OTG_FS.Init.dev_endpoints = 4;
-  hpcd_USB_OTG_FS.Init.speed = PCD_SPEED_FULL;
-  hpcd_USB_OTG_FS.Init.dma_enable = DISABLE;
-  hpcd_USB_OTG_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
-  hpcd_USB_OTG_FS.Init.Sof_enable = DISABLE;
-  hpcd_USB_OTG_FS.Init.low_power_enable = DISABLE;
-  hpcd_USB_OTG_FS.Init.lpm_enable = DISABLE;
-  hpcd_USB_OTG_FS.Init.vbus_sensing_enable = DISABLE;
-  hpcd_USB_OTG_FS.Init.use_dedicated_ep1 = DISABLE;
-  if (HAL_PCD_Init(&hpcd_USB_OTG_FS) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USB_OTG_FS_Init 2 */
-
-  /* USER CODE END USB_OTG_FS_Init 2 */
-
-}
-
-/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -1141,14 +1345,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA2 PA3 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /*Configure GPIO pin : PB12 */
   GPIO_InitStruct.Pin = GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -1173,6 +1369,25 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /* EXTI : 8 lignes INTA/INTB des MCP23017 (mapping verifie sur le netlist du PCB routé).
+     Priorite 2 : moins critique que le flux audio (I2S DMA=0, ADC=1). */
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);          /* PC0  -> MCP20 INTB */
+
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);          /* PC1  -> MCP21 INTB */
+
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);          /* PC2  -> MCP22 INTB */
+
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);          /* PC3  -> MCP23 INTB */
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);        /* PA8  -> MCP22 INTA */
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);      /* PA10 -> MCP20 INTA, PB12 -> MCP21 INTA, PC13 -> MCP23 INTA */
 }
 
 /* USER CODE BEGIN 4 */

@@ -7,3 +7,5 @@
 ../Core/Src/mcp23017.c:66:19:mcp23017_read_gpio	24	static
 ../Core/Src/mcp23017.c:76:9:mcp23017_read_gpio_int	24	static
 ../Core/Src/mcp23017.c:89:19:mcp23017_write_gpio	24	static
+../Core/Src/mcp23017.c:96:19:mcp23017_gpinten	24	static
+../Core/Src/mcp23017.c:104:19:mcp23017_intcon	24	static

@@ -1,2 +1,6 @@
-../Core/Src/wavetable.c:26:13:LoadWavetable	64	static
-../Core/Src/wavetable.c:103:6:Wavetable_Init	16	static
+../Core/Src/wavetable.c:35:13:bit_reverse_shuffle	40	static
+../Core/Src/wavetable.c:52:13:fft_forward	88	static
+../Core/Src/wavetable.c:80:13:fft_inverse	40	static
+../Core/Src/wavetable.c:93:14:resample_periodic	40	static
+../Core/Src/wavetable.c:115:13:generate_bl_wavetable	96	static
+../Core/Src/wavetable.c:192:6:Wavetable_Init	56	static

@@ -57,6 +57,7 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern ADC_HandleTypeDef hadc1;
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -200,6 +201,57 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line0 interrupt (PC0 -> MCP20 INTB).
+  */
+void EXTI0_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
+}
+
+/**
+  * @brief This function handles EXTI line1 interrupt (PC1 -> MCP21 INTB).
+  */
+void EXTI1_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
+}
+
+/**
+  * @brief This function handles EXTI line2 interrupt (PC2 -> MCP22 INTB).
+  */
+void EXTI2_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
+}
+
+/**
+  * @brief This function handles EXTI line3 interrupt (PC3 -> MCP23 INTB).
+  */
+void EXTI3_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
+}
+
+/**
+  * @brief This function handles EXTI line[9:5] interrupts (PA8 -> MCP22 INTA).
+  */
+void EXTI9_5_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
+}
+
+/**
+  * @brief This function handles EXTI line[15:10] interrupts
+  *        (PA10 -> MCP20 INTA, PB12 -> MCP21 INTA, PC13 -> MCP23 INTA).
+  */
+void EXTI15_10_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+}
+
+/**
   * @brief This function handles DMA2 stream2 global interrupt.
   */
 void DMA2_Stream2_IRQHandler(void)
@@ -216,6 +268,14 @@ void DMA2_Stream2_IRQHandler(void)
 void ADC_IRQHandler(void)
 {
     HAL_ADC_IRQHandler(&hadc1);
+}
+
+/**
+  * @brief This function handles USB On The Go FS global interrupt (USB-MIDI).
+  */
+void OTG_FS_IRQHandler(void)
+{
+    HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
 }
 
 /* USER CODE BEGIN 1 */

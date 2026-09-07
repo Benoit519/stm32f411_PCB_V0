@@ -91,3 +91,18 @@ HAL_StatusTypeDef mcp23017_write_gpio(MCP23017_HandleTypeDef *hdev, uint8_t port
 	uint8_t data[1] = {hdev->gpio[port]};
 	return mcp23017_write(hdev, REGISTER_GPIOA|port, data);
 }
+
+// GPINTEN: enable interrupt-on-change per pin (1 = enabled)
+HAL_StatusTypeDef mcp23017_gpinten(MCP23017_HandleTypeDef *hdev, uint8_t port, uint8_t mask)
+{
+	uint8_t data[1] = {mask};
+	return mcp23017_write(hdev, REGISTER_GPINTENA|port, data);
+}
+
+// INTCON: 0 = compare against previous pin value (interrupt on any change),
+// 1 = compare against DEFVAL. We always want "any change", so callers pass 0x00.
+HAL_StatusTypeDef mcp23017_intcon(MCP23017_HandleTypeDef *hdev, uint8_t port, uint8_t mask)
+{
+	uint8_t data[1] = {mask};
+	return mcp23017_write(hdev, REGISTER_INTCONA|port, data);
+}
