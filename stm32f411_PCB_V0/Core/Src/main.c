@@ -30,6 +30,14 @@
 #define ATTACK_TIME_MS   20.0f
 #define RELEASE_TIME_MS 120.0f
 
+/* Reglages du soufflet a ajuster via le printf pression/repos/gain (serie) :
+   DEADZONE = jeu/bruit autour du repos a ignorer (son nul au repos) ;
+   PULL/PUSH_MAX_DELTA = ecart de pression observe pour un tire/pousse ferme
+   (augmenter si le son plafonne trop bas, diminuer s'il ne monte jamais a fond). */
+#define BELLOWS_DEADZONE        100u
+#define BELLOWS_PULL_MAX_DELTA 500u
+#define BELLOWS_PUSH_MAX_DELTA 500u
+
 #define SUSTAIN_LEVEL 0.8f
 #define AMPLITUDE 28000.0f
 
@@ -172,6 +180,12 @@ static void MX_USB_DEVICE_Init(void);
 /* -------------------------------------------------------------------------- */
 static uint8_t mcp_state[4][2];
 volatile uint16_t pressure = 0;
+
+/* Valeur du capteur de pression au repos (aucune force), capturee au premier
+   echantillon ADC : tirer augmente la lecture au-dessus de ce repos, pousser
+   la diminue en-dessous - un seul et meme capteur, deux sens opposes. */
+static volatile uint16_t pressure_rest = 2048;
+static volatile uint8_t  pressure_rest_captured = 0;
 
 MCP23017_HandleTypeDef hmcp20;
 MCP23017_HandleTypeDef hmcp21;
@@ -678,6 +692,37 @@ static uint8_t NoteNameToMidi(const char *name)
     return (uint8_t)midi;
 }
 
+/* Convertit la pression brute en intensite 0..1 selon le sens du soufflet :
+   tirer -> plus fort au-dessus du repos, pousser -> plus fort en-dessous
+   (le capteur est moins presse quand on pousse que quand on tire).
+   Une zone morte autour du repos evite tout son au repos, et l'ecart max
+   attendu (au lieu de toute la plage ADC) permet d'atteindre le volume max
+   avec une pression ferme réaliste plutot qu'avec toute la plage du capteur. */
+static float Bellows_Gain(void)
+{
+    float delta;
+    float max_delta;
+
+    if(bellows_mode == MODE_PULL)
+    {
+        delta     = (float)pressure - (float)pressure_rest;
+        max_delta = (float)BELLOWS_PULL_MAX_DELTA;
+    }
+    else
+    {
+        delta     = (float)pressure_rest - (float)pressure;
+        max_delta = (float)BELLOWS_PUSH_MAX_DELTA;
+    }
+
+    float range = max_delta - (float)BELLOWS_DEADZONE;
+    float gain  = (range > 1.0f) ? (delta - (float)BELLOWS_DEADZONE) / range : 0.0f;
+
+    if(gain < 0.0f) gain = 0.0f;
+    if(gain > 1.0f) gain = 1.0f;
+
+    return gain;
+}
+
 /* Main gauche -> canal MIDI 0, main droite -> canal MIDI 1.
    Velocite derivee de la pression du soufflet (expressivite). */
 static void MIDI_NoteEvent(const char *note, Hand hand, uint8_t note_on)
@@ -689,7 +734,7 @@ static void MIDI_NoteEvent(const char *note, Hand hand, uint8_t note_on)
     }
 
     uint8_t channel  = (hand == HAND_LEFT) ? 0 : 1;
-    uint8_t velocity = (uint8_t)(1 + (pressure * 126u) / 4095u);
+    uint8_t velocity = (uint8_t)(1 + Bellows_Gain() * 126.0f);
 
     if(note_on)
     {
@@ -707,7 +752,6 @@ static void Dispatch_Buttons(void)
 {
     // Lecture du sens du soufflet via MCP23 GPA7
     Update_Bellows_Mode();
-
 
     for(int i = 0; i < NB_BUTTONS; i++)
     {
@@ -805,6 +849,78 @@ static void Dispatch_Buttons(void)
         }
 
 
+        /*
+            CHANGEMENT DE SENS (bouton toujours enfonce)
+            Pas de dependance a un flanc precis : a chaque dispatch, un bouton
+            tenu revalide que son son actif correspond bien au sens courant du
+            soufflet, et corrige sinon (auto-correction, robuste meme si le
+            changement de sens a ete traite lors d'un cycle precedent).
+        */
+
+        else if(state && previous_buttons[i] && active_sound[i] != NULL)
+        {
+            ButtonSound *old_sound = active_sound[i];
+            ButtonSound *new_sound =
+                (bellows_mode == MODE_PUSH) ? &buttons[i].push : &buttons[i].pull;
+
+            if(new_sound != old_sound)
+            {
+                printf("Bouton %d : changement de sens en tenant -> %s%s%s\r\n",
+                       i,
+                       new_sound->notes[0] ? new_sound->notes[0] : "",
+                       new_sound->notes[1] ? "+" : "",
+                       new_sound->notes[1] ? new_sound->notes[1] : "");
+
+                for(int n = 0; n < 2; n++)
+                {
+                    if(old_sound->notes[n] == NULL) continue;
+
+                    uint8_t kept_in_new = 0;
+                    for(int m = 0; m < 2; m++)
+                    {
+                        if(new_sound->notes[m] != NULL &&
+                           strcmp(new_sound->notes[m], old_sound->notes[n]) == 0)
+                        {
+                            kept_in_new = 1;
+                            break;
+                        }
+                    }
+
+                    if(!kept_in_new &&
+                       !IsNoteHeldByOtherButton(i, old_sound->notes[n], buttons[i].hand))
+                    {
+                        NoteOff(old_sound->notes[n], buttons[i].hand, old_sound->wavetable);
+                        MIDI_NoteEvent(old_sound->notes[n], buttons[i].hand, 0);
+                    }
+                }
+
+                active_sound[i] = new_sound;
+
+                for(int n = 0; n < 2; n++)
+                {
+                    if(new_sound->notes[n] == NULL) continue;
+
+                    uint8_t already_on = 0;
+                    for(int m = 0; m < 2; m++)
+                    {
+                        if(old_sound->notes[m] != NULL &&
+                           strcmp(old_sound->notes[m], new_sound->notes[n]) == 0)
+                        {
+                            already_on = 1;
+                            break;
+                        }
+                    }
+
+                    if(!already_on)
+                    {
+                        NoteOn(new_sound->notes[n], buttons[i].hand, new_sound->wavetable);
+                        MIDI_NoteEvent(new_sound->notes[n], buttons[i].hand, 1);
+                    }
+                }
+            }
+        }
+
+
         previous_buttons[i] = state;
     }
 }
@@ -858,7 +974,7 @@ static void Voice_SetWave(Voice *v, WaveTableId wt)
 void render_audio_block(int16_t *buffer,
                         uint32_t samples)
 {
-    float gain = pressure / 4095.0f;
+    float gain = Bellows_Gain();
 
     /* I2S = trames stereo L/R : 2 entrees buffer par echantillon audio.
        N'avancer le DDS qu'une fois par trame, sinon la frequence percue double
@@ -919,6 +1035,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     if (hadc == &hadc1)
     {
         pressure = HAL_ADC_GetValue(hadc);
+
+        if(!pressure_rest_captured)
+        {
+            pressure_rest = pressure;
+            pressure_rest_captured = 1;
+        }
     }
 }
 
@@ -1011,6 +1133,7 @@ HAL_I2S_Transmit_DMA(&hi2s1,
                      (uint16_t*)bufferDMA,
                      BUFFER_SIZE);
 uint32_t last_full_scan = HAL_GetTick();
+uint32_t last_pressure_print = HAL_GetTick();
 
 while (1)
 {
@@ -1035,6 +1158,17 @@ while (1)
         last_full_scan = HAL_GetTick();
         MCP_Read_All();
         Dispatch_Buttons();
+    }
+
+    /* Trace de reglage du soufflet (pas de debugueur dispo) : a retirer une
+       fois pressure_rest / le mapping gain valides sur le materiel reel. */
+    if ((HAL_GetTick() - last_pressure_print) >= 300)
+    {
+        last_pressure_print = HAL_GetTick();
+        printf("pression=%u repos=%u sens=%s gain=%d%%\r\n",
+               pressure, pressure_rest,
+               (bellows_mode == MODE_PULL) ? "tire" : "pousse",
+               (int)(Bellows_Gain() * 100.0f));
     }
 
     __WFI();   /* dort jusqu'a la prochaine IRQ (bouton MCP, audio I2S/DMA, ADC) */
