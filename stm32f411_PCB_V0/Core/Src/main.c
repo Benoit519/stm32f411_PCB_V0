@@ -35,11 +35,15 @@
    PULL/PUSH_MAX_DELTA = ecart de pression observe pour un tire/pousse ferme
    (augmenter si le son plafonne trop bas, diminuer s'il ne monte jamais a fond) ;
    CURVE_EXPONENT > 1 rend les faibles pressions (repos) plus discretes tout en
-   gardant un volume max atteignable avec moins d'effort grace au MAX_DELTA reduit. */
-#define BELLOWS_DEADZONE        80u
-#define BELLOWS_PULL_MAX_DELTA 1500u
-#define BELLOWS_PUSH_MAX_DELTA 1500u
-#define BELLOWS_CURVE_EXPONENT  4.0f
+   gardant un volume max atteignable avec moins d'effort grace au MAX_DELTA reduit.
+   Mesures reelles (2026-09-09, capteur repare, repos fige a 2009) : bruit au
+   repos ~33, tire a fond ~861, pousse a fond ~1859 - le soufflet pousse
+   desormais beaucoup plus que ne tire le capteur. MAX_DELTA fixes sous le
+   maximum mesure pour atteindre le volume max avant la butee complete. */
+#define BELLOWS_DEADZONE        70u
+#define BELLOWS_PULL_MAX_DELTA 550u
+#define BELLOWS_PUSH_MAX_DELTA 1000u
+#define BELLOWS_CURVE_EXPONENT  1.8f
 
 #define SUSTAIN_LEVEL 0.8f
 #define AMPLITUDE 28000.0f
@@ -796,7 +800,8 @@ static void Dispatch_Buttons(void)
 
             ButtonSound *sound = active_sound[i];
 
-            printf("Bouton %d presse (MCP%d port%c bit%d, main %s) -> %s%s%s\r\n",
+            printf("Bouton %d presse (MCP%d port%c bit%d, main %s) -> %s%s%s "
+                   "[pression=%u repos=%u sens=%s gain=%d%%]\r\n",
                    i,
                    buttons[i].mcp,
                    (port == MCP23017_PORTA) ? 'A' : 'B',
@@ -804,7 +809,10 @@ static void Dispatch_Buttons(void)
                    (buttons[i].hand == HAND_LEFT) ? "gauche" : "droite",
                    sound->notes[0] ? sound->notes[0] : "",
                    sound->notes[1] ? "+" : "",
-                   sound->notes[1] ? sound->notes[1] : "");
+                   sound->notes[1] ? sound->notes[1] : "",
+                   pressure, pressure_rest,
+                   (bellows_mode == MODE_PULL) ? "tire" : "pousse",
+                   (int)(Bellows_Gain() * 100.0f));
 
             for(int n = 0; n < 2; n++)
             {
@@ -1037,6 +1045,14 @@ int __io_putchar(int ch)
     return ch;
 }
 
+/* Capture au boot, apres quelques echantillons de "settle" (le tout premier
+   peut etre un transitoire ADC/capteur pas encore stabilise) : avec un capteur
+   dont l'ecart tire/pousse reel ne fait que quelques dizaines/centaines de
+   counts, une capture instable donne un repos fausse qui peut rendre tire ET
+   pousse silencieux (delta insuffisant dans les deux sens depuis ce repos). */
+#define PRESSURE_REST_SETTLE_SAMPLES 20u
+static uint16_t pressure_rest_settle_count = 0;
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc == &hadc1)
@@ -1045,8 +1061,15 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
         if(!pressure_rest_captured)
         {
-            pressure_rest = pressure;
-            pressure_rest_captured = 1;
+            if(pressure_rest_settle_count < PRESSURE_REST_SETTLE_SAMPLES)
+            {
+                pressure_rest_settle_count++;
+            }
+            else
+            {
+                pressure_rest = pressure;
+                pressure_rest_captured = 1;
+            }
         }
     }
 }
@@ -1139,6 +1162,7 @@ for (int i = 0; i < BUFFER_SIZE; i++)
 HAL_I2S_Transmit_DMA(&hi2s1,
                      (uint16_t*)bufferDMA,
                      BUFFER_SIZE);
+
 uint32_t last_full_scan = HAL_GetTick();
 uint32_t last_pressure_print = HAL_GetTick();
 
