@@ -422,49 +422,49 @@ Disassembly of section .text:
  80005a2:	bf00      	nop
 
 080005a4 <Update_Bellows_Mode>:
+{23,1,7, HAND_RIGHT, {{"Dod3",  "La3"}, WT_ACCORDION}, {{"Fad3",  "Dod3"}, WT_ACCORDION}},
+
+{23,0,0, HAND_RIGHT, {{"Sol3",   NULL}, WT_ACCORDION}, {{"Re3",   NULL}, WT_ACCORDION}},
 {23,0,1, HAND_RIGHT, {{"Mi3",   NULL}, WT_ACCORDION}, {{"La3",   NULL}, WT_ACCORDION}},
 {23,0,2, HAND_RIGHT, {{"Re3",  NULL}, WT_ACCORDION}, {{"Si3",  NULL}, WT_ACCORDION}},
 {23,0,3, HAND_RIGHT, {{"Sol3",  "Re3"}, WT_ACCORDION}, {{"Re3",  "La3"}, WT_ACCORDION}},
-{23,0,4, HAND_RIGHT, {{"Mi3",  "Si3"}, WT_ACCORDION}, {{"La3",  "Mi3"}, WT_ACCORDION}},
-{23,0,5, HAND_RIGHT, {{"Re3",  "La3"}, WT_ACCORDION}, {{"Si3",  "Fad3"}, WT_ACCORDION}},
-{23,0,6, HAND_RIGHT, {{"Sol10", NULL}, WT_ACCORDION}, {{"Sol10", NULL}, WT_ACCORDION}}
  80005a4:	b480      	push	{r7}
  80005a6:	b083      	sub	sp, #12
  80005a8:	af00      	add	r7, sp, #0
+};
+enum
+{
     NB_BUTTONS = sizeof(buttons) / sizeof(buttons[0])
 };
 
+ 80005aa:	4b0a      	ldr	r3, [pc, #40]	; (80005d4 <Update_Bellows_Mode+0x30>)
+ 80005ac:	799b      	ldrb	r3, [r3, #6]
+};
+ 80005ae:	09db      	lsrs	r3, r3, #7
+ 80005b0:	71fb      	strb	r3, [r7, #7]
 static ButtonSound *active_sound[NB_BUTTONS];
 static uint8_t previous_buttons[NB_BUTTONS];
 
- 80005aa:	4b0a      	ldr	r3, [pc, #40]	; (80005d4 <Update_Bellows_Mode+0x30>)
- 80005ac:	799b      	ldrb	r3, [r3, #6]
-static uint8_t previous_buttons[NB_BUTTONS];
- 80005ae:	09db      	lsrs	r3, r3, #7
- 80005b0:	71fb      	strb	r3, [r7, #7]
-
-
-static void Update_Bellows_Mode(void)
  80005b2:	79fb      	ldrb	r3, [r7, #7]
  80005b4:	2b00      	cmp	r3, #0
  80005b6:	d003      	beq.n	80005c0 <Update_Bellows_Mode+0x1c>
-{
-    /*
+
+
  80005b8:	4b07      	ldr	r3, [pc, #28]	; (80005d8 <Update_Bellows_Mode+0x34>)
  80005ba:	2201      	movs	r2, #1
  80005bc:	701a      	strb	r2, [r3, #0]
+static void Update_Bellows_Mode(void)
+{
+    /*
        MCP23
        GPA7 = bit 7 du port A
 
-       0 = PUSH
-       1 = PULL
-    */
  80005be:	e002      	b.n	80005c6 <Update_Bellows_Mode+0x22>
-       0 = PUSH
+       MCP23
  80005c0:	4b05      	ldr	r3, [pc, #20]	; (80005d8 <Update_Bellows_Mode+0x34>)
  80005c2:	2200      	movs	r2, #0
  80005c4:	701a      	strb	r2, [r3, #0]
-    */
+
  80005c6:	bf00      	nop
  80005c8:	370c      	adds	r7, #12
  80005ca:	46bd      	mov	sp, r7
@@ -475,9 +475,9 @@ static void Update_Bellows_Mode(void)
  80005d8:	20000864 	.word	0x20000864
 
 080005dc <Synth_Init>:
-
-    uint8_t gpa7 =
-        (mcp_state[3][0] >> 7) & 1;
+       0 = PUSH
+       1 = PULL
+    */
  80005dc:	b480      	push	{r7}
  80005de:	b083      	sub	sp, #12
  80005e0:	af00      	add	r7, sp, #0
@@ -485,8 +485,8 @@ static void Update_Bellows_Mode(void)
  80005e2:	2300      	movs	r3, #0
  80005e4:	607b      	str	r3, [r7, #4]
  80005e6:	e00a      	b.n	80005fe <Synth_Init+0x22>
-
-    if(gpa7)
+    uint8_t gpa7 =
+        (mcp_state[3][0] >> 7) & 1;
  80005e8:	4a13      	ldr	r2, [pc, #76]	; (8000638 <Synth_Init+0x5c>)
  80005ea:	687b      	ldr	r3, [r7, #4]
  80005ec:	2134      	movs	r1, #52	; 0x34
@@ -501,33 +501,33 @@ static void Update_Bellows_Mode(void)
  80005fe:	687b      	ldr	r3, [r7, #4]
  8000600:	2b0f      	cmp	r3, #15
  8000602:	ddf1      	ble.n	80005e8 <Synth_Init+0xc>
-    {
-        bellows_mode = MODE_PULL;
-    }
+
+
+    if(gpa7)
  8000604:	2300      	movs	r3, #0
  8000606:	603b      	str	r3, [r7, #0]
  8000608:	e00c      	b.n	8000624 <Synth_Init+0x48>
-    else
     {
+        bellows_mode = MODE_PULL;
  800060a:	4a0c      	ldr	r2, [pc, #48]	; (800063c <Synth_Init+0x60>)
  800060c:	683b      	ldr	r3, [r7, #0]
  800060e:	4413      	add	r3, r2
  8000610:	2200      	movs	r2, #0
  8000612:	701a      	strb	r2, [r3, #0]
-        bellows_mode = MODE_PUSH;
+    }
  8000614:	4a0a      	ldr	r2, [pc, #40]	; (8000640 <Synth_Init+0x64>)
  8000616:	683b      	ldr	r3, [r7, #0]
  8000618:	2100      	movs	r1, #0
  800061a:	f842 1023 	str.w	r1, [r2, r3, lsl #2]
-    }
+    if(gpa7)
  800061e:	683b      	ldr	r3, [r7, #0]
  8000620:	3301      	adds	r3, #1
  8000622:	603b      	str	r3, [r7, #0]
  8000624:	683b      	ldr	r3, [r7, #0]
  8000626:	2b3e      	cmp	r3, #62	; 0x3e
  8000628:	ddef      	ble.n	800060a <Synth_Init+0x2e>
-    }
-}
+    else
+    {
  800062a:	bf00      	nop
  800062c:	bf00      	nop
  800062e:	370c      	adds	r7, #12
@@ -539,11 +539,11 @@ static void Update_Bellows_Mode(void)
  8000640:	20001744 	.word	0x20001744
 
 08000644 <NoteOn>:
+        bellows_mode = MODE_PUSH;
+    }
+}
 
 void Synth_Init(void)
-{
-    for(int i=0;i<MAX_VOICES;i++)
-    {
  8000644:	b580      	push	{r7, lr}
  8000646:	b088      	sub	sp, #32
  8000648:	af00      	add	r7, sp, #0
@@ -552,13 +552,13 @@ void Synth_Init(void)
  800064e:	70fb      	strb	r3, [r7, #3]
  8000650:	4613      	mov	r3, r2
  8000652:	70bb      	strb	r3, [r7, #2]
-        voices[i].active = 0;
-    }
+{
+    for(int i=0;i<MAX_VOICES;i++)
  8000654:	2300      	movs	r3, #0
  8000656:	61fb      	str	r3, [r7, #28]
  8000658:	e03a      	b.n	80006d0 <NoteOn+0x8c>
-
-    for(int i = 0; i < NB_BUTTONS; i++)
+    {
+        voices[i].active = 0;
  800065a:	4a99      	ldr	r2, [pc, #612]	; (80008c0 <NoteOn+0x27c>)
  800065c:	69fb      	ldr	r3, [r7, #28]
  800065e:	2134      	movs	r1, #52	; 0x34
@@ -567,7 +567,7 @@ void Synth_Init(void)
  8000666:	781b      	ldrb	r3, [r3, #0]
  8000668:	2b00      	cmp	r3, #0
  800066a:	d02e      	beq.n	80006ca <NoteOn+0x86>
-    {
+    }
  800066c:	4a94      	ldr	r2, [pc, #592]	; (80008c0 <NoteOn+0x27c>)
  800066e:	69fb      	ldr	r3, [r7, #28]
  8000670:	2134      	movs	r1, #52	; 0x34
@@ -579,10 +579,10 @@ void Synth_Init(void)
  800067e:	4618      	mov	r0, r3
  8000680:	f7ff fdae 	bl	80001e0 <strcmp>
  8000684:	4603      	mov	r3, r0
-    for(int i = 0; i < NB_BUTTONS; i++)
+        voices[i].active = 0;
  8000686:	2b00      	cmp	r3, #0
  8000688:	d11f      	bne.n	80006ca <NoteOn+0x86>
-        previous_buttons[i] = 0;
+
  800068a:	4a8d      	ldr	r2, [pc, #564]	; (80008c0 <NoteOn+0x27c>)
  800068c:	69fb      	ldr	r3, [r7, #28]
  800068e:	2134      	movs	r1, #52	; 0x34
@@ -590,12 +590,12 @@ void Synth_Init(void)
  8000694:	4413      	add	r3, r2
  8000696:	3308      	adds	r3, #8
  8000698:	781b      	ldrb	r3, [r3, #0]
-    {
+    }
  800069a:	78fa      	ldrb	r2, [r7, #3]
  800069c:	429a      	cmp	r2, r3
  800069e:	d114      	bne.n	80006ca <NoteOn+0x86>
-        active_sound[i] = NULL;
-    }
+    for(int i = 0; i < NB_BUTTONS; i++)
+    {
  80006a0:	4a87      	ldr	r2, [pc, #540]	; (80008c0 <NoteOn+0x27c>)
  80006a2:	69fb      	ldr	r3, [r7, #28]
  80006a4:	2134      	movs	r1, #52	; 0x34
@@ -605,9 +605,9 @@ void Synth_Init(void)
  80006ae:	781b      	ldrb	r3, [r3, #0]
  80006b0:	2b03      	cmp	r3, #3
  80006b2:	f040 80ff 	bne.w	80008b4 <NoteOn+0x270>
-}
-
-void NoteOn(const char *note,
+        previous_buttons[i] = 0;
+        active_sound[i] = NULL;
+    }
  80006b6:	4a82      	ldr	r2, [pc, #520]	; (80008c0 <NoteOn+0x27c>)
  80006b8:	69fb      	ldr	r3, [r7, #28]
  80006ba:	2134      	movs	r1, #52	; 0x34
@@ -616,29 +616,29 @@ void NoteOn(const char *note,
  80006c2:	3318      	adds	r3, #24
  80006c4:	2201      	movs	r2, #1
  80006c6:	701a      	strb	r2, [r3, #0]
-            Hand hand,
-            WaveTableId wavetable)
+}
+
  80006c8:	e0f4      	b.n	80008b4 <NoteOn+0x270>
-    }
+    for(int i=0;i<MAX_VOICES;i++)
  80006ca:	69fb      	ldr	r3, [r7, #28]
  80006cc:	3301      	adds	r3, #1
  80006ce:	61fb      	str	r3, [r7, #28]
  80006d0:	69fb      	ldr	r3, [r7, #28]
  80006d2:	2b0f      	cmp	r3, #15
  80006d4:	ddc1      	ble.n	800065a <NoteOn+0x16>
+void NoteOn(const char *note,
+            Hand hand,
+            WaveTableId wavetable)
 {
     /* eviter les doublons ; retrigger si la voix est en RELEASE */
-    for(int i = 0; i < MAX_VOICES; i++)
-    {
-        if(voices[i].active &&
  80006d6:	f04f 33ff 	mov.w	r3, #4294967295
  80006da:	61bb      	str	r3, [r7, #24]
-           strcmp(voices[i].note, note) == 0 &&
+    for(int i = 0; i < MAX_VOICES; i++)
  80006dc:	2300      	movs	r3, #0
  80006de:	617b      	str	r3, [r7, #20]
  80006e0:	e00e      	b.n	8000700 <NoteOn+0xbc>
-           voices[i].hand == hand)
-        {
+    {
+        if(voices[i].active &&
  80006e2:	4a77      	ldr	r2, [pc, #476]	; (80008c0 <NoteOn+0x27c>)
  80006e4:	697b      	ldr	r3, [r7, #20]
  80006e6:	2134      	movs	r1, #52	; 0x34
@@ -647,34 +647,34 @@ void NoteOn(const char *note,
  80006ee:	781b      	ldrb	r3, [r3, #0]
  80006f0:	2b00      	cmp	r3, #0
  80006f2:	d102      	bne.n	80006fa <NoteOn+0xb6>
-            if(voices[i].env_state == ENV_RELEASE)
-            {
+           strcmp(voices[i].note, note) == 0 &&
+           voices[i].hand == hand)
  80006f4:	697b      	ldr	r3, [r7, #20]
  80006f6:	61bb      	str	r3, [r7, #24]
-                /* retrigger : reprendre l'attaque depuis le niveau actuel */
+        {
  80006f8:	e005      	b.n	8000706 <NoteOn+0xc2>
-           strcmp(voices[i].note, note) == 0 &&
+    for(int i = 0; i < MAX_VOICES; i++)
  80006fa:	697b      	ldr	r3, [r7, #20]
  80006fc:	3301      	adds	r3, #1
  80006fe:	617b      	str	r3, [r7, #20]
  8000700:	697b      	ldr	r3, [r7, #20]
  8000702:	2b0f      	cmp	r3, #15
  8000704:	dded      	ble.n	80006e2 <NoteOn+0x9e>
+            if(voices[i].env_state == ENV_RELEASE)
+            {
+                /* retrigger : reprendre l'attaque depuis le niveau actuel */
                 voices[i].env_state = ENV_ATTACK;
             }
-            return;
-        }
-    }
  8000706:	69bb      	ldr	r3, [r7, #24]
  8000708:	f1b3 3fff 	cmp.w	r3, #4294967295
  800070c:	d115      	bne.n	800073a <NoteOn+0xf6>
-
-    /* chercher une voix libre */
+            return;
+        }
  800070e:	2300      	movs	r3, #0
  8000710:	613b      	str	r3, [r7, #16]
  8000712:	e00f      	b.n	8000734 <NoteOn+0xf0>
-    int slot = -1;
-    for(int i = 0; i < MAX_VOICES; i++)
+    }
+
  8000714:	4a6a      	ldr	r2, [pc, #424]	; (80008c0 <NoteOn+0x27c>)
  8000716:	693b      	ldr	r3, [r7, #16]
  8000718:	2134      	movs	r1, #52	; 0x34
@@ -684,50 +684,50 @@ void NoteOn(const char *note,
  8000722:	781b      	ldrb	r3, [r3, #0]
  8000724:	2b03      	cmp	r3, #3
  8000726:	d102      	bne.n	800072e <NoteOn+0xea>
-    {
-        if(!voices[i].active)
+    /* chercher une voix libre */
+    int slot = -1;
  8000728:	693b      	ldr	r3, [r7, #16]
  800072a:	61bb      	str	r3, [r7, #24]
-        {
+    for(int i = 0; i < MAX_VOICES; i++)
  800072c:	e005      	b.n	800073a <NoteOn+0xf6>
-    /* chercher une voix libre */
+        }
  800072e:	693b      	ldr	r3, [r7, #16]
  8000730:	3301      	adds	r3, #1
  8000732:	613b      	str	r3, [r7, #16]
  8000734:	693b      	ldr	r3, [r7, #16]
  8000736:	2b0f      	cmp	r3, #15
  8000738:	ddec      	ble.n	8000714 <NoteOn+0xd0>
+    {
+        if(!voices[i].active)
+        {
             slot = i;
             break;
         }
-    }
-
-    /* voice stealing : priorité aux voix en RELEASE */
  800073a:	69bb      	ldr	r3, [r7, #24]
  800073c:	f1b3 3fff 	cmp.w	r3, #4294967295
  8000740:	d101      	bne.n	8000746 <NoteOn+0x102>
-    if(slot == -1)
-    {
+    }
+
  8000742:	2300      	movs	r3, #0
  8000744:	61bb      	str	r3, [r7, #24]
+    /* voice stealing : priorité aux voix en RELEASE */
+    if(slot == -1)
+    {
         for(int i = 0; i < MAX_VOICES; i++)
-        {
-            if(voices[i].env_state == ENV_RELEASE)
-            {
  8000746:	6878      	ldr	r0, [r7, #4]
  8000748:	f001 fba4 	bl	8001e94 <Note_GetFrequency>
  800074c:	ed87 0a03 	vstr	s0, [r7, #12]
-                slot = i;
+        {
  8000750:	edd7 7a03 	vldr	s15, [r7, #12]
  8000754:	eef5 7ac0 	vcmpe.f32	s15, #0.0
  8000758:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  800075c:	f240 80ac 	bls.w	80008b8 <NoteOn+0x274>
+            {
+                slot = i;
+                break;
             }
         }
     }
-
-    /* fallback : voix 0 (la plus ancienne) */
-    if(slot == -1)
  8000760:	4a57      	ldr	r2, [pc, #348]	; (80008c0 <NoteOn+0x27c>)
  8000762:	69bb      	ldr	r3, [r7, #24]
  8000764:	2134      	movs	r1, #52	; 0x34
@@ -735,10 +735,10 @@ void NoteOn(const char *note,
  800076a:	4413      	add	r3, r2
  800076c:	2200      	movs	r2, #0
  800076e:	701a      	strb	r2, [r3, #0]
-    {
-        slot = 0;
-    }
 
+    /* fallback : voix 0 (la plus ancienne) */
+    if(slot == -1)
+    {
  8000770:	4a53      	ldr	r2, [pc, #332]	; (80008c0 <NoteOn+0x27c>)
  8000772:	69bb      	ldr	r3, [r7, #24]
  8000774:	2134      	movs	r1, #52	; 0x34
@@ -747,7 +747,7 @@ void NoteOn(const char *note,
  800077c:	3304      	adds	r3, #4
  800077e:	687a      	ldr	r2, [r7, #4]
  8000780:	601a      	str	r2, [r3, #0]
-    /* sécurité note inconnue */
+        slot = 0;
  8000782:	4a4f      	ldr	r2, [pc, #316]	; (80008c0 <NoteOn+0x27c>)
  8000784:	69bb      	ldr	r3, [r7, #24]
  8000786:	2134      	movs	r1, #52	; 0x34
@@ -756,7 +756,7 @@ void NoteOn(const char *note,
  800078e:	3308      	adds	r3, #8
  8000790:	78fa      	ldrb	r2, [r7, #3]
  8000792:	701a      	strb	r2, [r3, #0]
-    float freq = Note_GetFrequency(note);
+    }
  8000794:	4a4a      	ldr	r2, [pc, #296]	; (80008c0 <NoteOn+0x27c>)
  8000796:	69bb      	ldr	r3, [r7, #24]
  8000798:	2134      	movs	r1, #52	; 0x34
@@ -765,10 +765,10 @@ void NoteOn(const char *note,
  80007a0:	330c      	adds	r3, #12
  80007a2:	68fa      	ldr	r2, [r7, #12]
  80007a4:	601a      	str	r2, [r3, #0]
+
+    /* sécurité note inconnue */
+    float freq = Note_GetFrequency(note);
     if(freq <= 0.0f)
-    {
-        return;
-    }
  80007a6:	4a46      	ldr	r2, [pc, #280]	; (80008c0 <NoteOn+0x27c>)
  80007a8:	69bb      	ldr	r3, [r7, #24]
  80007aa:	2134      	movs	r1, #52	; 0x34
@@ -777,10 +777,10 @@ void NoteOn(const char *note,
  80007b2:	3310      	adds	r3, #16
  80007b4:	2200      	movs	r2, #0
  80007b6:	601a      	str	r2, [r3, #0]
+    {
+        return;
+    }
 
-    /* Desactivation d'abord : si voice stealing, l'ISR DMA verra active=0
-       et sautera cette voix pendant toute la reinitialisation. */
-    voices[slot].active = 0;
  80007b8:	edd7 7a03 	vldr	s15, [r7, #12]
  80007bc:	ed9f 7a41 	vldr	s14, [pc, #260]	; 80008c4 <NoteOn+0x280>
  80007c0:	ee27 7a87 	vmul.f32	s14, s15, s14
@@ -788,7 +788,7 @@ void NoteOn(const char *note,
  80007c8:	eec7 7a26 	vdiv.f32	s15, s14, s13
  80007cc:	eefc 7ae7 	vcvt.u32.f32	s15, s15
  80007d0:	ee17 0a90 	vmov	r0, s15
-       et sautera cette voix pendant toute la reinitialisation. */
+    }
  80007d4:	4a3a      	ldr	r2, [pc, #232]	; (80008c0 <NoteOn+0x27c>)
  80007d6:	69bb      	ldr	r3, [r7, #24]
  80007d8:	2134      	movs	r1, #52	; 0x34
@@ -796,10 +796,10 @@ void NoteOn(const char *note,
  80007de:	4413      	add	r3, r2
  80007e0:	3314      	adds	r3, #20
  80007e2:	6018      	str	r0, [r3, #0]
+    /* Desactivation d'abord : si voice stealing, l'ISR DMA verra active=0
+       et sautera cette voix pendant toute la reinitialisation. */
+    voices[slot].active = 0;
 
-    /* Initialisation complete avant reactivation */
-
-    voices[slot].note      = note;
  80007e4:	4a36      	ldr	r2, [pc, #216]	; (80008c0 <NoteOn+0x27c>)
  80007e6:	69bb      	ldr	r3, [r7, #24]
  80007e8:	2134      	movs	r1, #52	; 0x34
@@ -808,7 +808,7 @@ void NoteOn(const char *note,
  80007f0:	3318      	adds	r3, #24
  80007f2:	2201      	movs	r2, #1
  80007f4:	701a      	strb	r2, [r3, #0]
-    voices[slot].hand      = hand;
+    /* Initialisation complete avant reactivation */
  80007f6:	4a32      	ldr	r2, [pc, #200]	; (80008c0 <NoteOn+0x27c>)
  80007f8:	69bb      	ldr	r3, [r7, #24]
  80007fa:	2134      	movs	r1, #52	; 0x34
@@ -817,7 +817,7 @@ void NoteOn(const char *note,
  8000802:	331c      	adds	r3, #28
  8000804:	f04f 0200 	mov.w	r2, #0
  8000808:	601a      	str	r2, [r3, #0]
-    voices[slot].frequency = freq;
+
  800080a:	4a2d      	ldr	r2, [pc, #180]	; (80008c0 <NoteOn+0x27c>)
  800080c:	69bb      	ldr	r3, [r7, #24]
  800080e:	2134      	movs	r1, #52	; 0x34
@@ -826,19 +826,19 @@ void NoteOn(const char *note,
  8000816:	3328      	adds	r3, #40	; 0x28
  8000818:	4a2c      	ldr	r2, [pc, #176]	; (80008cc <NoteOn+0x288>)
  800081a:	601a      	str	r2, [r3, #0]
+    voices[slot].note      = note;
+    voices[slot].hand      = hand;
+    voices[slot].frequency = freq;
 
-    /* Oscillateur principal DDS 32 bits */
-
-    voices[slot].phase_acc = 0;
  800081c:	ed9f 7a2a 	vldr	s14, [pc, #168]	; 80008c8 <NoteOn+0x284>
  8000820:	eef3 7a04 	vmov.f32	s15, #52	; 0x41a00000  20.0
  8000824:	ee67 7a27 	vmul.f32	s15, s14, s15
  8000828:	eddf 6a29 	vldr	s13, [pc, #164]	; 80008d0 <NoteOn+0x28c>
  800082c:	ee87 7aa6 	vdiv.f32	s14, s15, s13
-
+    voices[slot].frequency = freq;
  8000830:	eddf 6a28 	vldr	s13, [pc, #160]	; 80008d4 <NoteOn+0x290>
  8000834:	eec6 7a87 	vdiv.f32	s15, s13, s14
-    /* Oscillateur principal DDS 32 bits */
+    voices[slot].hand      = hand;
  8000838:	4a21      	ldr	r2, [pc, #132]	; (80008c0 <NoteOn+0x27c>)
  800083a:	69bb      	ldr	r3, [r7, #24]
  800083c:	2134      	movs	r1, #52	; 0x34
@@ -846,20 +846,20 @@ void NoteOn(const char *note,
  8000842:	4413      	add	r3, r2
  8000844:	3320      	adds	r3, #32
  8000846:	edc3 7a00 	vstr	s15, [r3]
+    /* Oscillateur principal DDS 32 bits */
+
+    voices[slot].phase_acc = 0;
 
     /* increment = f * 2^32 / fs  (calcul flottant a la note-on, pas dans la boucle audio) */
-    voices[slot].phase_inc_nom =
-        (uint32_t)(freq * 4294967296.0f / SAMPLE_RATE);
-
  800084a:	ed9f 7a1f 	vldr	s14, [pc, #124]	; 80008c8 <NoteOn+0x284>
  800084e:	eddf 7a22 	vldr	s15, [pc, #136]	; 80008d8 <NoteOn+0x294>
  8000852:	ee67 7a27 	vmul.f32	s15, s14, s15
  8000856:	eddf 6a1e 	vldr	s13, [pc, #120]	; 80008d0 <NoteOn+0x28c>
  800085a:	ee87 7aa6 	vdiv.f32	s14, s15, s13
-        (uint32_t)(freq * 4294967296.0f / SAMPLE_RATE);
+
  800085e:	eddf 6a1d 	vldr	s13, [pc, #116]	; 80008d4 <NoteOn+0x290>
  8000862:	eec6 7a87 	vdiv.f32	s15, s13, s14
-    voices[slot].phase_inc_nom =
+    voices[slot].phase_acc = 0;
  8000866:	4a16      	ldr	r2, [pc, #88]	; (80008c0 <NoteOn+0x27c>)
  8000868:	69bb      	ldr	r3, [r7, #24]
  800086a:	2134      	movs	r1, #52	; 0x34
@@ -867,8 +867,8 @@ void NoteOn(const char *note,
  8000870:	4413      	add	r3, r2
  8000872:	3324      	adds	r3, #36	; 0x24
  8000874:	edc3 7a00 	vstr	s15, [r3]
-    /* Enveloppe : attaque directement jusqu'au sustain (pas de discontinuité 1.0→0.8) */
-
+    voices[slot].phase_inc_nom =
+        (uint32_t)(freq * 4294967296.0f / SAMPLE_RATE);
  8000878:	69bb      	ldr	r3, [r7, #24]
  800087a:	2234      	movs	r2, #52	; 0x34
  800087c:	fb02 f303 	mul.w	r3, r2, r3
@@ -878,8 +878,8 @@ void NoteOn(const char *note,
  8000886:	4611      	mov	r1, r2
  8000888:	4618      	mov	r0, r3
  800088a:	f000 fda5 	bl	80013d8 <Voice_SetWave>
-    voices[slot].env_state     = ENV_ATTACK;
-    voices[slot].env_level     = 0.0f;
+
+    /* Enveloppe : attaque directement jusqu'au sustain (pas de discontinuité 1.0→0.8) */
  800088e:	4a0c      	ldr	r2, [pc, #48]	; (80008c0 <NoteOn+0x27c>)
  8000890:	69bb      	ldr	r3, [r7, #24]
  8000892:	2134      	movs	r1, #52	; 0x34
@@ -888,9 +888,9 @@ void NoteOn(const char *note,
  800089a:	332c      	adds	r3, #44	; 0x2c
  800089c:	f04f 527e 	mov.w	r2, #1065353216	; 0x3f800000
  80008a0:	601a      	str	r2, [r3, #0]
-    voices[slot].sustain_level = SUSTAIN_LEVEL;
 
-    voices[slot].attack_step =
+    voices[slot].env_state     = ENV_ATTACK;
+    voices[slot].env_level     = 0.0f;
  80008a2:	4a07      	ldr	r2, [pc, #28]	; (80008c0 <NoteOn+0x27c>)
  80008a4:	69bb      	ldr	r3, [r7, #24]
  80008a6:	2134      	movs	r1, #52	; 0x34
@@ -899,12 +899,12 @@ void NoteOn(const char *note,
  80008ae:	2201      	movs	r2, #1
  80008b0:	701a      	strb	r2, [r3, #0]
  80008b2:	e002      	b.n	80008ba <NoteOn+0x276>
-            WaveTableId wavetable)
+
  80008b4:	bf00      	nop
  80008b6:	e000      	b.n	80008ba <NoteOn+0x276>
-            }
+            {
  80008b8:	bf00      	nop
-        SUSTAIN_LEVEL /
+    voices[slot].sustain_level = SUSTAIN_LEVEL;
  80008ba:	3720      	adds	r7, #32
  80008bc:	46bd      	mov	sp, r7
  80008be:	bd80      	pop	{r7, pc}
@@ -917,11 +917,11 @@ void NoteOn(const char *note,
  80008d8:	42f00000 	.word	0x42f00000
 
 080008dc <NoteOff>:
+
+    voices[slot].attack_step =
+        SUSTAIN_LEVEL /
         ((ATTACK_TIME_MS * SAMPLE_RATE) / 1000.0f);
 
-    /* SUSTAIN_LEVEL / duree : la release part du niveau sustain -> 0 en RELEASE_TIME_MS */
-    voices[slot].release_step =
-        SUSTAIN_LEVEL /
  80008dc:	b580      	push	{r7, lr}
  80008de:	b084      	sub	sp, #16
  80008e0:	af00      	add	r7, sp, #0
@@ -930,14 +930,14 @@ void NoteOn(const char *note,
  80008e6:	70fb      	strb	r3, [r7, #3]
  80008e8:	4613      	mov	r3, r2
  80008ea:	70bb      	strb	r3, [r7, #2]
-        ((RELEASE_TIME_MS * SAMPLE_RATE) / 1000.0f);
-
-    Voice_SetWave(&voices[slot], wavetable);
+    /* SUSTAIN_LEVEL / duree : la release part du niveau sustain -> 0 en RELEASE_TIME_MS */
+    voices[slot].release_step =
+        SUSTAIN_LEVEL /
  80008ec:	2300      	movs	r3, #0
  80008ee:	60fb      	str	r3, [r7, #12]
  80008f0:	e02e      	b.n	8000950 <NoteOff+0x74>
+        ((RELEASE_TIME_MS * SAMPLE_RATE) / 1000.0f);
 
-    voices[slot].amplitude = 1.0f;
  80008f2:	4a1b      	ldr	r2, [pc, #108]	; (8000960 <NoteOff+0x84>)
  80008f4:	68fb      	ldr	r3, [r7, #12]
  80008f6:	2134      	movs	r1, #52	; 0x34
@@ -946,7 +946,7 @@ void NoteOn(const char *note,
  80008fe:	781b      	ldrb	r3, [r3, #0]
  8000900:	2b00      	cmp	r3, #0
  8000902:	d022      	beq.n	800094a <NoteOff+0x6e>
-
+    Voice_SetWave(&voices[slot], wavetable);
  8000904:	4a16      	ldr	r2, [pc, #88]	; (8000960 <NoteOff+0x84>)
  8000906:	68fb      	ldr	r3, [r7, #12]
  8000908:	2134      	movs	r1, #52	; 0x34
@@ -958,10 +958,10 @@ void NoteOn(const char *note,
  8000916:	4618      	mov	r0, r3
  8000918:	f7ff fc62 	bl	80001e0 <strcmp>
  800091c:	4603      	mov	r3, r0
-    voices[slot].amplitude = 1.0f;
+
  800091e:	2b00      	cmp	r3, #0
  8000920:	d113      	bne.n	800094a <NoteOff+0x6e>
-    /* Activation en dernier : la voix est prête avant d'être visible par l'ISR audio */
+
  8000922:	4a0f      	ldr	r2, [pc, #60]	; (8000960 <NoteOff+0x84>)
  8000924:	68fb      	ldr	r3, [r7, #12]
  8000926:	2134      	movs	r1, #52	; 0x34
@@ -969,12 +969,12 @@ void NoteOn(const char *note,
  800092c:	4413      	add	r3, r2
  800092e:	3308      	adds	r3, #8
  8000930:	781b      	ldrb	r3, [r3, #0]
-
+    Voice_SetWave(&voices[slot], wavetable);
  8000932:	78fa      	ldrb	r2, [r7, #3]
  8000934:	429a      	cmp	r2, r3
  8000936:	d108      	bne.n	800094a <NoteOff+0x6e>
-    voices[slot].active = 1;
-}
+    voices[slot].amplitude = 1.0f;
+
  8000938:	4a09      	ldr	r2, [pc, #36]	; (8000960 <NoteOff+0x84>)
  800093a:	68fb      	ldr	r3, [r7, #12]
  800093c:	2134      	movs	r1, #52	; 0x34
@@ -983,16 +983,16 @@ void NoteOn(const char *note,
  8000944:	3318      	adds	r3, #24
  8000946:	2203      	movs	r2, #3
  8000948:	701a      	strb	r2, [r3, #0]
-    Voice_SetWave(&voices[slot], wavetable);
+        SUSTAIN_LEVEL /
  800094a:	68fb      	ldr	r3, [r7, #12]
  800094c:	3301      	adds	r3, #1
  800094e:	60fb      	str	r3, [r7, #12]
  8000950:	68fb      	ldr	r3, [r7, #12]
  8000952:	2b0f      	cmp	r3, #15
  8000954:	ddcd      	ble.n	80008f2 <NoteOff+0x16>
-
-void NoteOff(const char *note,
-             Hand hand,
+    /* Activation en dernier : la voix est prête avant d'être visible par l'ISR audio */
+    voices[slot].active = 1;
+}
  8000956:	bf00      	nop
  8000958:	bf00      	nop
  800095a:	3710      	adds	r7, #16
@@ -1001,15 +1001,15 @@ void NoteOff(const char *note,
  8000960:	20000868 	.word	0x20000868
 
 08000964 <Envelope_Update>:
-             WaveTableId wavetable)
-{
-    (void)wavetable;   // paramètre inutilisé
+
+void NoteOff(const char *note,
+             Hand hand,
  8000964:	b480      	push	{r7}
  8000966:	b083      	sub	sp, #12
  8000968:	af00      	add	r7, sp, #0
  800096a:	6078      	str	r0, [r7, #4]
-
-    for(int i = 0; i < MAX_VOICES; i++)
+             WaveTableId wavetable)
+{
  800096c:	687b      	ldr	r3, [r7, #4]
  800096e:	7e1b      	ldrb	r3, [r3, #24]
  8000970:	2b03      	cmp	r3, #3
@@ -1021,11 +1021,11 @@ void NoteOff(const char *note,
  8000980:	0800098d 	.word	0x0800098d
  8000984:	080009cb 	.word	0x080009cb
  8000988:	080009d5 	.word	0x080009d5
+    (void)wavetable;   // paramètre inutilisé
+
+    for(int i = 0; i < MAX_VOICES; i++)
     {
         if(voices[i].active &&
-           strcmp(voices[i].note, note) == 0 &&
-           voices[i].hand == hand)
-        {
  800098c:	687b      	ldr	r3, [r7, #4]
  800098e:	ed93 7a07 	vldr	s14, [r3, #28]
  8000992:	687b      	ldr	r3, [r7, #4]
@@ -1033,8 +1033,8 @@ void NoteOff(const char *note,
  8000998:	ee77 7a27 	vadd.f32	s15, s14, s15
  800099c:	687b      	ldr	r3, [r7, #4]
  800099e:	edc3 7a07 	vstr	s15, [r3, #28]
-        	voices[i].env_state = ENV_RELEASE;
-        }
+           strcmp(voices[i].note, note) == 0 &&
+           voices[i].hand == hand)
  80009a2:	687b      	ldr	r3, [r7, #4]
  80009a4:	ed93 7a07 	vldr	s14, [r3, #28]
  80009a8:	687b      	ldr	r3, [r7, #4]
@@ -1042,43 +1042,43 @@ void NoteOff(const char *note,
  80009ae:	eeb4 7ae7 	vcmpe.f32	s14, s15
  80009b2:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  80009b6:	da00      	bge.n	80009ba <Envelope_Update+0x56>
+        {
+        	voices[i].env_state = ENV_RELEASE;
+        }
     }
 }
 
-static float Envelope_Update(Voice *v)
-{
-
  80009b8:	e02b      	b.n	8000a12 <Envelope_Update+0xae>
-}
+        	voices[i].env_state = ENV_RELEASE;
  80009ba:	687b      	ldr	r3, [r7, #4]
  80009bc:	6a9a      	ldr	r2, [r3, #40]	; 0x28
  80009be:	687b      	ldr	r3, [r7, #4]
  80009c0:	61da      	str	r2, [r3, #28]
-
+        }
  80009c2:	687b      	ldr	r3, [r7, #4]
  80009c4:	2202      	movs	r2, #2
  80009c6:	761a      	strb	r2, [r3, #24]
 
  80009c8:	e023      	b.n	8000a12 <Envelope_Update+0xae>
+static float Envelope_Update(Voice *v)
+{
+
     switch(v->env_state)
     {
 
-    case ENV_ATTACK:
-
-        v->env_level += v->attack_step;
  80009ca:	687b      	ldr	r3, [r7, #4]
  80009cc:	6a9a      	ldr	r2, [r3, #40]	; 0x28
  80009ce:	687b      	ldr	r3, [r7, #4]
  80009d0:	61da      	str	r2, [r3, #28]
+    case ENV_ATTACK:
+
+ 80009d2:	e01e      	b.n	8000a12 <Envelope_Update+0xae>
+        v->env_level += v->attack_step;
 
         if(v->env_level >= v->sustain_level)
- 80009d2:	e01e      	b.n	8000a12 <Envelope_Update+0xae>
         {
             v->env_level = v->sustain_level;
             v->env_state = ENV_SUSTAIN;
-        }
-
-        break;
  80009d4:	687b      	ldr	r3, [r7, #4]
  80009d6:	ed93 7a07 	vldr	s14, [r3, #28]
  80009da:	687b      	ldr	r3, [r7, #4]
@@ -1086,45 +1086,45 @@ static float Envelope_Update(Voice *v)
  80009e0:	ee77 7a67 	vsub.f32	s15, s14, s15
  80009e4:	687b      	ldr	r3, [r7, #4]
  80009e6:	edc3 7a07 	vstr	s15, [r3, #28]
+        }
 
-
-
+        break;
  80009ea:	687b      	ldr	r3, [r7, #4]
  80009ec:	edd3 7a07 	vldr	s15, [r3, #28]
  80009f0:	eef5 7ac0 	vcmpe.f32	s15, #0.0
  80009f4:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  80009f8:	d900      	bls.n	80009fc <Envelope_Update+0x98>
 
+
+    case ENV_SUSTAIN:
+
         v->env_level = v->sustain_level;
-
-        break;
-
 
  80009fa:	e009      	b.n	8000a10 <Envelope_Update+0xac>
 
  80009fc:	687b      	ldr	r3, [r7, #4]
  80009fe:	f04f 0200 	mov.w	r2, #0
  8000a02:	61da      	str	r2, [r3, #28]
-        v->env_level = v->sustain_level;
+
  8000a04:	687b      	ldr	r3, [r7, #4]
  8000a06:	2200      	movs	r2, #0
  8000a08:	761a      	strb	r2, [r3, #24]
-
+    case ENV_SUSTAIN:
  8000a0a:	687b      	ldr	r3, [r7, #4]
  8000a0c:	2200      	movs	r2, #0
  8000a0e:	701a      	strb	r2, [r3, #0]
 
  8000a10:	bf00      	nop
+    case ENV_RELEASE:
+
+        v->env_level -= v->release_step;
 
 
         if(v->env_level <= 0.0f)
-        {
-            v->env_level = 0.0f;
-            v->env_state = ENV_OFF;
  8000a12:	687b      	ldr	r3, [r7, #4]
  8000a14:	69db      	ldr	r3, [r3, #28]
  8000a16:	ee07 3a90 	vmov	s15, r3
-            v->active = 0;
+        {
  8000a1a:	eeb0 0a67 	vmov.f32	s0, s15
  8000a1e:	370c      	adds	r7, #12
  8000a20:	46bd      	mov	sp, r7
@@ -1132,48 +1132,48 @@ static float Envelope_Update(Voice *v)
  8000a26:	4770      	bx	lr
 
 08000a28 <MCP_Read_All>:
-        }
-
-        break;
+            v->env_level = 0.0f;
+            v->env_state = ENV_OFF;
+            v->active = 0;
  8000a28:	b580      	push	{r7, lr}
  8000a2a:	af00      	add	r7, sp, #0
-
+        }
 
  8000a2c:	2100      	movs	r1, #0
  8000a2e:	4820      	ldr	r0, [pc, #128]	; (8000ab0 <MCP_Read_All+0x88>)
  8000a30:	f001 f9db 	bl	8001dea <mcp23017_read_gpio_int>
  8000a34:	4603      	mov	r3, r0
  8000a36:	461a      	mov	r2, r3
-
+        }
  8000a38:	4b1e      	ldr	r3, [pc, #120]	; (8000ab4 <MCP_Read_All+0x8c>)
  8000a3a:	701a      	strb	r2, [r3, #0]
+        break;
 
-    case ENV_OFF:
 
  8000a3c:	2101      	movs	r1, #1
  8000a3e:	481c      	ldr	r0, [pc, #112]	; (8000ab0 <MCP_Read_All+0x88>)
  8000a40:	f001 f9d3 	bl	8001dea <mcp23017_read_gpio_int>
  8000a44:	4603      	mov	r3, r0
  8000a46:	461a      	mov	r2, r3
-    case ENV_OFF:
+
  8000a48:	4b1a      	ldr	r3, [pc, #104]	; (8000ab4 <MCP_Read_All+0x8c>)
  8000a4a:	705a      	strb	r2, [r3, #1]
+
+    case ENV_OFF:
+
         break;
     }
-
-
-    return v->env_level;
  8000a4c:	2100      	movs	r1, #0
  8000a4e:	481a      	ldr	r0, [pc, #104]	; (8000ab8 <MCP_Read_All+0x90>)
  8000a50:	f001 f9cb 	bl	8001dea <mcp23017_read_gpio_int>
  8000a54:	4603      	mov	r3, r0
  8000a56:	461a      	mov	r2, r3
-
+        break;
  8000a58:	4b16      	ldr	r3, [pc, #88]	; (8000ab4 <MCP_Read_All+0x8c>)
  8000a5a:	709a      	strb	r2, [r3, #2]
-}
 
-static void MCP_Read_All(void)
+
+    return v->env_level;
  8000a5c:	2101      	movs	r1, #1
  8000a5e:	4816      	ldr	r0, [pc, #88]	; (8000ab8 <MCP_Read_All+0x90>)
  8000a60:	f001 f9c3 	bl	8001dea <mcp23017_read_gpio_int>
@@ -1182,22 +1182,22 @@ static void MCP_Read_All(void)
 
  8000a68:	4b12      	ldr	r3, [pc, #72]	; (8000ab4 <MCP_Read_All+0x8c>)
  8000a6a:	70da      	strb	r2, [r3, #3]
+}
+
+static void MCP_Read_All(void)
 {
     mcp_state[0][0] =
-        mcp23017_read_gpio_int(&hmcp20, MCP23017_PORTA);
-
-    mcp_state[0][1] =
  8000a6c:	2100      	movs	r1, #0
  8000a6e:	4813      	ldr	r0, [pc, #76]	; (8000abc <MCP_Read_All+0x94>)
  8000a70:	f001 f9bb 	bl	8001dea <mcp23017_read_gpio_int>
  8000a74:	4603      	mov	r3, r0
  8000a76:	461a      	mov	r2, r3
-
+{
  8000a78:	4b0e      	ldr	r3, [pc, #56]	; (8000ab4 <MCP_Read_All+0x8c>)
  8000a7a:	711a      	strb	r2, [r3, #4]
-        mcp23017_read_gpio_int(&hmcp20, MCP23017_PORTB);
+        mcp23017_read_gpio_int(&hmcp20, MCP23017_PORTA);
 
-
+    mcp_state[0][1] =
  8000a7c:	2101      	movs	r1, #1
  8000a7e:	480f      	ldr	r0, [pc, #60]	; (8000abc <MCP_Read_All+0x94>)
  8000a80:	f001 f9b3 	bl	8001dea <mcp23017_read_gpio_int>
@@ -1206,11 +1206,11 @@ static void MCP_Read_All(void)
 
  8000a88:	4b0a      	ldr	r3, [pc, #40]	; (8000ab4 <MCP_Read_All+0x8c>)
  8000a8a:	715a      	strb	r2, [r3, #5]
+        mcp23017_read_gpio_int(&hmcp20, MCP23017_PORTB);
+
+
 
     mcp_state[1][0] =
-        mcp23017_read_gpio_int(&hmcp21, MCP23017_PORTA);
-
-    mcp_state[1][1] =
  8000a8c:	2100      	movs	r1, #0
  8000a8e:	480c      	ldr	r0, [pc, #48]	; (8000ac0 <MCP_Read_All+0x98>)
  8000a90:	f001 f9ab 	bl	8001dea <mcp23017_read_gpio_int>
@@ -1219,9 +1219,9 @@ static void MCP_Read_All(void)
 
  8000a98:	4b06      	ldr	r3, [pc, #24]	; (8000ab4 <MCP_Read_All+0x8c>)
  8000a9a:	719a      	strb	r2, [r3, #6]
-        mcp23017_read_gpio_int(&hmcp21, MCP23017_PORTB);
+        mcp23017_read_gpio_int(&hmcp21, MCP23017_PORTA);
 
-
+    mcp_state[1][1] =
  8000a9c:	2101      	movs	r1, #1
  8000a9e:	4808      	ldr	r0, [pc, #32]	; (8000ac0 <MCP_Read_All+0x98>)
  8000aa0:	f001 f9a3 	bl	8001dea <mcp23017_read_gpio_int>
@@ -1230,7 +1230,7 @@ static void MCP_Read_All(void)
 
  8000aa8:	4b02      	ldr	r3, [pc, #8]	; (8000ab4 <MCP_Read_All+0x8c>)
  8000aaa:	71da      	strb	r2, [r3, #7]
-
+        mcp23017_read_gpio_int(&hmcp21, MCP23017_PORTB);
  8000aac:	bf00      	nop
  8000aae:	bd80      	pop	{r7, pc}
  8000ab0:	20001724 	.word	0x20001724
@@ -1240,15 +1240,15 @@ static void MCP_Read_All(void)
  8000ac0:	2000173c 	.word	0x2000173c
 
 08000ac4 <MCP_Index>:
-    mcp_state[2][0] =
-        mcp23017_read_gpio_int(&hmcp22, MCP23017_PORTA);
+
+
 
  8000ac4:	b480      	push	{r7}
  8000ac6:	b083      	sub	sp, #12
  8000ac8:	af00      	add	r7, sp, #0
  8000aca:	4603      	mov	r3, r0
  8000acc:	71fb      	strb	r3, [r7, #7]
-    mcp_state[2][1] =
+    mcp_state[2][0] =
  8000ace:	79fb      	ldrb	r3, [r7, #7]
  8000ad0:	3b14      	subs	r3, #20
  8000ad2:	2b03      	cmp	r3, #3
@@ -1259,24 +1259,24 @@ static void MCP_Read_All(void)
  8000ae0:	08000af1 	.word	0x08000af1
  8000ae4:	08000af5 	.word	0x08000af5
  8000ae8:	08000af9 	.word	0x08000af9
-        mcp23017_read_gpio_int(&hmcp22, MCP23017_PORTB);
+        mcp23017_read_gpio_int(&hmcp22, MCP23017_PORTA);
 
  8000aec:	2300      	movs	r3, #0
  8000aee:	e006      	b.n	8000afe <MCP_Index+0x3a>
-
+    mcp_state[2][1] =
  8000af0:	2301      	movs	r3, #1
  8000af2:	e004      	b.n	8000afe <MCP_Index+0x3a>
-
+        mcp23017_read_gpio_int(&hmcp22, MCP23017_PORTB);
  8000af4:	2302      	movs	r3, #2
  8000af6:	e002      	b.n	8000afe <MCP_Index+0x3a>
-    mcp_state[3][0] =
+
  8000af8:	2303      	movs	r3, #3
  8000afa:	e000      	b.n	8000afe <MCP_Index+0x3a>
-        mcp23017_read_gpio_int(&hmcp23, MCP23017_PORTA);
 
-    mcp_state[3][1] =
+
+    mcp_state[3][0] =
  8000afc:	2300      	movs	r3, #0
-        mcp23017_read_gpio_int(&hmcp23, MCP23017_PORTB);
+        mcp23017_read_gpio_int(&hmcp23, MCP23017_PORTA);
  8000afe:	4618      	mov	r0, r3
  8000b00:	370c      	adds	r7, #12
  8000b02:	46bd      	mov	sp, r7
@@ -1285,18 +1285,18 @@ static void MCP_Read_All(void)
  8000b0a:	bf00      	nop
 
 08000b0c <HAL_GPIO_EXTI_Callback>:
+    }
+
+    return 0;
 }
 
 /* -------------------------------------------------------------------------- */
-/* IRQ-driven button scan (matches the final PCB wiring, verified from the    */
-/* routed netlist): each MCP23017's INTA/INTB pin has its own dedicated EXTI  */
-/* line, so a falling edge tells us exactly which chip+port to re-read -      */
  8000b0c:	b480      	push	{r7}
  8000b0e:	b083      	sub	sp, #12
  8000b10:	af00      	add	r7, sp, #0
  8000b12:	4603      	mov	r3, r0
  8000b14:	80fb      	strh	r3, [r7, #6]
-/* no more blind polling of all 4 chips every 5 ms.                          */
+/* IRQ-driven button scan (matches the final PCB wiring, verified from the    */
  8000b16:	88fb      	ldrh	r3, [r7, #6]
  8000b18:	f5b3 5f00 	cmp.w	r3, #8192	; 0x2000
  8000b1c:	d062      	beq.n	8000be4 <HAL_GPIO_EXTI_Callback+0xd8>
@@ -1329,14 +1329,14 @@ static void MCP_Read_All(void)
  8000b6c:	08000bf7 	.word	0x08000bf7
  8000b70:	f5b3 7f80 	cmp.w	r3, #256	; 0x100
  8000b74:	d024      	beq.n	8000bc0 <HAL_GPIO_EXTI_Callback+0xb4>
+/*   PA10 (EXTI10) -> MCP20 INTA   PC0  (EXTI0)  -> MCP20 INTB               */
+/*   PB12 (EXTI12) -> MCP21 INTA   PC1  (EXTI1)  -> MCP21 INTB               */
+/*   PA8  (EXTI8)  -> MCP22 INTA   PC2  (EXTI2)  -> MCP22 INTB               */
 /*   PC13 (EXTI13) -> MCP23 INTA   PC3  (EXTI3)  -> MCP23 INTB               */
 /* -------------------------------------------------------------------------- */
 #define MCP_DIRTY_BIT(mcp_idx, port) (1u << ((mcp_idx) * 2 + (port)))
-
-static volatile uint8_t s_mcp_dirty_mask;
-static volatile uint8_t s_scan_pending;
  8000b76:	e04b      	b.n	8000c10 <HAL_GPIO_EXTI_Callback+0x104>
-/*   PA10 (EXTI10) -> MCP20 INTA   PC0  (EXTI0)  -> MCP20 INTB               */
+/* line, so a falling edge tells us exactly which chip+port to re-read -      */
  8000b78:	4b28      	ldr	r3, [pc, #160]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000b7a:	781b      	ldrb	r3, [r3, #0]
  8000b7c:	b2db      	uxtb	r3, r3
@@ -1345,7 +1345,7 @@ static volatile uint8_t s_scan_pending;
  8000b84:	4b25      	ldr	r3, [pc, #148]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000b86:	701a      	strb	r2, [r3, #0]
  8000b88:	e03e      	b.n	8000c08 <HAL_GPIO_EXTI_Callback+0xfc>
-/*   PB12 (EXTI12) -> MCP21 INTA   PC1  (EXTI1)  -> MCP21 INTB               */
+/* no more blind polling of all 4 chips every 5 ms.                          */
  8000b8a:	4b24      	ldr	r3, [pc, #144]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000b8c:	781b      	ldrb	r3, [r3, #0]
  8000b8e:	b2db      	uxtb	r3, r3
@@ -1354,7 +1354,7 @@ static volatile uint8_t s_scan_pending;
  8000b96:	4b21      	ldr	r3, [pc, #132]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000b98:	701a      	strb	r2, [r3, #0]
  8000b9a:	e035      	b.n	8000c08 <HAL_GPIO_EXTI_Callback+0xfc>
-/*   PA8  (EXTI8)  -> MCP22 INTA   PC2  (EXTI2)  -> MCP22 INTB               */
+/*                                                                            */
  8000b9c:	4b1f      	ldr	r3, [pc, #124]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000b9e:	781b      	ldrb	r3, [r3, #0]
  8000ba0:	b2db      	uxtb	r3, r3
@@ -1363,7 +1363,7 @@ static volatile uint8_t s_scan_pending;
  8000ba8:	4b1c      	ldr	r3, [pc, #112]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000baa:	701a      	strb	r2, [r3, #0]
  8000bac:	e02c      	b.n	8000c08 <HAL_GPIO_EXTI_Callback+0xfc>
-/*   PC13 (EXTI13) -> MCP23 INTA   PC3  (EXTI3)  -> MCP23 INTB               */
+/*   PA10 (EXTI10) -> MCP20 INTA   PC0  (EXTI0)  -> MCP20 INTB               */
  8000bae:	4b1b      	ldr	r3, [pc, #108]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000bb0:	781b      	ldrb	r3, [r3, #0]
  8000bb2:	b2db      	uxtb	r3, r3
@@ -1372,7 +1372,7 @@ static volatile uint8_t s_scan_pending;
  8000bba:	4b18      	ldr	r3, [pc, #96]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000bbc:	701a      	strb	r2, [r3, #0]
  8000bbe:	e023      	b.n	8000c08 <HAL_GPIO_EXTI_Callback+0xfc>
-/* -------------------------------------------------------------------------- */
+/*   PB12 (EXTI12) -> MCP21 INTA   PC1  (EXTI1)  -> MCP21 INTB               */
  8000bc0:	4b16      	ldr	r3, [pc, #88]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000bc2:	781b      	ldrb	r3, [r3, #0]
  8000bc4:	b2db      	uxtb	r3, r3
@@ -1381,7 +1381,7 @@ static volatile uint8_t s_scan_pending;
  8000bcc:	4b13      	ldr	r3, [pc, #76]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000bce:	701a      	strb	r2, [r3, #0]
  8000bd0:	e01a      	b.n	8000c08 <HAL_GPIO_EXTI_Callback+0xfc>
-#define MCP_DIRTY_BIT(mcp_idx, port) (1u << ((mcp_idx) * 2 + (port)))
+/*   PA8  (EXTI8)  -> MCP22 INTA   PC2  (EXTI2)  -> MCP22 INTB               */
  8000bd2:	4b12      	ldr	r3, [pc, #72]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000bd4:	781b      	ldrb	r3, [r3, #0]
  8000bd6:	b2db      	uxtb	r3, r3
@@ -1390,7 +1390,7 @@ static volatile uint8_t s_scan_pending;
  8000bde:	4b0f      	ldr	r3, [pc, #60]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000be0:	701a      	strb	r2, [r3, #0]
  8000be2:	e011      	b.n	8000c08 <HAL_GPIO_EXTI_Callback+0xfc>
-
+/*   PC13 (EXTI13) -> MCP23 INTA   PC3  (EXTI3)  -> MCP23 INTB               */
  8000be4:	4b0d      	ldr	r3, [pc, #52]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000be6:	781b      	ldrb	r3, [r3, #0]
  8000be8:	b2db      	uxtb	r3, r3
@@ -1399,7 +1399,7 @@ static volatile uint8_t s_scan_pending;
  8000bf0:	4b0a      	ldr	r3, [pc, #40]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000bf2:	701a      	strb	r2, [r3, #0]
  8000bf4:	e008      	b.n	8000c08 <HAL_GPIO_EXTI_Callback+0xfc>
-static volatile uint8_t s_mcp_dirty_mask;
+/* -------------------------------------------------------------------------- */
  8000bf6:	4b09      	ldr	r3, [pc, #36]	; (8000c1c <HAL_GPIO_EXTI_Callback+0x110>)
  8000bf8:	781b      	ldrb	r3, [r3, #0]
  8000bfa:	b2db      	uxtb	r3, r3
@@ -1409,15 +1409,15 @@ static volatile uint8_t s_mcp_dirty_mask;
  8000c04:	701a      	strb	r2, [r3, #0]
  8000c06:	bf00      	nop
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
+static volatile uint8_t s_mcp_dirty_mask;
+static volatile uint8_t s_scan_pending;
  8000c08:	4b05      	ldr	r3, [pc, #20]	; (8000c20 <HAL_GPIO_EXTI_Callback+0x114>)
  8000c0a:	2201      	movs	r2, #1
  8000c0c:	701a      	strb	r2, [r3, #0]
  8000c0e:	e000      	b.n	8000c12 <HAL_GPIO_EXTI_Callback+0x106>
-static volatile uint8_t s_scan_pending;
+#define MCP_DIRTY_BIT(mcp_idx, port) (1u << ((mcp_idx) * 2 + (port)))
  8000c10:	bf00      	nop
-    switch(GPIO_Pin)
+
  8000c12:	370c      	adds	r7, #12
  8000c14:	46bd      	mov	sp, r7
  8000c16:	f85d 7b04 	ldr.w	r7, [sp], #4
@@ -1426,28 +1426,28 @@ static volatile uint8_t s_scan_pending;
  8000c20:	20001880 	.word	0x20001880
 
 08000c24 <I2C_ScanBus>:
+{
+    switch(GPIO_Pin)
+    {
     case GPIO_PIN_10: s_mcp_dirty_mask |= MCP_DIRTY_BIT(0, MCP23017_PORTA); break; /* MCP20 INTA */
     case GPIO_PIN_0:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(0, MCP23017_PORTB); break; /* MCP20 INTB */
     case GPIO_PIN_12: s_mcp_dirty_mask |= MCP_DIRTY_BIT(1, MCP23017_PORTA); break; /* MCP21 INTA */
-    case GPIO_PIN_1:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(1, MCP23017_PORTB); break; /* MCP21 INTB */
-    case GPIO_PIN_8:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(2, MCP23017_PORTA); break; /* MCP22 INTA */
-    case GPIO_PIN_2:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(2, MCP23017_PORTB); break; /* MCP22 INTB */
  8000c24:	b580      	push	{r7, lr}
  8000c26:	b082      	sub	sp, #8
  8000c28:	af00      	add	r7, sp, #0
-    case GPIO_PIN_13: s_mcp_dirty_mask |= MCP_DIRTY_BIT(3, MCP23017_PORTA); break; /* MCP23 INTA */
+    case GPIO_PIN_1:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(1, MCP23017_PORTB); break; /* MCP21 INTB */
  8000c2a:	4815      	ldr	r0, [pc, #84]	; (8000c80 <I2C_ScanBus+0x5c>)
  8000c2c:	f00b f9e6 	bl	800bffc <puts>
-    case GPIO_PIN_3:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(3, MCP23017_PORTB); break; /* MCP23 INTB */
+    case GPIO_PIN_8:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(2, MCP23017_PORTA); break; /* MCP22 INTA */
  8000c30:	2300      	movs	r3, #0
  8000c32:	71fb      	strb	r3, [r7, #7]
-    default: return;
-    }
+    case GPIO_PIN_2:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(2, MCP23017_PORTB); break; /* MCP22 INTB */
+    case GPIO_PIN_13: s_mcp_dirty_mask |= MCP_DIRTY_BIT(3, MCP23017_PORTA); break; /* MCP23 INTA */
  8000c34:	2303      	movs	r3, #3
  8000c36:	80bb      	strh	r3, [r7, #4]
  8000c38:	e015      	b.n	8000c66 <I2C_ScanBus+0x42>
-
-    s_scan_pending = 1;
+    case GPIO_PIN_3:  s_mcp_dirty_mask |= MCP_DIRTY_BIT(3, MCP23017_PORTB); break; /* MCP23 INTB */
+    default: return;
  8000c3a:	88bb      	ldrh	r3, [r7, #4]
  8000c3c:	005b      	lsls	r3, r3, #1
  8000c3e:	b299      	uxth	r1, r3
@@ -1458,32 +1458,32 @@ static volatile uint8_t s_scan_pending;
  8000c4a:	4603      	mov	r3, r0
  8000c4c:	2b00      	cmp	r3, #0
  8000c4e:	d107      	bne.n	8000c60 <I2C_ScanBus+0x3c>
-}
+    }
 
  8000c50:	88bb      	ldrh	r3, [r7, #4]
  8000c52:	4619      	mov	r1, r3
  8000c54:	480c      	ldr	r0, [pc, #48]	; (8000c88 <I2C_ScanBus+0x64>)
  8000c56:	f00b f94b 	bl	800bef0 <iprintf>
-/* Scanne le bus I2C1 (adresses 7 bits 0x03-0x77) et imprime qui repond.
+    s_scan_pending = 1;
  8000c5a:	79fb      	ldrb	r3, [r7, #7]
  8000c5c:	3301      	adds	r3, #1
  8000c5e:	71fb      	strb	r3, [r7, #7]
-    }
+    case GPIO_PIN_13: s_mcp_dirty_mask |= MCP_DIRTY_BIT(3, MCP23017_PORTA); break; /* MCP23 INTA */
  8000c60:	88bb      	ldrh	r3, [r7, #4]
  8000c62:	3301      	adds	r3, #1
  8000c64:	80bb      	strh	r3, [r7, #4]
  8000c66:	88bb      	ldrh	r3, [r7, #4]
  8000c68:	2b77      	cmp	r3, #119	; 0x77
  8000c6a:	d9e6      	bls.n	8000c3a <I2C_ScanBus+0x16>
+}
+
+/* Scanne le bus I2C1 (adresses 7 bits 0x03-0x77) et imprime qui repond.
    Sert a verifier que les 4 MCP23017 sont bien vus a 0x20/0x21/0x22/0x23
-   (un strap A0/A1/A2 faux ferait repondre la puce a une autre adresse,
-   ou en collision avec une autre puce deja presente). */
-static void I2C_ScanBus(void)
  8000c6c:	79fb      	ldrb	r3, [r7, #7]
  8000c6e:	4619      	mov	r1, r3
  8000c70:	4806      	ldr	r0, [pc, #24]	; (8000c8c <I2C_ScanBus+0x68>)
  8000c72:	f00b f93d 	bl	800bef0 <iprintf>
-{
+   (un strap A0/A1/A2 faux ferait repondre la puce a une autre adresse,
  8000c76:	bf00      	nop
  8000c78:	3708      	adds	r7, #8
  8000c7a:	46bd      	mov	sp, r7
@@ -1495,12 +1495,12 @@ static void I2C_ScanBus(void)
  8000c8c:	0800de10 	.word	0x0800de10
 
 08000c90 <MCP_Init_WithIRQ>:
+   ou en collision avec une autre puce deja presente). */
+static void I2C_ScanBus(void)
+{
     printf("Scan I2C1...\r\n");
     uint8_t found = 0;
 
-    for(uint16_t addr7 = 0x03; addr7 <= 0x77; addr7++)
-    {
-        if(HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)(addr7 << 1), 2, 5) == HAL_OK)
  8000c90:	b590      	push	{r4, r7, lr}
  8000c92:	b08b      	sub	sp, #44	; 0x2c
  8000c94:	af04      	add	r7, sp, #16
@@ -1508,49 +1508,49 @@ static void I2C_ScanBus(void)
  8000c98:	460b      	mov	r3, r1
  8000c9a:	607a      	str	r2, [r7, #4]
  8000c9c:	817b      	strh	r3, [r7, #10]
-        {
+    for(uint16_t addr7 = 0x03; addr7 <= 0x77; addr7++)
  8000c9e:	897b      	ldrh	r3, [r7, #10]
  8000ca0:	461a      	mov	r2, r3
  8000ca2:	4930      	ldr	r1, [pc, #192]	; (8000d64 <MCP_Init_WithIRQ+0xd4>)
  8000ca4:	68f8      	ldr	r0, [r7, #12]
  8000ca6:	f001 f840 	bl	8001d2a <mcp23017_init>
-            printf("  -> peripherique repond en 0x%02X\r\n", addr7);
+    {
  8000caa:	22ff      	movs	r2, #255	; 0xff
  8000cac:	2100      	movs	r1, #0
  8000cae:	68f8      	ldr	r0, [r7, #12]
  8000cb0:	f001 f884 	bl	8001dbc <mcp23017_iodir>
-            found++;
+        if(HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)(addr7 << 1), 2, 5) == HAL_OK)
  8000cb4:	22ff      	movs	r2, #255	; 0xff
  8000cb6:	2101      	movs	r1, #1
  8000cb8:	68f8      	ldr	r0, [r7, #12]
  8000cba:	f001 f87f 	bl	8001dbc <mcp23017_iodir>
-        }
+        {
  8000cbe:	2200      	movs	r2, #0
  8000cc0:	2100      	movs	r1, #0
  8000cc2:	68f8      	ldr	r0, [r7, #12]
  8000cc4:	f001 f8cc 	bl	8001e60 <mcp23017_intcon>
-    }
+            printf("  -> peripherique repond en 0x%02X\r\n", addr7);
  8000cc8:	2200      	movs	r2, #0
  8000cca:	2101      	movs	r1, #1
  8000ccc:	68f8      	ldr	r0, [r7, #12]
  8000cce:	f001 f8c7 	bl	8001e60 <mcp23017_intcon>
-
+            found++;
  8000cd2:	22ff      	movs	r2, #255	; 0xff
  8000cd4:	2100      	movs	r1, #0
  8000cd6:	68f8      	ldr	r0, [r7, #12]
  8000cd8:	f001 f8a8 	bl	8001e2c <mcp23017_gpinten>
-    printf("Scan I2C1 termine : %u peripherique(s) detecte(s) (4 attendus: 0x20,0x21,0x22,0x23)\r\n", found);
+        }
  8000cdc:	22ff      	movs	r2, #255	; 0xff
  8000cde:	2101      	movs	r1, #1
  8000ce0:	68f8      	ldr	r0, [r7, #12]
  8000ce2:	f001 f8a3 	bl	8001e2c <mcp23017_gpinten>
-}
+    }
 
  8000ce6:	2300      	movs	r3, #0
  8000ce8:	757b      	strb	r3, [r7, #21]
  8000cea:	2300      	movs	r3, #0
  8000cec:	753b      	strb	r3, [r7, #20]
-/* Initialise un MCP23017 et arme l'IRQ sur ses 16 broches, puis relit GPINTEN
+    printf("Scan I2C1 termine : %u peripherique(s) detecte(s) (4 attendus: 0x20,0x21,0x22,0x23)\r\n", found);
  8000cee:	f107 0315 	add.w	r3, r7, #21
  8000cf2:	461a      	mov	r2, r3
  8000cf4:	2104      	movs	r1, #4
@@ -1558,7 +1558,7 @@ static void I2C_ScanBus(void)
  8000cf8:	f001 f82c 	bl	8001d54 <mcp23017_read>
  8000cfc:	4603      	mov	r3, r0
  8000cfe:	75fb      	strb	r3, [r7, #23]
-   pour confirmer par I2C que la config a bien ete prise (glitch bus au power-up,
+}
  8000d00:	f107 0314 	add.w	r3, r7, #20
  8000d04:	461a      	mov	r2, r3
  8000d06:	2105      	movs	r1, #5
@@ -1566,8 +1566,8 @@ static void I2C_ScanBus(void)
  8000d0a:	f001 f823 	bl	8001d54 <mcp23017_read>
  8000d0e:	4603      	mov	r3, r0
  8000d10:	75bb      	strb	r3, [r7, #22]
-   adresse fausse, etc. sinon aucune touche de cette puce ne remontera jamais). */
-static void MCP_Init_WithIRQ(MCP23017_HandleTypeDef *hdev, uint16_t addr, const char *label)
+
+/* Initialise un MCP23017 et arme l'IRQ sur ses 16 broches, puis relit GPINTEN
  8000d12:	7dfb      	ldrb	r3, [r7, #23]
  8000d14:	2b00      	cmp	r3, #0
  8000d16:	d108      	bne.n	8000d2a <MCP_Init_WithIRQ+0x9a>
@@ -1580,8 +1580,8 @@ static void MCP_Init_WithIRQ(MCP23017_HandleTypeDef *hdev, uint16_t addr, const 
  8000d24:	7d3b      	ldrb	r3, [r7, #20]
  8000d26:	2bff      	cmp	r3, #255	; 0xff
  8000d28:	d010      	beq.n	8000d4c <MCP_Init_WithIRQ+0xbc>
-{
-    mcp23017_init(hdev, &hi2c1, addr);
+   pour confirmer par I2C que la config a bien ete prise (glitch bus au power-up,
+   adresse fausse, etc. sinon aucune touche de cette puce ne remontera jamais). */
  8000d2a:	8979      	ldrh	r1, [r7, #10]
  8000d2c:	7d7b      	ldrb	r3, [r7, #21]
  8000d2e:	461c      	mov	r4, r3
@@ -1598,18 +1598,18 @@ static void MCP_Init_WithIRQ(MCP23017_HandleTypeDef *hdev, uint16_t addr, const 
  8000d44:	4808      	ldr	r0, [pc, #32]	; (8000d68 <MCP_Init_WithIRQ+0xd8>)
  8000d46:	f00b f8d3 	bl	800bef0 <iprintf>
  8000d4a:	e006      	b.n	8000d5a <MCP_Init_WithIRQ+0xca>
+static void MCP_Init_WithIRQ(MCP23017_HandleTypeDef *hdev, uint16_t addr, const char *label)
+{
+    mcp23017_init(hdev, &hi2c1, addr);
     mcp23017_iodir(hdev, MCP23017_PORTA, MCP23017_IODIR_ALL_INPUT);
     mcp23017_iodir(hdev, MCP23017_PORTB, MCP23017_IODIR_ALL_INPUT);
-    mcp23017_intcon(hdev, MCP23017_PORTA, 0x00);
-    mcp23017_intcon(hdev, MCP23017_PORTB, 0x00);
-    mcp23017_gpinten(hdev, MCP23017_PORTA, 0xFF);
  8000d4c:	897b      	ldrh	r3, [r7, #10]
  8000d4e:	461a      	mov	r2, r3
  8000d50:	6879      	ldr	r1, [r7, #4]
  8000d52:	4806      	ldr	r0, [pc, #24]	; (8000d6c <MCP_Init_WithIRQ+0xdc>)
  8000d54:	f00b f8cc 	bl	800bef0 <iprintf>
-    mcp23017_gpinten(hdev, MCP23017_PORTB, 0xFF);
-
+    mcp23017_intcon(hdev, MCP23017_PORTA, 0x00);
+    mcp23017_intcon(hdev, MCP23017_PORTB, 0x00);
  8000d58:	bf00      	nop
  8000d5a:	bf00      	nop
  8000d5c:	371c      	adds	r7, #28
@@ -1621,27 +1621,27 @@ static void MCP_Init_WithIRQ(MCP23017_HandleTypeDef *hdev, uint16_t addr, const 
  8000d6c:	0800dec4 	.word	0x0800dec4
 
 08000d70 <MCP_Read_Dirty>:
-    uint8_t gpintenA = 0, gpintenB = 0;
-    HAL_StatusTypeDef stA = mcp23017_read(hdev, MCP23017_REG_GPINTENA | MCP23017_PORTA, &gpintenA);
-    HAL_StatusTypeDef stB = mcp23017_read(hdev, MCP23017_REG_GPINTENA | MCP23017_PORTB, &gpintenB);
+    mcp23017_gpinten(hdev, MCP23017_PORTA, 0xFF);
+    mcp23017_gpinten(hdev, MCP23017_PORTB, 0xFF);
 
+    uint8_t gpintenA = 0, gpintenB = 0;
  8000d70:	b590      	push	{r4, r7, lr}
  8000d72:	b089      	sub	sp, #36	; 0x24
  8000d74:	af00      	add	r7, sp, #0
  8000d76:	4603      	mov	r3, r0
  8000d78:	71fb      	strb	r3, [r7, #7]
-    if(stA != HAL_OK || stB != HAL_OK || gpintenA != 0xFF || gpintenB != 0xFF)
+    HAL_StatusTypeDef stA = mcp23017_read(hdev, MCP23017_REG_GPINTENA | MCP23017_PORTA, &gpintenA);
  8000d7a:	4b24      	ldr	r3, [pc, #144]	; (8000e0c <MCP_Read_Dirty+0x9c>)
  8000d7c:	f107 040c 	add.w	r4, r7, #12
  8000d80:	cb0f      	ldmia	r3, {r0, r1, r2, r3}
  8000d82:	e884 000f 	stmia.w	r4, {r0, r1, r2, r3}
-    {
-        printf("ATTENTION MCP%s (0x%02X): IRQ non confirmee ! GPINTENA=0x%02X(st%d) GPINTENB=0x%02X(st%d)\r\n",
+    HAL_StatusTypeDef stB = mcp23017_read(hdev, MCP23017_REG_GPINTENA | MCP23017_PORTB, &gpintenB);
+
  8000d86:	2300      	movs	r3, #0
  8000d88:	61fb      	str	r3, [r7, #28]
  8000d8a:	e037      	b.n	8000dfc <MCP_Read_Dirty+0x8c>
-               label, addr, gpintenA, stA, gpintenB, stB);
-    }
+    if(stA != HAL_OK || stB != HAL_OK || gpintenA != 0xFF || gpintenB != 0xFF)
+    {
  8000d8c:	79fa      	ldrb	r2, [r7, #7]
  8000d8e:	69fb      	ldr	r3, [r7, #28]
  8000d90:	005b      	lsls	r3, r3, #1
@@ -1649,8 +1649,8 @@ static void MCP_Init_WithIRQ(MCP23017_HandleTypeDef *hdev, uint16_t addr, const 
  8000d96:	f003 0301 	and.w	r3, r3, #1
  8000d9a:	2b00      	cmp	r3, #0
  8000d9c:	d00f      	beq.n	8000dbe <MCP_Read_Dirty+0x4e>
-    else
-    {
+        printf("ATTENTION MCP%s (0x%02X): IRQ non confirmee ! GPINTENA=0x%02X(st%d) GPINTENB=0x%02X(st%d)\r\n",
+               label, addr, gpintenA, stA, gpintenB, stB);
  8000d9e:	69fb      	ldr	r3, [r7, #28]
  8000da0:	009b      	lsls	r3, r3, #2
  8000da2:	3320      	adds	r3, #32
@@ -1664,8 +1664,8 @@ static void MCP_Init_WithIRQ(MCP23017_HandleTypeDef *hdev, uint16_t addr, const 
  8000db6:	4a16      	ldr	r2, [pc, #88]	; (8000e10 <MCP_Read_Dirty+0xa0>)
  8000db8:	69fb      	ldr	r3, [r7, #28]
  8000dba:	f802 1013 	strb.w	r1, [r2, r3, lsl #1]
-        printf("MCP%s (0x%02X) OK, IRQ armee sur les 16 broches\r\n", label, addr);
     }
+    else
  8000dbe:	79fa      	ldrb	r2, [r7, #7]
  8000dc0:	69fb      	ldr	r3, [r7, #28]
  8000dc2:	005b      	lsls	r3, r3, #1
@@ -1674,8 +1674,8 @@ static void MCP_Init_WithIRQ(MCP23017_HandleTypeDef *hdev, uint16_t addr, const 
  8000dca:	f003 0301 	and.w	r3, r3, #1
  8000dce:	2b00      	cmp	r3, #0
  8000dd0:	d011      	beq.n	8000df6 <MCP_Read_Dirty+0x86>
-}
-
+    {
+        printf("MCP%s (0x%02X) OK, IRQ armee sur les 16 broches\r\n", label, addr);
  8000dd2:	69fb      	ldr	r3, [r7, #28]
  8000dd4:	009b      	lsls	r3, r3, #2
  8000dd6:	3320      	adds	r3, #32
@@ -1692,16 +1692,16 @@ static void MCP_Init_WithIRQ(MCP23017_HandleTypeDef *hdev, uint16_t addr, const 
  8000df0:	4413      	add	r3, r2
  8000df2:	460a      	mov	r2, r1
  8000df4:	705a      	strb	r2, [r3, #1]
-        printf("ATTENTION MCP%s (0x%02X): IRQ non confirmee ! GPINTENA=0x%02X(st%d) GPINTENB=0x%02X(st%d)\r\n",
+
  8000df6:	69fb      	ldr	r3, [r7, #28]
  8000df8:	3301      	adds	r3, #1
  8000dfa:	61fb      	str	r3, [r7, #28]
  8000dfc:	69fb      	ldr	r3, [r7, #28]
  8000dfe:	2b03      	cmp	r3, #3
  8000e00:	ddc4      	ble.n	8000d8c <MCP_Read_Dirty+0x1c>
-/* Relit uniquement les ports MCP signales par l'IRQ (mask = bits MCP_DIRTY_BIT) */
-static void MCP_Read_Dirty(uint8_t mask)
-{
+    }
+}
+
  8000e02:	bf00      	nop
  8000e04:	bf00      	nop
  8000e06:	3724      	adds	r7, #36	; 0x24
@@ -1711,10 +1711,10 @@ static void MCP_Read_Dirty(uint8_t mask)
  8000e10:	20001718 	.word	0x20001718
 
 08000e14 <IsNoteHeldByOtherButton>:
+/* Relit uniquement les ports MCP signales par l'IRQ (mask = bits MCP_DIRTY_BIT) */
+static void MCP_Read_Dirty(uint8_t mask)
+{
     MCP23017_HandleTypeDef *chips[4] = { &hmcp20, &hmcp21, &hmcp22, &hmcp23 };
-
-    for(int i = 0; i < 4; i++)
-    {
  8000e14:	b580      	push	{r7, lr}
  8000e16:	b086      	sub	sp, #24
  8000e18:	af00      	add	r7, sp, #0
@@ -1722,17 +1722,17 @@ static void MCP_Read_Dirty(uint8_t mask)
  8000e1c:	60b9      	str	r1, [r7, #8]
  8000e1e:	4613      	mov	r3, r2
  8000e20:	71fb      	strb	r3, [r7, #7]
-        if(mask & MCP_DIRTY_BIT(i, MCP23017_PORTA))
+
  8000e22:	2300      	movs	r3, #0
  8000e24:	617b      	str	r3, [r7, #20]
  8000e26:	e042      	b.n	8000eae <IsNoteHeldByOtherButton+0x9a>
-        {
-            mcp_state[i][MCP23017_PORTA] = mcp23017_read_gpio_int(chips[i], MCP23017_PORTA);
+    for(int i = 0; i < 4; i++)
+    {
  8000e28:	697a      	ldr	r2, [r7, #20]
  8000e2a:	68fb      	ldr	r3, [r7, #12]
  8000e2c:	429a      	cmp	r2, r3
  8000e2e:	d03a      	beq.n	8000ea6 <IsNoteHeldByOtherButton+0x92>
-        }
+        if(mask & MCP_DIRTY_BIT(i, MCP23017_PORTA))
  8000e30:	4a23      	ldr	r2, [pc, #140]	; (8000ec0 <IsNoteHeldByOtherButton+0xac>)
  8000e32:	697b      	ldr	r3, [r7, #20]
  8000e34:	4413      	add	r3, r2
@@ -1744,13 +1744,13 @@ static void MCP_Read_Dirty(uint8_t mask)
  8000e40:	f852 3023 	ldr.w	r3, [r2, r3, lsl #2]
  8000e44:	2b00      	cmp	r3, #0
  8000e46:	d02f      	beq.n	8000ea8 <IsNoteHeldByOtherButton+0x94>
-        if(mask & MCP_DIRTY_BIT(i, MCP23017_PORTB))
         {
+            mcp_state[i][MCP23017_PORTA] = mcp23017_read_gpio_int(chips[i], MCP23017_PORTA);
  8000e48:	2300      	movs	r3, #0
  8000e4a:	613b      	str	r3, [r7, #16]
  8000e4c:	e027      	b.n	8000e9e <IsNoteHeldByOtherButton+0x8a>
-            mcp_state[i][MCP23017_PORTB] = mcp23017_read_gpio_int(chips[i], MCP23017_PORTB);
         }
+        if(mask & MCP_DIRTY_BIT(i, MCP23017_PORTB))
  8000e4e:	4a1d      	ldr	r2, [pc, #116]	; (8000ec4 <IsNoteHeldByOtherButton+0xb0>)
  8000e50:	697b      	ldr	r3, [r7, #20]
  8000e52:	f852 3023 	ldr.w	r3, [r2, r3, lsl #2]
@@ -1758,7 +1758,7 @@ static void MCP_Read_Dirty(uint8_t mask)
  8000e58:	f853 3022 	ldr.w	r3, [r3, r2, lsl #2]
  8000e5c:	2b00      	cmp	r3, #0
  8000e5e:	d01b      	beq.n	8000e98 <IsNoteHeldByOtherButton+0x84>
-    }
+        {
  8000e60:	4a18      	ldr	r2, [pc, #96]	; (8000ec4 <IsNoteHeldByOtherButton+0xb0>)
  8000e62:	697b      	ldr	r3, [r7, #20]
  8000e64:	f852 3023 	ldr.w	r3, [r2, r3, lsl #2]
@@ -1768,10 +1768,10 @@ static void MCP_Read_Dirty(uint8_t mask)
  8000e70:	4618      	mov	r0, r3
  8000e72:	f7ff f9b5 	bl	80001e0 <strcmp>
  8000e76:	4603      	mov	r3, r0
-        }
+        if(mask & MCP_DIRTY_BIT(i, MCP23017_PORTB))
  8000e78:	2b00      	cmp	r3, #0
  8000e7a:	d10d      	bne.n	8000e98 <IsNoteHeldByOtherButton+0x84>
-}
+            mcp_state[i][MCP23017_PORTB] = mcp23017_read_gpio_int(chips[i], MCP23017_PORTB);
  8000e7c:	4912      	ldr	r1, [pc, #72]	; (8000ec8 <IsNoteHeldByOtherButton+0xb4>)
  8000e7e:	697a      	ldr	r2, [r7, #20]
  8000e80:	4613      	mov	r3, r2
@@ -1781,15 +1781,15 @@ static void MCP_Read_Dirty(uint8_t mask)
  8000e88:	440b      	add	r3, r1
  8000e8a:	3303      	adds	r3, #3
  8000e8c:	781b      	ldrb	r3, [r3, #0]
-    }
+        {
  8000e8e:	79fa      	ldrb	r2, [r7, #7]
  8000e90:	429a      	cmp	r2, r3
  8000e92:	d101      	bne.n	8000e98 <IsNoteHeldByOtherButton+0x84>
-/* Renvoie 1 si un autre bouton encore presse tient deja la meme note+main.
-   Evite de couper une note partagee entre deux boutons lors d'un NoteOff partiel. */
+        }
+    }
  8000e94:	2301      	movs	r3, #1
  8000e96:	e00e      	b.n	8000eb6 <IsNoteHeldByOtherButton+0xa2>
-        {
+            mcp_state[i][MCP23017_PORTA] = mcp23017_read_gpio_int(chips[i], MCP23017_PORTA);
  8000e98:	693b      	ldr	r3, [r7, #16]
  8000e9a:	3301      	adds	r3, #1
  8000e9c:	613b      	str	r3, [r7, #16]
@@ -1797,22 +1797,22 @@ static void MCP_Read_Dirty(uint8_t mask)
  8000ea0:	2b01      	cmp	r3, #1
  8000ea2:	ddd4      	ble.n	8000e4e <IsNoteHeldByOtherButton+0x3a>
  8000ea4:	e000      	b.n	8000ea8 <IsNoteHeldByOtherButton+0x94>
-            mcp_state[i][MCP23017_PORTA] = mcp23017_read_gpio_int(chips[i], MCP23017_PORTA);
+    {
  8000ea6:	bf00      	nop
-        if(mask & MCP_DIRTY_BIT(i, MCP23017_PORTA))
+
  8000ea8:	697b      	ldr	r3, [r7, #20]
  8000eaa:	3301      	adds	r3, #1
  8000eac:	617b      	str	r3, [r7, #20]
  8000eae:	697b      	ldr	r3, [r7, #20]
  8000eb0:	2b3e      	cmp	r3, #62	; 0x3e
  8000eb2:	ddb9      	ble.n	8000e28 <IsNoteHeldByOtherButton+0x14>
+}
+/* Renvoie 1 si un autre bouton encore presse tient deja la meme note+main.
+   Evite de couper une note partagee entre deux boutons lors d'un NoteOff partiel. */
 static uint8_t IsNoteHeldByOtherButton(int except_i, const char *note, Hand hand)
 {
-    for(int j = 0; j < NB_BUTTONS; j++)
-    {
-        if(j == except_i) continue;
  8000eb4:	2300      	movs	r3, #0
-        if(previous_buttons[j] && active_sound[j] != NULL)
+    for(int j = 0; j < NB_BUTTONS; j++)
  8000eb6:	4618      	mov	r0, r3
  8000eb8:	3718      	adds	r7, #24
  8000eba:	46bd      	mov	sp, r7
@@ -1823,30 +1823,30 @@ static uint8_t IsNoteHeldByOtherButton(int except_i, const char *note, Hand hand
  8000ec8:	20000000 	.word	0x20000000
 
 08000ecc <NoteNameToMidi>:
+    {
+        if(j == except_i) continue;
+        if(previous_buttons[j] && active_sound[j] != NULL)
         {
-            for(int n = 0; n < 2; n++)
-            {
-                if(active_sound[j]->notes[n] != NULL &&
  8000ecc:	b580      	push	{r7, lr}
  8000ece:	b084      	sub	sp, #16
  8000ed0:	af00      	add	r7, sp, #0
  8000ed2:	6078      	str	r0, [r7, #4]
-                   strcmp(active_sound[j]->notes[n], note) == 0 &&
+            for(int n = 0; n < 2; n++)
  8000ed4:	6878      	ldr	r0, [r7, #4]
  8000ed6:	f000 ffdd 	bl	8001e94 <Note_GetFrequency>
  8000eda:	ed87 0a02 	vstr	s0, [r7, #8]
-                   buttons[j].hand == hand)
+            {
  8000ede:	edd7 7a02 	vldr	s15, [r7, #8]
  8000ee2:	eef5 7ac0 	vcmpe.f32	s15, #0.0
  8000ee6:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  8000eea:	d801      	bhi.n	8000ef0 <NoteNameToMidi+0x24>
-                {
-                    return 1;
+                if(active_sound[j]->notes[n] != NULL &&
+                   strcmp(active_sound[j]->notes[n], note) == 0 &&
  8000eec:	23ff      	movs	r3, #255	; 0xff
  8000eee:	e028      	b.n	8000f42 <NoteNameToMidi+0x76>
-                }
-            }
-        }
+                   buttons[j].hand == hand)
+                {
+                    return 1;
  8000ef0:	edd7 7a02 	vldr	s15, [r7, #8]
  8000ef4:	eddf 6a15 	vldr	s13, [pc, #84]	; 8000f4c <NoteNameToMidi+0x80>
  8000ef8:	ee87 7aa6 	vdiv.f32	s14, s15, s13
@@ -1862,23 +1862,23 @@ static uint8_t IsNoteHeldByOtherButton(int except_i, const char *note, Hand hand
  8000f20:	eefd 7ae7 	vcvt.s32.f32	s15, s15
  8000f24:	ee17 3a90 	vmov	r3, s15
  8000f28:	60fb      	str	r3, [r7, #12]
-    }
+                }
  8000f2a:	68fb      	ldr	r3, [r7, #12]
  8000f2c:	2b00      	cmp	r3, #0
  8000f2e:	da01      	bge.n	8000f34 <NoteNameToMidi+0x68>
  8000f30:	2300      	movs	r3, #0
  8000f32:	60fb      	str	r3, [r7, #12]
-    return 0;
+            }
  8000f34:	68fb      	ldr	r3, [r7, #12]
  8000f36:	2b7f      	cmp	r3, #127	; 0x7f
  8000f38:	dd01      	ble.n	8000f3e <NoteNameToMidi+0x72>
  8000f3a:	237f      	movs	r3, #127	; 0x7f
  8000f3c:	60fb      	str	r3, [r7, #12]
-}
-/* Convertit un nom de note (table note.c, La4=440Hz) en numero MIDI standard
+        }
+    }
  8000f3e:	68fb      	ldr	r3, [r7, #12]
  8000f40:	b2db      	uxtb	r3, r3
-   (60 = Do4 = C4). Renvoie 0xFF si la note est inconnue. */
+    return 0;
  8000f42:	4618      	mov	r0, r3
  8000f44:	3710      	adds	r7, #16
  8000f46:	46bd      	mov	sp, r7
@@ -1888,11 +1888,11 @@ static uint8_t IsNoteHeldByOtherButton(int except_i, const char *note, Hand hand
  8000f50:	428a0000 	.word	0x428a0000
 
 08000f54 <MIDI_NoteEvent>:
+}
+/* Convertit un nom de note (table note.c, La4=440Hz) en numero MIDI standard
+   (60 = Do4 = C4). Renvoie 0xFF si la note est inconnue. */
 static uint8_t NoteNameToMidi(const char *name)
 {
-    float freq = Note_GetFrequency(name);
-    if(freq <= 0.0f)
-    {
  8000f54:	b580      	push	{r7, lr}
  8000f56:	b086      	sub	sp, #24
  8000f58:	af02      	add	r7, sp, #8
@@ -1901,20 +1901,20 @@ static uint8_t NoteNameToMidi(const char *name)
  8000f5e:	70fb      	strb	r3, [r7, #3]
  8000f60:	4613      	mov	r3, r2
  8000f62:	70bb      	strb	r3, [r7, #2]
-        return 0xFF;
+    float freq = Note_GetFrequency(name);
  8000f64:	6878      	ldr	r0, [r7, #4]
  8000f66:	f7ff ffb1 	bl	8000ecc <NoteNameToMidi>
  8000f6a:	4603      	mov	r3, r0
  8000f6c:	73fb      	strb	r3, [r7, #15]
-    }
+    if(freq <= 0.0f)
  8000f6e:	7bfb      	ldrb	r3, [r7, #15]
  8000f70:	2bff      	cmp	r3, #255	; 0xff
  8000f72:	d03a      	beq.n	8000fea <MIDI_NoteEvent+0x96>
+    {
+        return 0xFF;
+    }
 
     int midi = (int)(69.0f + 12.0f * log2f(freq / 440.0f) + 0.5f);
-    if(midi < 0)   midi = 0;
-    if(midi > 127) midi = 127;
-
  8000f74:	78fb      	ldrb	r3, [r7, #3]
  8000f76:	2b00      	cmp	r3, #0
  8000f78:	bf14      	ite	ne
@@ -1922,7 +1922,7 @@ static uint8_t NoteNameToMidi(const char *name)
  8000f7c:	2300      	moveq	r3, #0
  8000f7e:	b2db      	uxtb	r3, r3
  8000f80:	73bb      	strb	r3, [r7, #14]
-    return (uint8_t)midi;
+    if(midi < 0)   midi = 0;
  8000f82:	4b1c      	ldr	r3, [pc, #112]	; (8000ff4 <MIDI_NoteEvent+0xa0>)
  8000f84:	881b      	ldrh	r3, [r3, #0]
  8000f86:	b29b      	uxth	r3, r3
@@ -1941,13 +1941,13 @@ static uint8_t NoteNameToMidi(const char *name)
  8000fa2:	b2db      	uxtb	r3, r3
  8000fa4:	3301      	adds	r3, #1
  8000fa6:	737b      	strb	r3, [r7, #13]
-}
+    if(midi > 127) midi = 127;
 
  8000fa8:	78bb      	ldrb	r3, [r7, #2]
  8000faa:	2b00      	cmp	r3, #0
  8000fac:	d00e      	beq.n	8000fcc <MIDI_NoteEvent+0x78>
-/* Convertit la pression brute en intensite 0..1 selon le sens du soufflet :
-   tirer -> plus fort au-dessus du repos, pousser -> plus fort en-dessous
+    return (uint8_t)midi;
+}
  8000fae:	7bbb      	ldrb	r3, [r7, #14]
  8000fb0:	f063 036f 	orn	r3, r3, #111	; 0x6f
  8000fb4:	b2da      	uxtb	r2, r3
@@ -1961,11 +1961,11 @@ static uint8_t NoteNameToMidi(const char *name)
  8000fc4:	480d      	ldr	r0, [pc, #52]	; (8000ffc <MIDI_NoteEvent+0xa8>)
  8000fc6:	f003 f8fb 	bl	80041c0 <USBD_MIDI_SendPacket>
  8000fca:	e00f      	b.n	8000fec <MIDI_NoteEvent+0x98>
+
+/* Convertit la pression brute en intensite 0..1 selon le sens du soufflet :
+   tirer -> plus fort au-dessus du repos, pousser -> plus fort en-dessous
    (le capteur est moins presse quand on pousse que quand on tire).
    Une zone morte autour du repos evite tout son au repos, et l'ecart max
-   attendu (au lieu de toute la plage ADC) permet d'atteindre le volume max
-   avec une pression ferme réaliste plutot qu'avec toute la plage du capteur. */
-static float Bellows_Gain(void)
  8000fcc:	7bbb      	ldrb	r3, [r7, #14]
  8000fce:	f063 037f 	orn	r3, r3, #127	; 0x7f
  8000fd2:	b2da      	uxtb	r2, r3
@@ -1979,11 +1979,11 @@ static float Bellows_Gain(void)
  8000fe2:	4806      	ldr	r0, [pc, #24]	; (8000ffc <MIDI_NoteEvent+0xa8>)
  8000fe4:	f003 f8ec 	bl	80041c0 <USBD_MIDI_SendPacket>
  8000fe8:	e000      	b.n	8000fec <MIDI_NoteEvent+0x98>
-    int midi = (int)(69.0f + 12.0f * log2f(freq / 440.0f) + 0.5f);
+        return 0xFF;
  8000fea:	bf00      	nop
-{
-    float delta;
-    float max_delta;
+   attendu (au lieu de toute la plage ADC) permet d'atteindre le volume max
+   avec une pression ferme réaliste plutot qu'avec toute la plage du capteur. */
+static float Bellows_Gain(void)
  8000fec:	3710      	adds	r7, #16
  8000fee:	46bd      	mov	sp, r7
  8000ff0:	bd80      	pop	{r7, pc}
@@ -1993,23 +1993,23 @@ static float Bellows_Gain(void)
  8000ffc:	200013f8 	.word	0x200013f8
 
 08001000 <Dispatch_Buttons>:
-
-    if(bellows_mode == MODE_PULL)
-    {
+{
+    float delta;
+    float max_delta;
  8001000:	b5f0      	push	{r4, r5, r6, r7, lr}
  8001002:	b08d      	sub	sp, #52	; 0x34
  8001004:	af06      	add	r7, sp, #24
+
+    if(bellows_mode == MODE_PULL)
+ 8001006:	f7ff facd 	bl	80005a4 <Update_Bellows_Mode>
+    {
         delta     = (float)pressure - (float)pressure_rest;
         max_delta = (float)BELLOWS_PULL_MAX_DELTA;
- 8001006:	f7ff facd 	bl	80005a4 <Update_Bellows_Mode>
-    }
-    else
-    {
  800100a:	2300      	movs	r3, #0
  800100c:	617b      	str	r3, [r7, #20]
  800100e:	e13b      	b.n	8001288 <Dispatch_Buttons+0x288>
-        delta     = (float)pressure_rest - (float)pressure;
-        max_delta = (float)BELLOWS_PUSH_MAX_DELTA;
+    }
+    else
  8001010:	49a2      	ldr	r1, [pc, #648]	; (800129c <Dispatch_Buttons+0x29c>)
  8001012:	697a      	ldr	r2, [r7, #20]
  8001014:	4613      	mov	r3, r2
@@ -2022,8 +2022,8 @@ static float Bellows_Gain(void)
  8001022:	f7ff fd4f 	bl	8000ac4 <MCP_Index>
  8001026:	4603      	mov	r3, r0
  8001028:	72fb      	strb	r3, [r7, #11]
-    }
-
+    {
+        delta     = (float)pressure_rest - (float)pressure;
  800102a:	499c      	ldr	r1, [pc, #624]	; (800129c <Dispatch_Buttons+0x29c>)
  800102c:	697a      	ldr	r2, [r7, #20]
  800102e:	4613      	mov	r3, r2
@@ -2034,7 +2034,7 @@ static float Bellows_Gain(void)
  8001038:	3301      	adds	r3, #1
  800103a:	781b      	ldrb	r3, [r3, #0]
  800103c:	72bb      	strb	r3, [r7, #10]
-    float range = max_delta - (float)BELLOWS_DEADZONE;
+        max_delta = (float)BELLOWS_PUSH_MAX_DELTA;
  800103e:	4997      	ldr	r1, [pc, #604]	; (800129c <Dispatch_Buttons+0x29c>)
  8001040:	697a      	ldr	r2, [r7, #20]
  8001042:	4613      	mov	r3, r2
@@ -2045,10 +2045,10 @@ static float Bellows_Gain(void)
  800104c:	3302      	adds	r3, #2
  800104e:	781b      	ldrb	r3, [r3, #0]
  8001050:	727b      	strb	r3, [r7, #9]
-    float gain  = (range > 1.0f) ? (delta - (float)BELLOWS_DEADZONE) / range : 0.0f;
+    }
 
-    if(gain < 0.0f) gain = 0.0f;
-    if(gain > 1.0f) gain = 1.0f;
+    float range = max_delta - (float)BELLOWS_DEADZONE;
+    float gain  = (range > 1.0f) ? (delta - (float)BELLOWS_DEADZONE) / range : 0.0f;
  8001052:	7afa      	ldrb	r2, [r7, #11]
  8001054:	7abb      	ldrb	r3, [r7, #10]
  8001056:	4992      	ldr	r1, [pc, #584]	; (80012a0 <Dispatch_Buttons+0x2a0>)
@@ -2060,11 +2060,11 @@ static float Bellows_Gain(void)
  8001062:	7a7b      	ldrb	r3, [r7, #9]
  8001064:	fa42 f303 	asr.w	r3, r2, r3
  8001068:	b2db      	uxtb	r3, r3
-    if(gain < 0.0f) gain = 0.0f;
+    float range = max_delta - (float)BELLOWS_DEADZONE;
  800106a:	f003 0301 	and.w	r3, r3, #1
  800106e:	723b      	strb	r3, [r7, #8]
 
-    return gain;
+    if(gain < 0.0f) gain = 0.0f;
  8001070:	7a3b      	ldrb	r3, [r7, #8]
  8001072:	2b00      	cmp	r3, #0
  8001074:	bf0c      	ite	eq
@@ -2072,12 +2072,12 @@ static float Bellows_Gain(void)
  8001078:	2300      	movne	r3, #0
  800107a:	b2db      	uxtb	r3, r3
  800107c:	723b      	strb	r3, [r7, #8]
-}
+    if(gain > 1.0f) gain = 1.0f;
 
-/* Main gauche -> canal MIDI 0, main droite -> canal MIDI 1.
-   Velocite derivee de la pression du soufflet (expressivite). */
-static void MIDI_NoteEvent(const char *note, Hand hand, uint8_t note_on)
-{
+    /* Courbe en puissance : abaisse le volume pour les faibles pressions
+       (repos/legers appuis plus discrets) sans changer les extremes 0 et 1. */
+    gain = powf(gain, BELLOWS_CURVE_EXPONENT);
+
  800107e:	7a3b      	ldrb	r3, [r7, #8]
  8001080:	2b00      	cmp	r3, #0
  8001082:	f000 809d 	beq.w	80011c0 <Dispatch_Buttons+0x1c0>
@@ -2087,19 +2087,19 @@ static void MIDI_NoteEvent(const char *note, Hand hand, uint8_t note_on)
  800108c:	781b      	ldrb	r3, [r3, #0]
  800108e:	2b00      	cmp	r3, #0
  8001090:	f040 8096 	bne.w	80011c0 <Dispatch_Buttons+0x1c0>
-    if(midi_note == 0xFF)
-    {
-        return;
-    }
+}
 
-    uint8_t channel  = (hand == HAND_LEFT) ? 0 : 1;
+/* Main gauche -> canal MIDI 0, main droite -> canal MIDI 1.
+   Velocite derivee de la pression du soufflet (expressivite). */
+static void MIDI_NoteEvent(const char *note, Hand hand, uint8_t note_on)
+{
  8001094:	4b84      	ldr	r3, [pc, #528]	; (80012a8 <Dispatch_Buttons+0x2a8>)
  8001096:	781b      	ldrb	r3, [r3, #0]
  8001098:	b2db      	uxtb	r3, r3
  800109a:	2b00      	cmp	r3, #0
  800109c:	d10c      	bne.n	80010b8 <Dispatch_Buttons+0xb8>
-    uint8_t velocity = (uint8_t)(1 + Bellows_Gain() * 126.0f);
-
+    uint8_t midi_note = NoteNameToMidi(note);
+    if(midi_note == 0xFF)
  800109e:	697a      	ldr	r2, [r7, #20]
  80010a0:	4613      	mov	r3, r2
  80010a2:	00db      	lsls	r3, r3, #3
@@ -2112,10 +2112,10 @@ static void MIDI_NoteEvent(const char *note, Hand hand, uint8_t note_on)
  80010b0:	697b      	ldr	r3, [r7, #20]
  80010b2:	f841 2023 	str.w	r2, [r1, r3, lsl #2]
  80010b6:	e00b      	b.n	80010d0 <Dispatch_Buttons+0xd0>
-    if(note_on)
     {
-        USBD_MIDI_SendPacket(&hUsbDeviceFS, 0, MIDI_CIN_NOTE_ON,
-                              MIDI_STATUS_NOTE_ON | channel, midi_note, velocity);
+        return;
+    }
+
  80010b8:	697a      	ldr	r2, [r7, #20]
  80010ba:	4613      	mov	r3, r2
  80010bc:	00db      	lsls	r3, r3, #3
@@ -2127,18 +2127,18 @@ static void MIDI_NoteEvent(const char *note, Hand hand, uint8_t note_on)
  80010c8:	4978      	ldr	r1, [pc, #480]	; (80012ac <Dispatch_Buttons+0x2ac>)
  80010ca:	697b      	ldr	r3, [r7, #20]
  80010cc:	f841 2023 	str.w	r2, [r1, r3, lsl #2]
-    }
-    else
-    {
-        USBD_MIDI_SendPacket(&hUsbDeviceFS, 0, MIDI_CIN_NOTE_OFF,
+    uint8_t channel  = (hand == HAND_LEFT) ? 0 : 1;
+    uint8_t velocity = (uint8_t)(1 + Bellows_Gain() * 126.0f);
+
+    if(note_on)
  80010d0:	4a76      	ldr	r2, [pc, #472]	; (80012ac <Dispatch_Buttons+0x2ac>)
  80010d2:	697b      	ldr	r3, [r7, #20]
  80010d4:	f852 3023 	ldr.w	r3, [r2, r3, lsl #2]
  80010d8:	607b      	str	r3, [r7, #4]
-                              MIDI_STATUS_NOTE_OFF | channel, midi_note, 0);
+    {
+        USBD_MIDI_SendPacket(&hUsbDeviceFS, 0, MIDI_CIN_NOTE_ON,
+                              MIDI_STATUS_NOTE_ON | channel, midi_note, velocity);
     }
-}
-
  80010da:	4970      	ldr	r1, [pc, #448]	; (800129c <Dispatch_Buttons+0x29c>)
  80010dc:	697a      	ldr	r2, [r7, #20]
  80010de:	4613      	mov	r3, r2
@@ -2147,7 +2147,7 @@ static void MIDI_NoteEvent(const char *note, Hand hand, uint8_t note_on)
  80010e4:	009b      	lsls	r3, r3, #2
  80010e6:	440b      	add	r3, r1
  80010e8:	781b      	ldrb	r3, [r3, #0]
-    }
+        USBD_MIDI_SendPacket(&hUsbDeviceFS, 0, MIDI_CIN_NOTE_ON,
  80010ea:	461e      	mov	r6, r3
  80010ec:	7abb      	ldrb	r3, [r7, #10]
  80010ee:	2b00      	cmp	r3, #0
@@ -2156,9 +2156,9 @@ static void MIDI_NoteEvent(const char *note, Hand hand, uint8_t note_on)
  80010f4:	e000      	b.n	80010f8 <Dispatch_Buttons+0xf8>
  80010f6:	2542      	movs	r5, #66	; 0x42
  80010f8:	7a79      	ldrb	r1, [r7, #9]
-static void Dispatch_Buttons(void)
-{
-    // Lecture du sens du soufflet via MCP23 GPA7
+    else
+    {
+        USBD_MIDI_SendPacket(&hUsbDeviceFS, 0, MIDI_CIN_NOTE_OFF,
  80010fa:	4868      	ldr	r0, [pc, #416]	; (800129c <Dispatch_Buttons+0x29c>)
  80010fc:	697a      	ldr	r2, [r7, #20]
  80010fe:	4613      	mov	r3, r2
@@ -2168,35 +2168,35 @@ static void Dispatch_Buttons(void)
  8001106:	4403      	add	r3, r0
  8001108:	3303      	adds	r3, #3
  800110a:	781b      	ldrb	r3, [r3, #0]
-    }
+        USBD_MIDI_SendPacket(&hUsbDeviceFS, 0, MIDI_CIN_NOTE_ON,
  800110c:	2b00      	cmp	r3, #0
  800110e:	d101      	bne.n	8001114 <Dispatch_Buttons+0x114>
  8001110:	4867      	ldr	r0, [pc, #412]	; (80012b0 <Dispatch_Buttons+0x2b0>)
  8001112:	e000      	b.n	8001116 <Dispatch_Buttons+0x116>
  8001114:	4867      	ldr	r0, [pc, #412]	; (80012b4 <Dispatch_Buttons+0x2b4>)
-    Update_Bellows_Mode();
+                              MIDI_STATUS_NOTE_OFF | channel, midi_note, 0);
  8001116:	687b      	ldr	r3, [r7, #4]
  8001118:	681b      	ldr	r3, [r3, #0]
-    }
+        USBD_MIDI_SendPacket(&hUsbDeviceFS, 0, MIDI_CIN_NOTE_ON,
  800111a:	2b00      	cmp	r3, #0
  800111c:	d002      	beq.n	8001124 <Dispatch_Buttons+0x124>
  800111e:	687b      	ldr	r3, [r7, #4]
  8001120:	681b      	ldr	r3, [r3, #0]
  8001122:	e000      	b.n	8001126 <Dispatch_Buttons+0x126>
  8001124:	4b64      	ldr	r3, [pc, #400]	; (80012b8 <Dispatch_Buttons+0x2b8>)
-
+    }
  8001126:	687a      	ldr	r2, [r7, #4]
  8001128:	6852      	ldr	r2, [r2, #4]
-    }
+        USBD_MIDI_SendPacket(&hUsbDeviceFS, 0, MIDI_CIN_NOTE_ON,
  800112a:	2a00      	cmp	r2, #0
  800112c:	d001      	beq.n	8001132 <Dispatch_Buttons+0x132>
  800112e:	4c63      	ldr	r4, [pc, #396]	; (80012bc <Dispatch_Buttons+0x2bc>)
  8001130:	e000      	b.n	8001134 <Dispatch_Buttons+0x134>
  8001132:	4c61      	ldr	r4, [pc, #388]	; (80012b8 <Dispatch_Buttons+0x2b8>)
-    for(int i = 0; i < NB_BUTTONS; i++)
+}
  8001134:	687a      	ldr	r2, [r7, #4]
  8001136:	6852      	ldr	r2, [r2, #4]
-    }
+        USBD_MIDI_SendPacket(&hUsbDeviceFS, 0, MIDI_CIN_NOTE_ON,
  8001138:	2a00      	cmp	r2, #0
  800113a:	d002      	beq.n	8001142 <Dispatch_Buttons+0x142>
  800113c:	687a      	ldr	r2, [r7, #4]
@@ -2213,19 +2213,19 @@ static void Dispatch_Buttons(void)
  8001152:	6979      	ldr	r1, [r7, #20]
  8001154:	485a      	ldr	r0, [pc, #360]	; (80012c0 <Dispatch_Buttons+0x2c0>)
  8001156:	f00a fecb 	bl	800bef0 <iprintf>
-    {
-        uint8_t mcp_index = MCP_Index(buttons[i].mcp);
+
+static void Dispatch_Buttons(void)
  800115a:	2300      	movs	r3, #0
  800115c:	613b      	str	r3, [r7, #16]
  800115e:	e02b      	b.n	80011b8 <Dispatch_Buttons+0x1b8>
-
-        uint8_t port = buttons[i].port;
+{
+    // Lecture du sens du soufflet via MCP23 GPA7
  8001160:	687b      	ldr	r3, [r7, #4]
  8001162:	693a      	ldr	r2, [r7, #16]
  8001164:	f853 3022 	ldr.w	r3, [r3, r2, lsl #2]
  8001168:	2b00      	cmp	r3, #0
  800116a:	d022      	beq.n	80011b2 <Dispatch_Buttons+0x1b2>
-        uint8_t bit  = buttons[i].bit;
+    Update_Bellows_Mode();
 
  800116c:	687b      	ldr	r3, [r7, #4]
  800116e:	693a      	ldr	r2, [r7, #16]
@@ -2243,12 +2243,12 @@ static void Dispatch_Buttons(void)
  8001188:	7a1b      	ldrb	r3, [r3, #8]
  800118a:	461a      	mov	r2, r3
  800118c:	f7ff fa5a 	bl	8000644 <NoteOn>
+    for(int i = 0; i < NB_BUTTONS; i++)
+    {
+        uint8_t mcp_index = MCP_Index(buttons[i].mcp);
 
-        uint8_t state =
-            (mcp_state[mcp_index][port] >> bit) & 1;
-
-        state = !state;
-     
+        uint8_t port = buttons[i].port;
+        uint8_t bit  = buttons[i].bit;
  8001190:	687b      	ldr	r3, [r7, #4]
  8001192:	693a      	ldr	r2, [r7, #16]
  8001194:	f853 0022 	ldr.w	r0, [r3, r2, lsl #2]
@@ -2264,20 +2264,20 @@ static void Dispatch_Buttons(void)
  80011aa:	2201      	movs	r2, #1
  80011ac:	4619      	mov	r1, r3
  80011ae:	f7ff fed1 	bl	8000f54 <MIDI_NoteEvent>
-        uint8_t mcp_index = MCP_Index(buttons[i].mcp);
+static void Dispatch_Buttons(void)
  80011b2:	693b      	ldr	r3, [r7, #16]
  80011b4:	3301      	adds	r3, #1
  80011b6:	613b      	str	r3, [r7, #16]
  80011b8:	693b      	ldr	r3, [r7, #16]
  80011ba:	2b01      	cmp	r3, #1
  80011bc:	ddd0      	ble.n	8001160 <Dispatch_Buttons+0x160>
-    uint8_t midi_note = NoteNameToMidi(note);
+    return gain;
  80011be:	e05b      	b.n	8001278 <Dispatch_Buttons+0x278>
-        {
-            /*
-                On capture le son correspondant
-                au sens du soufflet AU MOMENT de l'appui
-            */
+        state = !state;
+     
+        /*
+            APPUI
+        */
 
  80011c0:	7a3b      	ldrb	r3, [r7, #8]
  80011c2:	2b00      	cmp	r3, #0
@@ -2288,32 +2288,32 @@ static void Dispatch_Buttons(void)
  80011cc:	781b      	ldrb	r3, [r3, #0]
  80011ce:	2b00      	cmp	r3, #0
  80011d0:	d052      	beq.n	8001278 <Dispatch_Buttons+0x278>
-            if(bellows_mode == MODE_PUSH)
-            {
-                active_sound[i] = &buttons[i].push;
+        if(state && !previous_buttons[i])
+        {
+            /*
  80011d2:	4a36      	ldr	r2, [pc, #216]	; (80012ac <Dispatch_Buttons+0x2ac>)
  80011d4:	697b      	ldr	r3, [r7, #20]
  80011d6:	f852 3023 	ldr.w	r3, [r2, r3, lsl #2]
  80011da:	603b      	str	r3, [r7, #0]
-            }
-            else
-            {
+                On capture le son correspondant
+                au sens du soufflet AU MOMENT de l'appui
+            */
  80011dc:	683b      	ldr	r3, [r7, #0]
  80011de:	2b00      	cmp	r3, #0
  80011e0:	d045      	beq.n	800126e <Dispatch_Buttons+0x26e>
-                active_sound[i] = &buttons[i].pull;
-            }
+
+            if(bellows_mode == MODE_PUSH)
  80011e2:	2300      	movs	r3, #0
  80011e4:	60fb      	str	r3, [r7, #12]
  80011e6:	e03f      	b.n	8001268 <Dispatch_Buttons+0x268>
-
-
+            {
+                active_sound[i] = &buttons[i].push;
  80011e8:	683b      	ldr	r3, [r7, #0]
  80011ea:	68fa      	ldr	r2, [r7, #12]
  80011ec:	f853 3022 	ldr.w	r3, [r3, r2, lsl #2]
  80011f0:	2b00      	cmp	r3, #0
  80011f2:	d036      	beq.n	8001262 <Dispatch_Buttons+0x262>
-            ButtonSound *sound = active_sound[i];
+            }
  80011f4:	683b      	ldr	r3, [r7, #0]
  80011f6:	68fa      	ldr	r2, [r7, #12]
  80011f8:	f853 1022 	ldr.w	r1, [r3, r2, lsl #2]
@@ -2330,11 +2330,11 @@ static void Dispatch_Buttons(void)
  8001210:	6978      	ldr	r0, [r7, #20]
  8001212:	f7ff fdff 	bl	8000e14 <IsNoteHeldByOtherButton>
  8001216:	4603      	mov	r3, r0
-
+                active_sound[i] = &buttons[i].push;
  8001218:	2b00      	cmp	r3, #0
  800121a:	d122      	bne.n	8001262 <Dispatch_Buttons+0x262>
-
-            printf("Bouton %d presse (MCP%d port%c bit%d, main %s) -> %s%s%s\r\n",
+            else
+            {
  800121c:	683b      	ldr	r3, [r7, #0]
  800121e:	68fa      	ldr	r2, [r7, #12]
  8001220:	f853 0022 	ldr.w	r0, [r3, r2, lsl #2]
@@ -2351,12 +2351,12 @@ static void Dispatch_Buttons(void)
  8001238:	7a1b      	ldrb	r3, [r3, #8]
  800123a:	461a      	mov	r2, r3
  800123c:	f7ff fb4e 	bl	80008dc <NoteOff>
-                   i,
-                   buttons[i].mcp,
-                   (port == MCP23017_PORTA) ? 'A' : 'B',
-                   bit,
-                   (buttons[i].hand == HAND_LEFT) ? "gauche" : "droite",
-                   sound->notes[0] ? sound->notes[0] : "",
+                active_sound[i] = &buttons[i].pull;
+            }
+
+
+            ButtonSound *sound = active_sound[i];
+
  8001240:	683b      	ldr	r3, [r7, #0]
  8001242:	68fa      	ldr	r2, [r7, #12]
  8001244:	f853 0022 	ldr.w	r0, [r3, r2, lsl #2]
@@ -2372,41 +2372,41 @@ static void Dispatch_Buttons(void)
  800125a:	2200      	movs	r2, #0
  800125c:	4619      	mov	r1, r3
  800125e:	f7ff fe79 	bl	8000f54 <MIDI_NoteEvent>
-            }
+            if(bellows_mode == MODE_PUSH)
  8001262:	68fb      	ldr	r3, [r7, #12]
  8001264:	3301      	adds	r3, #1
  8001266:	60fb      	str	r3, [r7, #12]
  8001268:	68fb      	ldr	r3, [r7, #12]
  800126a:	2b01      	cmp	r3, #1
  800126c:	ddbc      	ble.n	80011e8 <Dispatch_Buttons+0x1e8>
-                   sound->notes[1] ? "+" : "",
-                   sound->notes[1] ? sound->notes[1] : "");
-
-            for(int n = 0; n < 2; n++)
-            {
-                if(sound->notes[n] != NULL)
+            printf("Bouton %d presse (MCP%d port%c bit%d, main %s) -> %s%s%s\r\n",
+                   i,
+                   buttons[i].mcp,
+                   (port == MCP23017_PORTA) ? 'A' : 'B',
+                   bit,
+                   (buttons[i].hand == HAND_LEFT) ? "gauche" : "droite",
  800126e:	4a0f      	ldr	r2, [pc, #60]	; (80012ac <Dispatch_Buttons+0x2ac>)
  8001270:	697b      	ldr	r3, [r7, #20]
  8001272:	2100      	movs	r1, #0
  8001274:	f842 1023 	str.w	r1, [r2, r3, lsl #2]
-                {
-                    NoteOn(
-                        sound->notes[n],
-                        buttons[i].hand,
+                   sound->notes[0] ? sound->notes[0] : "",
+                   sound->notes[1] ? "+" : "",
+                   sound->notes[1] ? sound->notes[1] : "");
+
  8001278:	4a0a      	ldr	r2, [pc, #40]	; (80012a4 <Dispatch_Buttons+0x2a4>)
  800127a:	697b      	ldr	r3, [r7, #20]
  800127c:	4413      	add	r3, r2
  800127e:	7a3a      	ldrb	r2, [r7, #8]
  8001280:	701a      	strb	r2, [r3, #0]
-    {
+        max_delta = (float)BELLOWS_PULL_MAX_DELTA;
  8001282:	697b      	ldr	r3, [r7, #20]
  8001284:	3301      	adds	r3, #1
  8001286:	617b      	str	r3, [r7, #20]
  8001288:	697b      	ldr	r3, [r7, #20]
  800128a:	2b3e      	cmp	r3, #62	; 0x3e
  800128c:	f77f aec0 	ble.w	8001010 <Dispatch_Buttons+0x10>
-                        sound->wavetable
-                    );
+            for(int n = 0; n < 2; n++)
+            {
  8001290:	bf00      	nop
  8001292:	bf00      	nop
  8001294:	371c      	adds	r7, #28
@@ -2425,32 +2425,32 @@ static void Dispatch_Buttons(void)
  80012c0:	0800df20 	.word	0x0800df20
 
 080012c4 <UI_ScanAndDispatch>:
-
-                    MIDI_NoteEvent(sound->notes[n], buttons[i].hand, 1);
-                }
-            }
-        }
+                if(sound->notes[n] != NULL)
+                {
+                    NoteOn(
+                        sound->notes[n],
+                        buttons[i].hand,
  80012c4:	b580      	push	{r7, lr}
  80012c6:	af00      	add	r7, sp, #0
-
+                        sound->wavetable
  80012c8:	f7ff fbae 	bl	8000a28 <MCP_Read_All>
-
+                    );
  80012cc:	f7ff fe98 	bl	8001000 <Dispatch_Buttons>
 
  80012d0:	bf00      	nop
  80012d2:	bd80      	pop	{r7, pc}
 
 080012d4 <get_wave_index>:
-        /*
-            RELACHEMENT
-        */
+                    MIDI_NoteEvent(sound->notes[n], buttons[i].hand, 1);
+                }
+            }
+        }
 
-        else if(!state && previous_buttons[i])
  80012d4:	b480      	push	{r7}
  80012d6:	b083      	sub	sp, #12
  80012d8:	af00      	add	r7, sp, #0
  80012da:	ed87 0a01 	vstr	s0, [r7, #4]
-        {
+
  80012de:	edd7 7a01 	vldr	s15, [r7, #4]
  80012e2:	ed9f 7a1e 	vldr	s14, [pc, #120]	; 800135c <get_wave_index+0x88>
  80012e6:	eef4 7ac7 	vcmpe.f32	s15, s14
@@ -2466,7 +2466,7 @@ static void Dispatch_Buttons(void)
  8001304:	d501      	bpl.n	800130a <get_wave_index+0x36>
  8001306:	2301      	movs	r3, #1
  8001308:	e021      	b.n	800134e <get_wave_index+0x7a>
-            ButtonSound *sound = active_sound[i];
+        /*
  800130a:	edd7 7a01 	vldr	s15, [r7, #4]
  800130e:	ed9f 7a15 	vldr	s14, [pc, #84]	; 8001364 <get_wave_index+0x90>
  8001312:	eef4 7ac7 	vcmpe.f32	s15, s14
@@ -2474,7 +2474,7 @@ static void Dispatch_Buttons(void)
  800131a:	d501      	bpl.n	8001320 <get_wave_index+0x4c>
  800131c:	2302      	movs	r3, #2
  800131e:	e016      	b.n	800134e <get_wave_index+0x7a>
-
+            RELACHEMENT
  8001320:	edd7 7a01 	vldr	s15, [r7, #4]
  8001324:	ed9f 7a10 	vldr	s14, [pc, #64]	; 8001368 <get_wave_index+0x94>
  8001328:	eef4 7ac7 	vcmpe.f32	s15, s14
@@ -2482,7 +2482,7 @@ static void Dispatch_Buttons(void)
  8001330:	d501      	bpl.n	8001336 <get_wave_index+0x62>
  8001332:	2303      	movs	r3, #3
  8001334:	e00b      	b.n	800134e <get_wave_index+0x7a>
-
+        */
  8001336:	edd7 7a01 	vldr	s15, [r7, #4]
  800133a:	ed9f 7a0c 	vldr	s14, [pc, #48]	; 800136c <get_wave_index+0x98>
  800133e:	eef4 7ac7 	vcmpe.f32	s15, s14
@@ -2490,9 +2490,9 @@ static void Dispatch_Buttons(void)
  8001346:	d501      	bpl.n	800134c <get_wave_index+0x78>
  8001348:	2304      	movs	r3, #4
  800134a:	e000      	b.n	800134e <get_wave_index+0x7a>
-            if(sound != NULL)
+
  800134c:	2305      	movs	r3, #5
-            {
+        else if(!state && previous_buttons[i])
  800134e:	4618      	mov	r0, r3
  8001350:	370c      	adds	r7, #12
  8001352:	46bd      	mov	sp, r7
@@ -2506,16 +2506,16 @@ static void Dispatch_Buttons(void)
  800136c:	44200000 	.word	0x44200000
 
 08001370 <get_bl_index>:
-                for(int n = 0; n < 2; n++)
-                {
-                    if(sound->notes[n] != NULL &&
-                       !IsNoteHeldByOtherButton(i, sound->notes[n], buttons[i].hand))
-                    {
+        {
+
+            ButtonSound *sound = active_sound[i];
+
+
  8001370:	b480      	push	{r7}
  8001372:	b083      	sub	sp, #12
  8001374:	af00      	add	r7, sp, #0
  8001376:	ed87 0a01 	vstr	s0, [r7, #4]
-                        NoteOff(
+            if(sound != NULL)
  800137a:	edd7 7a01 	vldr	s15, [r7, #4]
  800137e:	ed9f 7a13 	vldr	s14, [pc, #76]	; 80013cc <get_bl_index+0x5c>
  8001382:	eef4 7ac7 	vcmpe.f32	s15, s14
@@ -2523,7 +2523,7 @@ static void Dispatch_Buttons(void)
  800138a:	d501      	bpl.n	8001390 <get_bl_index+0x20>
  800138c:	2300      	movs	r3, #0
  800138e:	e016      	b.n	80013be <get_bl_index+0x4e>
-                            sound->notes[n],
+            {
  8001390:	edd7 7a01 	vldr	s15, [r7, #4]
  8001394:	ed9f 7a0e 	vldr	s14, [pc, #56]	; 80013d0 <get_bl_index+0x60>
  8001398:	eef4 7ac7 	vcmpe.f32	s15, s14
@@ -2531,7 +2531,7 @@ static void Dispatch_Buttons(void)
  80013a0:	d501      	bpl.n	80013a6 <get_bl_index+0x36>
  80013a2:	2301      	movs	r3, #1
  80013a4:	e00b      	b.n	80013be <get_bl_index+0x4e>
-                            buttons[i].hand,
+                for(int n = 0; n < 2; n++)
  80013a6:	edd7 7a01 	vldr	s15, [r7, #4]
  80013aa:	ed9f 7a0a 	vldr	s14, [pc, #40]	; 80013d4 <get_bl_index+0x64>
  80013ae:	eef4 7ac7 	vcmpe.f32	s15, s14
@@ -2539,9 +2539,9 @@ static void Dispatch_Buttons(void)
  80013b6:	d501      	bpl.n	80013bc <get_bl_index+0x4c>
  80013b8:	2302      	movs	r3, #2
  80013ba:	e000      	b.n	80013be <get_bl_index+0x4e>
-                            sound->wavetable
+                {
  80013bc:	2303      	movs	r3, #3
-                        );
+                    if(sound->notes[n] != NULL &&
  80013be:	4618      	mov	r0, r3
  80013c0:	370c      	adds	r7, #12
  80013c2:	46bd      	mov	sp, r7
@@ -2553,35 +2553,35 @@ static void Dispatch_Buttons(void)
  80013d4:	45fa0000 	.word	0x45fa0000
 
 080013d8 <Voice_SetWave>:
-
-                        MIDI_NoteEvent(sound->notes[n], buttons[i].hand, 0);
-                    }
+                       !IsNoteHeldByOtherButton(i, sound->notes[n], buttons[i].hand))
+                    {
+                        NoteOff(
  80013d8:	b580      	push	{r7, lr}
  80013da:	b084      	sub	sp, #16
  80013dc:	af00      	add	r7, sp, #0
  80013de:	6078      	str	r0, [r7, #4]
  80013e0:	460b      	mov	r3, r1
  80013e2:	70fb      	strb	r3, [r7, #3]
-                }
+                            sound->notes[n],
  80013e4:	78fb      	ldrb	r3, [r7, #3]
  80013e6:	2b00      	cmp	r3, #0
  80013e8:	d119      	bne.n	800141e <Voice_SetWave+0x46>
-            }
+                            buttons[i].hand,
+                            sound->wavetable
+                        );
 
-
-            active_sound[i] = NULL;
  80013ea:	687b      	ldr	r3, [r7, #4]
  80013ec:	edd3 7a03 	vldr	s15, [r3, #12]
  80013f0:	eeb0 0a67 	vmov.f32	s0, s15
  80013f4:	f7ff ff6e 	bl	80012d4 <get_wave_index>
  80013f8:	60f8      	str	r0, [r7, #12]
-        }
+                        MIDI_NoteEvent(sound->notes[n], buttons[i].hand, 0);
  80013fa:	687b      	ldr	r3, [r7, #4]
  80013fc:	edd3 7a03 	vldr	s15, [r3, #12]
  8001400:	eeb0 0a67 	vmov.f32	s0, s15
  8001404:	f7ff ffb4 	bl	8001370 <get_bl_index>
  8001408:	60b8      	str	r0, [r7, #8]
-
+                    }
  800140a:	68fb      	ldr	r3, [r7, #12]
  800140c:	009a      	lsls	r2, r3, #2
  800140e:	68bb      	ldr	r3, [r7, #8]
@@ -2591,18 +2591,18 @@ static void Dispatch_Buttons(void)
  8001416:	441a      	add	r2, r3
  8001418:	687b      	ldr	r3, [r7, #4]
  800141a:	631a      	str	r2, [r3, #48]	; 0x30
-
+                }
  800141c:	e003      	b.n	8001426 <Voice_SetWave+0x4e>
-        /*
-            CHANGEMENT DE SENS (bouton toujours enfonce)
-            Pas de dependance a un flanc precis : a chaque dispatch, un bouton
+            }
+
+
  800141e:	687b      	ldr	r3, [r7, #4]
  8001420:	4a03      	ldr	r2, [pc, #12]	; (8001430 <Voice_SetWave+0x58>)
  8001422:	631a      	str	r2, [r3, #48]	; 0x30
-            tenu revalide que son son actif correspond bien au sens courant du
+            active_sound[i] = NULL;
  8001424:	bf00      	nop
-            soufflet, et corrige sinon (auto-correction, robuste meme si le
-            changement de sens a ete traite lors d'un cycle precedent).
+        }
+
  8001426:	bf00      	nop
  8001428:	3710      	adds	r7, #16
  800142a:	46bd      	mov	sp, r7
@@ -2611,15 +2611,15 @@ static void Dispatch_Buttons(void)
  8001430:	20001dd4 	.word	0x20001dd4
 
 08001434 <render_audio_block>:
-        */
 
-        else if(state && previous_buttons[i] && active_sound[i] != NULL)
+        /*
+            CHANGEMENT DE SENS (bouton toujours enfonce)
  8001434:	b580      	push	{r7, lr}
  8001436:	b090      	sub	sp, #64	; 0x40
  8001438:	af00      	add	r7, sp, #0
  800143a:	6078      	str	r0, [r7, #4]
  800143c:	6039      	str	r1, [r7, #0]
-        {
+            Pas de dependance a un flanc precis : a chaque dispatch, un bouton
  800143e:	4b7f      	ldr	r3, [pc, #508]	; (800163c <render_audio_block+0x208>)
  8001440:	881b      	ldrh	r3, [r3, #0]
  8001442:	b29b      	uxth	r3, r3
@@ -2628,25 +2628,25 @@ static void Dispatch_Buttons(void)
  800144c:	eddf 6a7c 	vldr	s13, [pc, #496]	; 8001640 <render_audio_block+0x20c>
  8001450:	eec7 7a26 	vdiv.f32	s15, s14, s13
  8001454:	edc7 7a0b 	vstr	s15, [r7, #44]	; 0x2c
-            ButtonSound *old_sound = active_sound[i];
-            ButtonSound *new_sound =
-                (bellows_mode == MODE_PUSH) ? &buttons[i].push : &buttons[i].pull;
+            tenu revalide que son son actif correspond bien au sens courant du
+            soufflet, et corrige sinon (auto-correction, robuste meme si le
+            changement de sens a ete traite lors d'un cycle precedent).
+        */
 
-            if(new_sound != old_sound)
  8001458:	2300      	movs	r3, #0
  800145a:	63fb      	str	r3, [r7, #60]	; 0x3c
  800145c:	e0e4      	b.n	8001628 <render_audio_block+0x1f4>
-            {
-                printf("Bouton %d : changement de sens en tenant -> %s%s%s\r\n",
+        else if(state && previous_buttons[i] && active_sound[i] != NULL)
+        {
  800145e:	f04f 0300 	mov.w	r3, #0
  8001462:	63bb      	str	r3, [r7, #56]	; 0x38
-                       i,
-                       new_sound->notes[0] ? new_sound->notes[0] : "",
+            ButtonSound *old_sound = active_sound[i];
+            ButtonSound *new_sound =
  8001464:	2300      	movs	r3, #0
  8001466:	637b      	str	r3, [r7, #52]	; 0x34
  8001468:	e0a0      	b.n	80015ac <render_audio_block+0x178>
-                       new_sound->notes[1] ? "+" : "",
-                       new_sound->notes[1] ? new_sound->notes[1] : "");
+                (bellows_mode == MODE_PUSH) ? &buttons[i].push : &buttons[i].pull;
+
  800146a:	4a76      	ldr	r2, [pc, #472]	; (8001644 <render_audio_block+0x210>)
  800146c:	6b7b      	ldr	r3, [r7, #52]	; 0x34
  800146e:	2134      	movs	r1, #52	; 0x34
@@ -2655,12 +2655,12 @@ static void Dispatch_Buttons(void)
  8001476:	781b      	ldrb	r3, [r3, #0]
  8001478:	2b00      	cmp	r3, #0
  800147a:	f000 8094 	beq.w	80015a6 <render_audio_block+0x172>
-
-                for(int n = 0; n < 2; n++)
-                {
-                    if(old_sound->notes[n] == NULL) continue;
-
-                    uint8_t kept_in_new = 0;
+            if(new_sound != old_sound)
+            {
+                printf("Bouton %d : changement de sens en tenant -> %s%s%s\r\n",
+                       i,
+                       new_sound->notes[0] ? new_sound->notes[0] : "",
+                       new_sound->notes[1] ? "+" : "",
  800147e:	4a71      	ldr	r2, [pc, #452]	; (8001644 <render_audio_block+0x210>)
  8001480:	6b7b      	ldr	r3, [r7, #52]	; 0x34
  8001482:	2134      	movs	r1, #52	; 0x34
@@ -2669,17 +2669,17 @@ static void Dispatch_Buttons(void)
  800148a:	3310      	adds	r3, #16
  800148c:	681b      	ldr	r3, [r3, #0]
  800148e:	627b      	str	r3, [r7, #36]	; 0x24
-                    for(int m = 0; m < 2; m++)
+                       new_sound->notes[1] ? new_sound->notes[1] : "");
  8001490:	6a7b      	ldr	r3, [r7, #36]	; 0x24
  8001492:	0ddb      	lsrs	r3, r3, #23
  8001494:	847b      	strh	r3, [r7, #34]	; 0x22
-                    {
+
  8001496:	8c7b      	ldrh	r3, [r7, #34]	; 0x22
  8001498:	3301      	adds	r3, #1
  800149a:	b29b      	uxth	r3, r3
  800149c:	f3c3 0308 	ubfx	r3, r3, #0, #9
  80014a0:	843b      	strh	r3, [r7, #32]
-                        if(new_sound->notes[m] != NULL &&
+                for(int n = 0; n < 2; n++)
  80014a2:	6a7b      	ldr	r3, [r7, #36]	; 0x24
  80014a4:	f3c3 0316 	ubfx	r3, r3, #0, #23
  80014a8:	ee07 3a90 	vmov	s15, r3
@@ -2687,8 +2687,8 @@ static void Dispatch_Buttons(void)
  80014b0:	ed9f 7a65 	vldr	s14, [pc, #404]	; 8001648 <render_audio_block+0x214>
  80014b4:	ee67 7a87 	vmul.f32	s15, s15, s14
  80014b8:	edc7 7a07 	vstr	s15, [r7, #28]
-                           strcmp(new_sound->notes[m], old_sound->notes[n]) == 0)
-                        {
+                {
+                    if(old_sound->notes[n] == NULL) continue;
  80014bc:	4a61      	ldr	r2, [pc, #388]	; (8001644 <render_audio_block+0x210>)
  80014be:	6b7b      	ldr	r3, [r7, #52]	; 0x34
  80014c0:	2134      	movs	r1, #52	; 0x34
@@ -2703,7 +2703,7 @@ static void Dispatch_Buttons(void)
  80014d6:	ee07 3a90 	vmov	s15, r3
  80014da:	eef8 7ae7 	vcvt.f32.s32	s15, s15
  80014de:	edc7 7a06 	vstr	s15, [r7, #24]
-                            kept_in_new = 1;
+
  80014e2:	4a58      	ldr	r2, [pc, #352]	; (8001644 <render_audio_block+0x210>)
  80014e4:	6b7b      	ldr	r3, [r7, #52]	; 0x34
  80014e6:	2134      	movs	r1, #52	; 0x34
@@ -2718,7 +2718,7 @@ static void Dispatch_Buttons(void)
  80014fc:	ee07 3a90 	vmov	s15, r3
  8001500:	eef8 7ae7 	vcvt.f32.s32	s15, s15
  8001504:	edc7 7a05 	vstr	s15, [r7, #20]
-                            break;
+                    uint8_t kept_in_new = 0;
  8001508:	ed97 7a05 	vldr	s14, [r7, #20]
  800150c:	edd7 7a06 	vldr	s15, [r7, #24]
  8001510:	ee37 7a67 	vsub.f32	s14, s14, s15
@@ -2727,9 +2727,9 @@ static void Dispatch_Buttons(void)
  800151c:	ed97 7a06 	vldr	s14, [r7, #24]
  8001520:	ee77 7a27 	vadd.f32	s15, s14, s15
  8001524:	edc7 7a04 	vstr	s15, [r7, #16]
-                        }
-                    }
-
+                    for(int m = 0; m < 2; m++)
+                    {
+                        if(new_sound->notes[m] != NULL &&
  8001528:	6b7b      	ldr	r3, [r7, #52]	; 0x34
  800152a:	2234      	movs	r2, #52	; 0x34
  800152c:	fb02 f303 	mul.w	r3, r2, r3
@@ -2738,13 +2738,13 @@ static void Dispatch_Buttons(void)
  8001534:	4618      	mov	r0, r3
  8001536:	f7ff fa15 	bl	8000964 <Envelope_Update>
  800153a:	ed87 0a03 	vstr	s0, [r7, #12]
-                    if(!kept_in_new &&
-                       !IsNoteHeldByOtherButton(i, old_sound->notes[n], buttons[i].hand))
-                    {
+                           strcmp(new_sound->notes[m], old_sound->notes[n]) == 0)
+                        {
+                            kept_in_new = 1;
  800153e:	edd7 7a04 	vldr	s15, [r7, #16]
  8001542:	eddf 6a42 	vldr	s13, [pc, #264]	; 800164c <render_audio_block+0x218>
  8001546:	ee87 7aa6 	vdiv.f32	s14, s15, s13
-                        NoteOff(old_sound->notes[n], buttons[i].hand, old_sound->wavetable);
+                            break;
  800154a:	4a3e      	ldr	r2, [pc, #248]	; (8001644 <render_audio_block+0x210>)
  800154c:	6b7b      	ldr	r3, [r7, #52]	; 0x34
  800154e:	2134      	movs	r1, #52	; 0x34
@@ -2752,18 +2752,18 @@ static void Dispatch_Buttons(void)
  8001554:	4413      	add	r3, r2
  8001556:	332c      	adds	r3, #44	; 0x2c
  8001558:	edd3 7a00 	vldr	s15, [r3]
-                    {
+                            kept_in_new = 1;
  800155c:	ee27 7a27 	vmul.f32	s14, s14, s15
-                        NoteOff(old_sound->notes[n], buttons[i].hand, old_sound->wavetable);
+                            break;
  8001560:	edd7 7a03 	vldr	s15, [r7, #12]
  8001564:	ee67 7a27 	vmul.f32	s15, s14, s15
-                       !IsNoteHeldByOtherButton(i, old_sound->notes[n], buttons[i].hand))
+                        {
  8001568:	ed97 7a0e 	vldr	s14, [r7, #56]	; 0x38
  800156c:	ee77 7a27 	vadd.f32	s15, s14, s15
  8001570:	edc7 7a0e 	vstr	s15, [r7, #56]	; 0x38
-                        MIDI_NoteEvent(old_sound->notes[n], buttons[i].hand, 0);
+                        }
                     }
-                }
+
  8001574:	4a33      	ldr	r2, [pc, #204]	; (8001644 <render_audio_block+0x210>)
  8001576:	6b7b      	ldr	r3, [r7, #52]	; 0x34
  8001578:	2134      	movs	r1, #52	; 0x34
@@ -2786,25 +2786,25 @@ static void Dispatch_Buttons(void)
  80015a0:	440b      	add	r3, r1
  80015a2:	3310      	adds	r3, #16
  80015a4:	601a      	str	r2, [r3, #0]
-                       new_sound->notes[0] ? new_sound->notes[0] : "",
+            ButtonSound *new_sound =
  80015a6:	6b7b      	ldr	r3, [r7, #52]	; 0x34
  80015a8:	3301      	adds	r3, #1
  80015aa:	637b      	str	r3, [r7, #52]	; 0x34
  80015ac:	6b7b      	ldr	r3, [r7, #52]	; 0x34
  80015ae:	2b0f      	cmp	r3, #15
  80015b0:	f77f af5b 	ble.w	800146a <render_audio_block+0x36>
-
-                active_sound[i] = new_sound;
-
-                for(int n = 0; n < 2; n++)
+                    if(!kept_in_new &&
+                       !IsNoteHeldByOtherButton(i, old_sound->notes[n], buttons[i].hand))
+                    {
+                        NoteOff(old_sound->notes[n], buttons[i].hand, old_sound->wavetable);
  80015b4:	ed97 7a0e 	vldr	s14, [r7, #56]	; 0x38
  80015b8:	edd7 7a0b 	vldr	s15, [r7, #44]	; 0x2c
  80015bc:	ee67 7a27 	vmul.f32	s15, s14, s15
  80015c0:	ed9f 7a23 	vldr	s14, [pc, #140]	; 8001650 <render_audio_block+0x21c>
  80015c4:	ee67 7a87 	vmul.f32	s15, s15, s14
  80015c8:	edc7 7a0c 	vstr	s15, [r7, #48]	; 0x30
-                {
-                    if(new_sound->notes[n] == NULL) continue;
+                        MIDI_NoteEvent(old_sound->notes[n], buttons[i].hand, 0);
+                    }
  80015cc:	edd7 7a0c 	vldr	s15, [r7, #48]	; 0x30
  80015d0:	ed9f 7a20 	vldr	s14, [pc, #128]	; 8001654 <render_audio_block+0x220>
  80015d4:	eef4 7ac7 	vcmpe.f32	s15, s14
@@ -2812,7 +2812,7 @@ static void Dispatch_Buttons(void)
  80015dc:	dd01      	ble.n	80015e2 <render_audio_block+0x1ae>
  80015de:	4b1e      	ldr	r3, [pc, #120]	; (8001658 <render_audio_block+0x224>)
  80015e0:	633b      	str	r3, [r7, #48]	; 0x30
-
+                }
  80015e2:	edd7 7a0c 	vldr	s15, [r7, #48]	; 0x30
  80015e6:	ed9f 7a1d 	vldr	s14, [pc, #116]	; 800165c <render_audio_block+0x228>
  80015ea:	eef4 7ac7 	vcmpe.f32	s15, s14
@@ -2820,20 +2820,20 @@ static void Dispatch_Buttons(void)
  80015f2:	d502      	bpl.n	80015fa <render_audio_block+0x1c6>
  80015f4:	f04f 4347 	mov.w	r3, #3338665984	; 0xc7000000
  80015f8:	633b      	str	r3, [r7, #48]	; 0x30
-                    uint8_t already_on = 0;
-                    for(int m = 0; m < 2; m++)
+
+                active_sound[i] = new_sound;
  80015fa:	edd7 7a0c 	vldr	s15, [r7, #48]	; 0x30
  80015fe:	eefd 7ae7 	vcvt.s32.f32	s15, s15
  8001602:	ee17 3a90 	vmov	r3, s15
  8001606:	857b      	strh	r3, [r7, #42]	; 0x2a
-                    {
+
  8001608:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
  800160a:	005b      	lsls	r3, r3, #1
  800160c:	687a      	ldr	r2, [r7, #4]
  800160e:	4413      	add	r3, r2
  8001610:	8d7a      	ldrh	r2, [r7, #42]	; 0x2a
  8001612:	801a      	strh	r2, [r3, #0]
-                        if(old_sound->notes[m] != NULL &&
+                for(int n = 0; n < 2; n++)
  8001614:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
  8001616:	3301      	adds	r3, #1
  8001618:	005b      	lsls	r3, r3, #1
@@ -2841,7 +2841,7 @@ static void Dispatch_Buttons(void)
  800161c:	4413      	add	r3, r2
  800161e:	8d7a      	ldrh	r2, [r7, #42]	; 0x2a
  8001620:	801a      	strh	r2, [r3, #0]
-            if(new_sound != old_sound)
+
  8001622:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
  8001624:	3302      	adds	r3, #2
  8001626:	63fb      	str	r3, [r7, #60]	; 0x3c
@@ -2849,8 +2849,8 @@ static void Dispatch_Buttons(void)
  800162a:	683b      	ldr	r3, [r7, #0]
  800162c:	429a      	cmp	r2, r3
  800162e:	f4ff af16 	bcc.w	800145e <render_audio_block+0x2a>
-                           strcmp(old_sound->notes[m], new_sound->notes[n]) == 0)
-                        {
+                {
+                    if(new_sound->notes[n] == NULL) continue;
  8001632:	bf00      	nop
  8001634:	bf00      	nop
  8001636:	3740      	adds	r7, #64	; 0x40
@@ -2867,23 +2867,23 @@ static void Dispatch_Buttons(void)
  800165c:	c7000000 	.word	0xc7000000
 
 08001660 <__io_putchar>:
-                            already_on = 1;
-                            break;
-                        }
-                    }
+
+                    uint8_t already_on = 0;
+                    for(int m = 0; m < 2; m++)
+                    {
  8001660:	b580      	push	{r7, lr}
  8001662:	b082      	sub	sp, #8
  8001664:	af00      	add	r7, sp, #0
  8001666:	6078      	str	r0, [r7, #4]
-
+                        if(old_sound->notes[m] != NULL &&
  8001668:	1d39      	adds	r1, r7, #4
  800166a:	f04f 33ff 	mov.w	r3, #4294967295
  800166e:	2201      	movs	r2, #1
  8001670:	4803      	ldr	r0, [pc, #12]	; (8001680 <__io_putchar+0x20>)
  8001672:	f008 fc48 	bl	8009f06 <HAL_UART_Transmit>
-                    if(!already_on)
+                           strcmp(old_sound->notes[m], new_sound->notes[n]) == 0)
  8001676:	687b      	ldr	r3, [r7, #4]
-                    {
+                        {
  8001678:	4618      	mov	r0, r3
  800167a:	3708      	adds	r7, #8
  800167c:	46bd      	mov	sp, r7
@@ -2891,28 +2891,28 @@ static void Dispatch_Buttons(void)
  8001680:	200016d4 	.word	0x200016d4
 
 08001684 <HAL_ADC_ConvCpltCallback>:
-                        NoteOn(new_sound->notes[n], buttons[i].hand, new_sound->wavetable);
-                        MIDI_NoteEvent(new_sound->notes[n], buttons[i].hand, 1);
-                    }
+                            already_on = 1;
+                            break;
+                        }
  8001684:	b580      	push	{r7, lr}
  8001686:	b082      	sub	sp, #8
  8001688:	af00      	add	r7, sp, #0
  800168a:	6078      	str	r0, [r7, #4]
-                }
+                    }
  800168c:	687b      	ldr	r3, [r7, #4]
  800168e:	4a07      	ldr	r2, [pc, #28]	; (80016ac <HAL_ADC_ConvCpltCallback+0x28>)
  8001690:	4293      	cmp	r3, r2
  8001692:	d106      	bne.n	80016a2 <HAL_ADC_ConvCpltCallback+0x1e>
-            }
-        }
+
+                    if(!already_on)
  8001694:	6878      	ldr	r0, [r7, #4]
  8001696:	f003 fc97 	bl	8004fc8 <HAL_ADC_GetValue>
  800169a:	4603      	mov	r3, r0
  800169c:	b29a      	uxth	r2, r3
  800169e:	4b04      	ldr	r3, [pc, #16]	; (80016b0 <HAL_ADC_ConvCpltCallback+0x2c>)
  80016a0:	801a      	strh	r2, [r3, #0]
-
-
+                    {
+                        NoteOn(new_sound->notes[n], buttons[i].hand, new_sound->wavetable);
  80016a2:	bf00      	nop
  80016a4:	3708      	adds	r7, #8
  80016a6:	46bd      	mov	sp, r7
@@ -2922,32 +2922,32 @@ static void Dispatch_Buttons(void)
  80016b0:	20001720 	.word	0x20001720
 
 080016b4 <HAL_I2S_TxHalfCpltCallback>:
-        previous_buttons[i] = state;
-    }
-}
+                        MIDI_NoteEvent(new_sound->notes[n], buttons[i].hand, 1);
+                    }
+                }
  80016b4:	b580      	push	{r7, lr}
  80016b6:	b082      	sub	sp, #8
  80016b8:	af00      	add	r7, sp, #0
  80016ba:	6078      	str	r0, [r7, #4]
-
-/* Scan complet (lecture I2C des 4 MCP + dispatch) : utilise uniquement pour
+            }
+        }
  80016bc:	4809      	ldr	r0, [pc, #36]	; (80016e4 <HAL_I2S_TxHalfCpltCallback+0x30>)
  80016be:	f003 fdd7 	bl	8005270 <HAL_ADC_GetState>
  80016c2:	4603      	mov	r3, r0
  80016c4:	f403 7380 	and.w	r3, r3, #256	; 0x100
  80016c8:	2b00      	cmp	r3, #0
  80016ca:	d102      	bne.n	80016d2 <HAL_I2S_TxHalfCpltCallback+0x1e>
-   l'etat initial, avant que les IRQ EXTI ne prennent le relais. */
-static void UI_ScanAndDispatch(void)
+
+
  80016cc:	4805      	ldr	r0, [pc, #20]	; (80016e4 <HAL_I2S_TxHalfCpltCallback+0x30>)
  80016ce:	f003 faad 	bl	8004c2c <HAL_ADC_Start_IT>
-{
-    MCP_Read_All();
-    Dispatch_Buttons();
+        previous_buttons[i] = state;
+    }
+}
  80016d2:	2180      	movs	r1, #128	; 0x80
  80016d4:	4804      	ldr	r0, [pc, #16]	; (80016e8 <HAL_I2S_TxHalfCpltCallback+0x34>)
  80016d6:	f7ff fead 	bl	8001434 <render_audio_block>
-}
+
  80016da:	bf00      	nop
  80016dc:	3708      	adds	r7, #8
  80016de:	46bd      	mov	sp, r7
@@ -2957,32 +2957,32 @@ static void UI_ScanAndDispatch(void)
  80016e8:	20000ba8 	.word	0x20000ba8
 
 080016ec <HAL_I2S_TxCpltCallback>:
-/* Selectionne la position musicale (wave_index) d'apres la frequence.
-   Points de reference : do3=130.81  sol3=196  do4=261.63  sol4=392  do5=523.25  sol5=783.99
-   Seuils = moyennes geometriques entre positions adjacentes. */
+/* Scan complet (lecture I2C des 4 MCP + dispatch) : utilise uniquement pour
+   l'etat initial, avant que les IRQ EXTI ne prennent le relais. */
+static void UI_ScanAndDispatch(void)
  80016ec:	b580      	push	{r7, lr}
  80016ee:	b082      	sub	sp, #8
  80016f0:	af00      	add	r7, sp, #0
  80016f2:	6078      	str	r0, [r7, #4]
-static int get_wave_index(float frequency)
 {
+    MCP_Read_All();
  80016f4:	4809      	ldr	r0, [pc, #36]	; (800171c <HAL_I2S_TxCpltCallback+0x30>)
  80016f6:	f003 fdbb 	bl	8005270 <HAL_ADC_GetState>
  80016fa:	4603      	mov	r3, r0
  80016fc:	f403 7380 	and.w	r3, r3, #256	; 0x100
  8001700:	2b00      	cmp	r3, #0
  8001702:	d102      	bne.n	800170a <HAL_I2S_TxCpltCallback+0x1e>
-    if(frequency < 160.0f)  return 0;   /* do3  */
-    if(frequency < 226.0f)  return 1;   /* sol3 */
+    Dispatch_Buttons();
+}
  8001704:	4805      	ldr	r0, [pc, #20]	; (800171c <HAL_I2S_TxCpltCallback+0x30>)
  8001706:	f003 fa91 	bl	8004c2c <HAL_ADC_Start_IT>
-    if(frequency < 320.0f)  return 2;   /* do4  */
-    if(frequency < 453.0f)  return 3;   /* sol4 */
-    if(frequency < 640.0f)  return 4;   /* do5  */
+/* Selectionne la position musicale (wave_index) d'apres la frequence.
+   Points de reference : do3=130.81  sol3=196  do4=261.63  sol4=392  do5=523.25  sol5=783.99
+   Seuils = moyennes geometriques entre positions adjacentes. */
  800170a:	2180      	movs	r1, #128	; 0x80
  800170c:	4804      	ldr	r0, [pc, #16]	; (8001720 <HAL_I2S_TxCpltCallback+0x34>)
  800170e:	f7ff fe91 	bl	8001434 <render_audio_block>
-    return 5;                            /* sol5 */
+static int get_wave_index(float frequency)
  8001712:	bf00      	nop
  8001714:	3708      	adds	r7, #8
  8001716:	46bd      	mov	sp, r7
@@ -2992,104 +2992,104 @@ static int get_wave_index(float frequency)
  8001720:	20000ca8 	.word	0x20000ca8
 
 08001724 <main>:
-   Plus la frequence est haute, moins d'harmoniques sont conservees. */
+    if(frequency < 320.0f)  return 2;   /* do4  */
+    if(frequency < 453.0f)  return 3;   /* sol4 */
+    if(frequency < 640.0f)  return 4;   /* do5  */
+    return 5;                            /* sol5 */
+}
+
+ 8001724:	b580      	push	{r7, lr}
+ 8001726:	b084      	sub	sp, #16
+ 8001728:	af00      	add	r7, sp, #0
 static int get_bl_index(float frequency)
 {
     if(frequency < 500.0f)  return 0;   /* BL0 : plein spectre */
     if(frequency < 2000.0f) return 1;   /* BL1 : reduit        */
     if(frequency < 8000.0f) return 2;   /* BL2 : tres reduit   */
- 8001724:	b580      	push	{r7, lr}
- 8001726:	b084      	sub	sp, #16
- 8001728:	af00      	add	r7, sp, #0
+    return 3;                            /* BL3 : quasi-sinus   */
+ 800172a:	f003 f9a5 	bl	8004a78 <HAL_Init>
 
 static void Voice_SetWave(Voice *v, WaveTableId wt)
 {
     switch(wt)
     {
     case WT_ACCORDION:
- 800172a:	f003 f9a5 	bl	8004a78 <HAL_Init>
+ 800172e:	f000 f88d 	bl	800184c <SystemClock_Config>
         int wi = get_wave_index(v->frequency);
         int bi = get_bl_index(v->frequency);
         v->wave = wavetable_accordion[wi][bi];
         break;
     }
     default:
- 800172e:	f000 f88d 	bl	800184c <SystemClock_Config>
-        break;
-    }
-}
-void render_audio_block(int16_t *buffer,
-                        uint32_t samples)
-{
  8001732:	f000 fa33 	bl	8001b9c <MX_GPIO_Init>
-    float gain = Bellows_Gain();
+        v->wave = wavetable_accordion[0][0];
  8001736:	f000 fa11 	bl	8001b5c <MX_DMA_Init>
-
+        break;
  800173a:	f000 f9e1 	bl	8001b00 <MX_I2S1_Init>
-    /* I2S = trames stereo L/R : 2 entrees buffer par echantillon audio.
+    }
  800173e:	f000 f9b1 	bl	8001aa4 <MX_I2C1_Init>
-       N'avancer le DDS qu'une fois par trame, sinon la frequence percue double
+}
  8001742:	f000 f905 	bl	8001950 <MX_ADC1_Init>
-       (octave trop aigue) puisque la phase progresserait 2x plus vite que le temps reel. */
+void render_audio_block(int16_t *buffer,
  8001746:	f000 f95d 	bl	8001a04 <MX_USART2_UART_Init>
-    for(uint32_t i = 0; i < samples; i += 2)
+                        uint32_t samples)
  800174a:	f000 f985 	bl	8001a58 <MX_USB_DEVICE_Init>
-    {
-        float sample = 0.0f;
+{
+    float gain = Bellows_Gain();
  800174e:	4832      	ldr	r0, [pc, #200]	; (8001818 <main+0xf4>)
  8001750:	f00a fc54 	bl	800bffc <puts>
 
  8001754:	f7ff fa66 	bl	8000c24 <I2C_ScanBus>
-        for(int v = 0; v < MAX_VOICES; v++)
+    /* I2S = trames stereo L/R : 2 entrees buffer par echantillon audio.
  8001758:	4a30      	ldr	r2, [pc, #192]	; (800181c <main+0xf8>)
  800175a:	2120      	movs	r1, #32
  800175c:	4830      	ldr	r0, [pc, #192]	; (8001820 <main+0xfc>)
  800175e:	f7ff fa97 	bl	8000c90 <MCP_Init_WithIRQ>
-        {
-            if(voices[v].active)
-            {
-                /* Lecture wavetable DDS avec interpolation lineaire :
-                   bits [31:23] = index (0-511), bits [22:0] = fraction inter-echantillon.
+       N'avancer le DDS qu'une fois par trame, sinon la frequence percue double
+       (octave trop aigue) puisque la phase progresserait 2x plus vite que le temps reel. */
+    for(uint32_t i = 0; i < samples; i += 2)
+    {
+        float sample = 0.0f;
  8001762:	4a30      	ldr	r2, [pc, #192]	; (8001824 <main+0x100>)
  8001764:	2124      	movs	r1, #36	; 0x24
  8001766:	4830      	ldr	r0, [pc, #192]	; (8001828 <main+0x104>)
  8001768:	f7ff fa92 	bl	8000c90 <MCP_Init_WithIRQ>
-                   Supprime le bruit de quantification "en escalier" du nearest-neighbor,
+
  800176c:	4a2f      	ldr	r2, [pc, #188]	; (800182c <main+0x108>)
  800176e:	2122      	movs	r1, #34	; 0x22
  8001770:	482f      	ldr	r0, [pc, #188]	; (8001830 <main+0x10c>)
  8001772:	f7ff fa8d 	bl	8000c90 <MCP_Init_WithIRQ>
-                   surtout audible sur les notes aigues (grand phase_inc_nom). */
+        for(int v = 0; v < MAX_VOICES; v++)
  8001776:	4a2f      	ldr	r2, [pc, #188]	; (8001834 <main+0x110>)
  8001778:	2123      	movs	r1, #35	; 0x23
  800177a:	482f      	ldr	r0, [pc, #188]	; (8001838 <main+0x114>)
  800177c:	f7ff fa88 	bl	8000c90 <MCP_Init_WithIRQ>
-                uint32_t acc = voices[v].phase_acc;
-                uint16_t index = (uint16_t)(acc >> 23);
+        {
+            if(voices[v].active)
  8001780:	f003 f8da 	bl	8004938 <Wavetable_Init>
-                uint16_t index_next = (index + 1) & (WAVETABLE_SIZE - 1);
+            {
  8001784:	f7fe ff2a 	bl	80005dc <Synth_Init>
-                float frac = (float)(acc & 0x7FFFFFu) * (1.0f / 8388608.0f);
-
-                float s0 = (float)voices[v].wave[index];
-                float s1 = (float)voices[v].wave[index_next];
-                float wave_sample = s0 + (s1 - s0) * frac;
+                /* Lecture wavetable DDS avec interpolation lineaire :
+                   bits [31:23] = index (0-511), bits [22:0] = fraction inter-echantillon.
+                   Supprime le bruit de quantification "en escalier" du nearest-neighbor,
+                   surtout audible sur les notes aigues (grand phase_inc_nom). */
+                uint32_t acc = voices[v].phase_acc;
  8001788:	f7ff fd9c 	bl	80012c4 <UI_ScanAndDispatch>
-
+                uint16_t index = (uint16_t)(acc >> 23);
  800178c:	4b2b      	ldr	r3, [pc, #172]	; (800183c <main+0x118>)
  800178e:	2200      	movs	r2, #0
  8001790:	701a      	strb	r2, [r3, #0]
-                float envelope =
+                uint16_t index_next = (index + 1) & (WAVETABLE_SIZE - 1);
  8001792:	4b2b      	ldr	r3, [pc, #172]	; (8001840 <main+0x11c>)
  8001794:	2200      	movs	r2, #0
  8001796:	701a      	strb	r2, [r3, #0]
-                    Envelope_Update(&voices[v]);
+                float frac = (float)(acc & 0x7FFFFFu) * (1.0f / 8388608.0f);
 
  8001798:	2300      	movs	r3, #0
  800179a:	60fb      	str	r3, [r7, #12]
  800179c:	e007      	b.n	80017ae <main+0x8a>
-                sample +=
-                    (wave_sample / 32768.0f) *
+                float s0 = (float)voices[v].wave[index];
+                float s1 = (float)voices[v].wave[index_next];
  800179e:	4a29      	ldr	r2, [pc, #164]	; (8001844 <main+0x120>)
  80017a0:	68fb      	ldr	r3, [r7, #12]
  80017a2:	2100      	movs	r1, #0
@@ -3101,22 +3101,22 @@ void render_audio_block(int16_t *buffer,
  80017ae:	68fb      	ldr	r3, [r7, #12]
  80017b0:	2bff      	cmp	r3, #255	; 0xff
  80017b2:	ddf4      	ble.n	800179e <main+0x7a>
-                    voices[v].amplitude *
-                    envelope;
+                float wave_sample = s0 + (s1 - s0) * frac;
 
+                float envelope =
  80017b4:	f44f 7280 	mov.w	r2, #256	; 0x100
  80017b8:	4922      	ldr	r1, [pc, #136]	; (8001844 <main+0x120>)
  80017ba:	4823      	ldr	r0, [pc, #140]	; (8001848 <main+0x124>)
  80017bc:	f005 feb6 	bl	800752c <HAL_I2S_Transmit_DMA>
-                voices[v].phase_acc += voices[v].phase_inc_nom;
-            }
-        }
+                    Envelope_Update(&voices[v]);
+
+                sample +=
  80017c0:	f003 f9c0 	bl	8004b44 <HAL_GetTick>
  80017c4:	60b8      	str	r0, [r7, #8]
+                    (wave_sample / 32768.0f) *
+                    voices[v].amplitude *
+                    envelope;
 
-        float output = sample * gain * AMPLITUDE;
-
-        if(output > 32767.0f)  output = 32767.0f;
  80017c6:	4b1e      	ldr	r3, [pc, #120]	; (8001840 <main+0x11c>)
  80017c8:	781b      	ldrb	r3, [r3, #0]
  80017ca:	b2db      	uxtb	r3, r3
@@ -3131,17 +3131,17 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  80017d0:	b672      	cpsid	i
 }
  80017d2:	bf00      	nop
-        if(output < -32768.0f) output = -32768.0f;
-
-        int16_t out16 = (int16_t)output;
+                voices[v].phase_acc += voices[v].phase_inc_nom;
+            }
+        }
  80017d4:	4b19      	ldr	r3, [pc, #100]	; (800183c <main+0x118>)
  80017d6:	781b      	ldrb	r3, [r3, #0]
  80017d8:	71fb      	strb	r3, [r7, #7]
-        buffer[i]     = out16;   /* canal gauche */
+
  80017da:	4b18      	ldr	r3, [pc, #96]	; (800183c <main+0x118>)
  80017dc:	2200      	movs	r2, #0
  80017de:	701a      	strb	r2, [r3, #0]
-        buffer[i + 1] = out16;   /* canal droit (duplication mono -> stereo) */
+        float output = sample * gain * AMPLITUDE;
  80017e0:	4b17      	ldr	r3, [pc, #92]	; (8001840 <main+0x11c>)
  80017e2:	2200      	movs	r2, #0
  80017e4:	701a      	strb	r2, [r3, #0]
@@ -3149,39 +3149,39 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  80017e6:	b662      	cpsie	i
 }
  80017e8:	bf00      	nop
-    }
-}
 
+        if(output > 32767.0f)  output = 32767.0f;
+        if(output < -32768.0f) output = -32768.0f;
  80017ea:	79fb      	ldrb	r3, [r7, #7]
  80017ec:	4618      	mov	r0, r3
  80017ee:	f7ff fabf 	bl	8000d70 <MCP_Read_Dirty>
-/* Redirige printf() vers l'UART2 (115200 8N1) - cf. syscalls.c: _write() -> __io_putchar() */
+
  80017f2:	f7ff fc05 	bl	8001000 <Dispatch_Buttons>
-{
-    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
-    return ch;
+        buffer[i]     = out16;   /* canal gauche */
+        buffer[i + 1] = out16;   /* canal droit (duplication mono -> stereo) */
+    }
 }
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+/* Redirige printf() vers l'UART2 (115200 8N1) - cf. syscalls.c: _write() -> __io_putchar() */
  80017f6:	f003 f9a5 	bl	8004b44 <HAL_GetTick>
  80017fa:	4602      	mov	r2, r0
  80017fc:	68bb      	ldr	r3, [r7, #8]
  80017fe:	1ad3      	subs	r3, r2, r3
  8001800:	2b31      	cmp	r3, #49	; 0x31
  8001802:	d906      	bls.n	8001812 <main+0xee>
+int __io_putchar(int ch)
 {
-    if (hadc == &hadc1)
  8001804:	f003 f99e 	bl	8004b44 <HAL_GetTick>
  8001808:	60b8      	str	r0, [r7, #8]
-    {
+    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
  800180a:	f7ff f90d 	bl	8000a28 <MCP_Read_All>
-        pressure = HAL_ADC_GetValue(hadc);
+    return ch;
  800180e:	f7ff fbf7 	bl	8001000 <Dispatch_Buttons>
+}
 
-        if(!pressure_rest_captured)
-        {
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
  8001812:	bf30      	wfi
-        if(output > 32767.0f)  output = 32767.0f;
+
  8001814:	e7d7      	b.n	80017c6 <main+0xa2>
  8001816:	bf00      	nop
  8001818:	0800df5c 	.word	0x0800df5c
@@ -3199,22 +3199,22 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
  8001848:	20000e44 	.word	0x20000e44
 
 0800184c <SystemClock_Config>:
-}
 
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    (void)hi2s;
-if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
+        if(!pressure_rest_captured)
+        {
+            pressure_rest = pressure;
+            pressure_rest_captured = 1;
+        }
  800184c:	b580      	push	{r7, lr}
  800184e:	b09a      	sub	sp, #104	; 0x68
  8001850:	af00      	add	r7, sp, #0
-{
+    }
  8001852:	f107 0338 	add.w	r3, r7, #56	; 0x38
  8001856:	2230      	movs	r2, #48	; 0x30
  8001858:	2100      	movs	r1, #0
  800185a:	4618      	mov	r0, r3
  800185c:	f00a fb40 	bl	800bee0 <memset>
-    HAL_ADC_Start_IT(&hadc1);
+}
  8001860:	f107 0324 	add.w	r3, r7, #36	; 0x24
  8001864:	2200      	movs	r2, #0
  8001866:	601a      	str	r2, [r3, #0]
@@ -3222,7 +3222,7 @@ if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
  800186a:	609a      	str	r2, [r3, #8]
  800186c:	60da      	str	r2, [r3, #12]
  800186e:	611a      	str	r2, [r3, #16]
-}
+
  8001870:	f107 030c 	add.w	r3, r7, #12
  8001874:	2200      	movs	r2, #0
  8001876:	601a      	str	r2, [r3, #0]
@@ -3231,9 +3231,9 @@ if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
  800187c:	60da      	str	r2, [r3, #12]
  800187e:	611a      	str	r2, [r3, #16]
  8001880:	615a      	str	r2, [r3, #20]
-
-    render_audio_block((int16_t *)&bufferDMA[0], HALF_BUFFER_SIZE);
-}
+void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
+{
+    (void)hi2s;
  8001882:	2300      	movs	r3, #0
  8001884:	60bb      	str	r3, [r7, #8]
  8001886:	4b30      	ldr	r3, [pc, #192]	; (8001948 <SystemClock_Config+0xfc>)
@@ -3246,8 +3246,8 @@ if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
  8001896:	f003 5380 	and.w	r3, r3, #268435456	; 0x10000000
  800189a:	60bb      	str	r3, [r7, #8]
  800189c:	68bb      	ldr	r3, [r7, #8]
-
-void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
+if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
+{
  800189e:	2300      	movs	r3, #0
  80018a0:	607b      	str	r3, [r7, #4]
  80018a2:	4b2a      	ldr	r3, [pc, #168]	; (800194c <SystemClock_Config+0x100>)
@@ -3260,45 +3260,45 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
  80018b2:	f403 4340 	and.w	r3, r3, #49152	; 0xc000
  80018b6:	607b      	str	r3, [r7, #4]
  80018b8:	687b      	ldr	r3, [r7, #4]
+
+void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
+{
+    (void)hi2s;
+if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
+{
+ 80018ba:	2301      	movs	r3, #1
+ 80018bc:	63bb      	str	r3, [r7, #56]	; 0x38
+    HAL_ADC_Start_IT(&hadc1);
 }
 
+ 80018be:	f44f 3380 	mov.w	r3, #65536	; 0x10000
+ 80018c2:	63fb      	str	r3, [r7, #60]	; 0x3c
     render_audio_block((int16_t *)&bufferDMA[HALF_BUFFER_SIZE], HALF_BUFFER_SIZE);
 }
 
-/* USER CODE END 0 */
- 80018ba:	2301      	movs	r3, #1
- 80018bc:	63bb      	str	r3, [r7, #56]	; 0x38
-
-/**
-  * @brief  The application entry point.
- 80018be:	f44f 3380 	mov.w	r3, #65536	; 0x10000
- 80018c2:	63fb      	str	r3, [r7, #60]	; 0x3c
-  * @retval int
-  */
-int main(void)
  80018c4:	2302      	movs	r3, #2
  80018c6:	653b      	str	r3, [r7, #80]	; 0x50
-{
-  /* USER CODE BEGIN 1 */
+/* USER CODE END 0 */
 
+/**
  80018c8:	f44f 0380 	mov.w	r3, #4194304	; 0x400000
  80018cc:	657b      	str	r3, [r7, #84]	; 0x54
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
+  * @brief  The application entry point.
+  * @retval int
+  */
  80018ce:	2308      	movs	r3, #8
  80018d0:	65bb      	str	r3, [r7, #88]	; 0x58
-
+int main(void)
  80018d2:	f44f 73a8 	mov.w	r3, #336	; 0x150
  80018d6:	65fb      	str	r3, [r7, #92]	; 0x5c
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+{
  80018d8:	2304      	movs	r3, #4
  80018da:	663b      	str	r3, [r7, #96]	; 0x60
-  HAL_Init();
+  /* USER CODE BEGIN 1 */
  80018dc:	2307      	movs	r3, #7
  80018de:	667b      	str	r3, [r7, #100]	; 0x64
 
-  /* USER CODE BEGIN Init */
+  /* USER CODE END 1 */
 
  80018e0:	f107 0338 	add.w	r3, r7, #56	; 0x38
  80018e4:	4618      	mov	r0, r3
@@ -3306,68 +3306,68 @@ int main(void)
  80018ea:	4603      	mov	r3, r0
  80018ec:	2b00      	cmp	r3, #0
  80018ee:	d001      	beq.n	80018f4 <SystemClock_Config+0xa8>
-  /* USER CODE END Init */
+  /* MCU Configuration--------------------------------------------------------*/
  80018f0:	f000 fa16 	bl	8001d20 <Error_Handler>
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+ 80018f4:	2301      	movs	r3, #1
+ 80018f6:	60fb      	str	r3, [r7, #12]
+
   /* USER CODE END SysInit */
 
+ 80018f8:	23c0      	movs	r3, #192	; 0xc0
+ 80018fa:	617b      	str	r3, [r7, #20]
   /* Initialize all configured peripherals */
+ 80018fc:	2305      	movs	r3, #5
+ 80018fe:	61bb      	str	r3, [r7, #24]
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_I2S1_Init();
- 80018f4:	2301      	movs	r3, #1
- 80018f6:	60fb      	str	r3, [r7, #12]
-  MX_I2C1_Init();
-  MX_ADC1_Init();
-  MX_USART2_UART_Init();
- 80018f8:	23c0      	movs	r3, #192	; 0xc0
- 80018fa:	617b      	str	r3, [r7, #20]
-  MX_USB_DEVICE_Init();
- 80018fc:	2305      	movs	r3, #5
- 80018fe:	61bb      	str	r3, [r7, #24]
-  /* USER CODE BEGIN 2 */
-    printf("Hello world\r\n");
-    I2C_ScanBus();
  8001900:	f107 030c 	add.w	r3, r7, #12
  8001904:	4618      	mov	r0, r3
  8001906:	f008 f961 	bl	8009bcc <HAL_RCCEx_PeriphCLKConfig>
  800190a:	4603      	mov	r3, r0
  800190c:	2b00      	cmp	r3, #0
  800190e:	d001      	beq.n	8001914 <SystemClock_Config+0xc8>
-    MCP_Init_WithIRQ(&hmcp20, MCP23017_ADDRESS_20, "20");
+  MX_I2C1_Init();
  8001910:	f000 fa06 	bl	8001d20 <Error_Handler>
+  MX_ADC1_Init();
+  MX_USART2_UART_Init();
+  MX_USB_DEVICE_Init();
+  /* USER CODE BEGIN 2 */
+ 8001914:	230f      	movs	r3, #15
+ 8001916:	627b      	str	r3, [r7, #36]	; 0x24
+    I2C_ScanBus();
+    MCP_Init_WithIRQ(&hmcp20, MCP23017_ADDRESS_20, "20");
     /* Strapping A2/A1/A0 reel sur le PCB (verifie sur le netlist route) = 1/0/0
        => adresse I2C reelle 0x24, pas 0x21 comme l'etiquette schema le laisse
        penser. On garde le handle/l'index logique "21" (table de boutons,
        MCP_Index()) et on adresse juste la vraie puce. */
- 8001914:	230f      	movs	r3, #15
- 8001916:	627b      	str	r3, [r7, #36]	; 0x24
+ 8001918:	2302      	movs	r3, #2
+ 800191a:	62bb      	str	r3, [r7, #40]	; 0x28
+    MCP_Init_WithIRQ(&hmcp21, MCP23017_ADDRESS_24, "21 (adresse reelle 0x24)");
     MCP_Init_WithIRQ(&hmcp22, MCP23017_ADDRESS_22, "22");
     MCP_Init_WithIRQ(&hmcp23, MCP23017_ADDRESS_23, "23");
+ 800191c:	2300      	movs	r3, #0
+ 800191e:	62fb      	str	r3, [r7, #44]	; 0x2c
 
     Wavetable_Init();
     Synth_Init();
+ 8001920:	f44f 5380 	mov.w	r3, #4096	; 0x1000
+ 8001924:	633b      	str	r3, [r7, #48]	; 0x30
   /* USER CODE END 2 */
- 8001918:	2302      	movs	r3, #2
- 800191a:	62bb      	str	r3, [r7, #40]	; 0x28
 
   /* Infinite loop */
+ 8001926:	2300      	movs	r3, #0
+ 8001928:	637b      	str	r3, [r7, #52]	; 0x34
   /* USER CODE BEGIN WHILE */
- 800191c:	2300      	movs	r3, #0
- 800191e:	62fb      	str	r3, [r7, #44]	; 0x2c
 UI_ScanAndDispatch();   /* etat initial, avant que les IRQ ne prennent le relais */
 s_mcp_dirty_mask = 0;
 s_scan_pending = 0;
- 8001920:	f44f 5380 	mov.w	r3, #4096	; 0x1000
- 8001924:	633b      	str	r3, [r7, #48]	; 0x30
-
-for (int i = 0; i < BUFFER_SIZE; i++)
-{
- 8001926:	2300      	movs	r3, #0
- 8001928:	637b      	str	r3, [r7, #52]	; 0x34
-    bufferDMA[i] = 0;
-}
-
-HAL_I2S_Transmit_DMA(&hi2s1,
  800192a:	f107 0324 	add.w	r3, r7, #36	; 0x24
  800192e:	2102      	movs	r1, #2
  8001930:	4618      	mov	r0, r3
@@ -3375,13 +3375,13 @@ HAL_I2S_Transmit_DMA(&hi2s1,
  8001936:	4603      	mov	r3, r0
  8001938:	2b00      	cmp	r3, #0
  800193a:	d001      	beq.n	8001940 <SystemClock_Config+0xf4>
-                     (uint16_t*)bufferDMA,
-                     BUFFER_SIZE);
-uint32_t last_full_scan = HAL_GetTick();
-uint32_t last_pressure_print = HAL_GetTick();
- 800193c:	f000 f9f0 	bl	8001d20 <Error_Handler>
 
-while (1)
+for (int i = 0; i < BUFFER_SIZE; i++)
+{
+    bufferDMA[i] = 0;
+ 800193c:	f000 f9f0 	bl	8001d20 <Error_Handler>
+}
+
  8001940:	bf00      	nop
  8001942:	3768      	adds	r7, #104	; 0x68
  8001944:	46bd      	mov	sp, r7
@@ -3390,103 +3390,103 @@ while (1)
  800194c:	40007000 	.word	0x40007000
 
 08001950 <MX_ADC1_Init>:
+                     BUFFER_SIZE);
+uint32_t last_full_scan = HAL_GetTick();
+uint32_t last_pressure_print = HAL_GetTick();
+
+while (1)
+{
+ 8001950:	b580      	push	{r7, lr}
+ 8001952:	b084      	sub	sp, #16
+ 8001954:	af00      	add	r7, sp, #0
+    if (s_scan_pending)
     {
         __disable_irq();
         uint8_t mask = s_mcp_dirty_mask;
         s_mcp_dirty_mask = 0;
         s_scan_pending = 0;
-        __enable_irq();
- 8001950:	b580      	push	{r7, lr}
- 8001952:	b084      	sub	sp, #16
- 8001954:	af00      	add	r7, sp, #0
-
-        MCP_Read_Dirty(mask);
-        Dispatch_Buttons();
-    }
-
-    /* Filet de securite : un rebalayage complet toutes les 50 ms, au cas ou
  8001956:	463b      	mov	r3, r7
  8001958:	2200      	movs	r2, #0
  800195a:	601a      	str	r2, [r3, #0]
  800195c:	605a      	str	r2, [r3, #4]
  800195e:	609a      	str	r2, [r3, #8]
  8001960:	60da      	str	r2, [r3, #12]
-       ~100x moins bavard sur le bus I2C que l'ancien polling a 5 ms. */
-    if ((HAL_GetTick() - last_full_scan) >= 50)
-    {
-        last_full_scan = HAL_GetTick();
-        MCP_Read_All();
+        MCP_Read_Dirty(mask);
         Dispatch_Buttons();
+    }
+
+    /* Filet de securite : un rebalayage complet toutes les 50 ms, au cas ou
+       une IRQ aurait ete manquee (glitch I2C au boot, edge EXTI rate, etc.).
  8001962:	4b25      	ldr	r3, [pc, #148]	; (80019f8 <MX_ADC1_Init+0xa8>)
  8001964:	4a25      	ldr	r2, [pc, #148]	; (80019fc <MX_ADC1_Init+0xac>)
  8001966:	601a      	str	r2, [r3, #0]
-    }
+       Garantit qu'aucune touche ne reste jamais "bloquee", tout en restant
  8001968:	4b23      	ldr	r3, [pc, #140]	; (80019f8 <MX_ADC1_Init+0xa8>)
  800196a:	2200      	movs	r2, #0
  800196c:	605a      	str	r2, [r3, #4]
-
+       ~100x moins bavard sur le bus I2C que l'ancien polling a 5 ms. */
  800196e:	4b22      	ldr	r3, [pc, #136]	; (80019f8 <MX_ADC1_Init+0xa8>)
  8001970:	2200      	movs	r2, #0
  8001972:	609a      	str	r2, [r3, #8]
-    /* Trace de reglage du soufflet (pas de debugueur dispo) : a retirer une
+    if ((HAL_GetTick() - last_full_scan) >= 50)
  8001974:	4b20      	ldr	r3, [pc, #128]	; (80019f8 <MX_ADC1_Init+0xa8>)
  8001976:	2200      	movs	r2, #0
  8001978:	611a      	str	r2, [r3, #16]
-       fois pressure_rest / le mapping gain valides sur le materiel reel. */
+    {
  800197a:	4b1f      	ldr	r3, [pc, #124]	; (80019f8 <MX_ADC1_Init+0xa8>)
  800197c:	2200      	movs	r2, #0
  800197e:	761a      	strb	r2, [r3, #24]
-    if ((HAL_GetTick() - last_pressure_print) >= 300)
+        last_full_scan = HAL_GetTick();
  8001980:	4b1d      	ldr	r3, [pc, #116]	; (80019f8 <MX_ADC1_Init+0xa8>)
  8001982:	2200      	movs	r2, #0
  8001984:	f883 2020 	strb.w	r2, [r3, #32]
-    {
+        MCP_Read_All();
  8001988:	4b1b      	ldr	r3, [pc, #108]	; (80019f8 <MX_ADC1_Init+0xa8>)
  800198a:	2200      	movs	r2, #0
  800198c:	62da      	str	r2, [r3, #44]	; 0x2c
-        last_pressure_print = HAL_GetTick();
+        Dispatch_Buttons();
  800198e:	4b1a      	ldr	r3, [pc, #104]	; (80019f8 <MX_ADC1_Init+0xa8>)
  8001990:	4a1b      	ldr	r2, [pc, #108]	; (8001a00 <MX_ADC1_Init+0xb0>)
  8001992:	629a      	str	r2, [r3, #40]	; 0x28
-        printf("pression=%u repos=%u sens=%s gain=%d%%\r\n",
+    }
  8001994:	4b18      	ldr	r3, [pc, #96]	; (80019f8 <MX_ADC1_Init+0xa8>)
  8001996:	2200      	movs	r2, #0
  8001998:	60da      	str	r2, [r3, #12]
-               pressure, pressure_rest,
+
  800199a:	4b17      	ldr	r3, [pc, #92]	; (80019f8 <MX_ADC1_Init+0xa8>)
  800199c:	2201      	movs	r2, #1
  800199e:	61da      	str	r2, [r3, #28]
-               (bellows_mode == MODE_PULL) ? "tire" : "pousse",
+    /* Trace de reglage du soufflet (pas de debugueur dispo) : a retirer une
  80019a0:	4b15      	ldr	r3, [pc, #84]	; (80019f8 <MX_ADC1_Init+0xa8>)
  80019a2:	2200      	movs	r2, #0
  80019a4:	f883 2030 	strb.w	r2, [r3, #48]	; 0x30
-               (int)(Bellows_Gain() * 100.0f));
+       fois pressure_rest / le mapping gain valides sur le materiel reel. */
  80019a8:	4b13      	ldr	r3, [pc, #76]	; (80019f8 <MX_ADC1_Init+0xa8>)
  80019aa:	2201      	movs	r2, #1
  80019ac:	615a      	str	r2, [r3, #20]
-    }
+    if ((HAL_GetTick() - last_pressure_print) >= 300)
  80019ae:	4812      	ldr	r0, [pc, #72]	; (80019f8 <MX_ADC1_Init+0xa8>)
  80019b0:	f003 f8f8 	bl	8004ba4 <HAL_ADC_Init>
  80019b4:	4603      	mov	r3, r0
  80019b6:	2b00      	cmp	r3, #0
  80019b8:	d001      	beq.n	80019be <MX_ADC1_Init+0x6e>
-
-    __WFI();   /* dort jusqu'a la prochaine IRQ (bouton MCP, audio I2S/DMA, ADC) */
+    {
+        last_pressure_print = HAL_GetTick();
  80019ba:	f000 f9b1 	bl	8001d20 <Error_Handler>
-}
-  /* USER CODE END 3 */
-}
-
-/**
+        printf("pression=%u repos=%u sens=%s gain=%d%%\r\n",
+               pressure, pressure_rest,
+               (bellows_mode == MODE_PULL) ? "tire" : "pousse",
+               (int)(Bellows_Gain() * 100.0f));
+    }
  80019be:	2301      	movs	r3, #1
  80019c0:	603b      	str	r3, [r7, #0]
-  * @brief System Clock Configuration
+
  80019c2:	2301      	movs	r3, #1
  80019c4:	607b      	str	r3, [r7, #4]
-  * @retval None
+    __WFI();   /* dort jusqu'a la prochaine IRQ (bouton MCP, audio I2S/DMA, ADC) */
  80019c6:	2304      	movs	r3, #4
  80019c8:	60bb      	str	r3, [r7, #8]
-  */
+}
  80019ca:	463b      	mov	r3, r7
  80019cc:	4619      	mov	r1, r3
  80019ce:	480a      	ldr	r0, [pc, #40]	; (80019f8 <MX_ADC1_Init+0xa8>)
@@ -3494,24 +3494,24 @@ while (1)
  80019d4:	4603      	mov	r3, r0
  80019d6:	2b00      	cmp	r3, #0
  80019d8:	d001      	beq.n	80019de <MX_ADC1_Init+0x8e>
-void SystemClock_Config(void)
-{
+  /* USER CODE END 3 */
+}
  80019da:	f000 f9a1 	bl	8001d20 <Error_Handler>
-    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+
+/**
+  * @brief System Clock Configuration
  80019de:	2200      	movs	r2, #0
  80019e0:	2101      	movs	r1, #1
  80019e2:	2012      	movs	r0, #18
  80019e4:	f003 fe31 	bl	800564a <HAL_NVIC_SetPriority>
-
+  * @retval None
  80019e8:	2012      	movs	r0, #18
  80019ea:	f003 fe4a 	bl	8005682 <HAL_NVIC_EnableIRQ>
-
-    __HAL_RCC_PWR_CLK_ENABLE();
-
-    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-
+  */
+void SystemClock_Config(void)
+{
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
  80019ee:	bf00      	nop
  80019f0:	3710      	adds	r7, #16
  80019f2:	46bd      	mov	sp, r7
@@ -3522,23 +3522,23 @@ void SystemClock_Config(void)
  8001a00:	0f000001 	.word	0x0f000001
 
 08001a04 <MX_USART2_UART_Init>:
-       PLL principal
-       HSE 8MHz
 
-       VCO = 8 / 8 * 336 = 336MHz
-       SYSCLK = 336 / 4 = 84MHz
-    */
+    __HAL_RCC_PWR_CLK_ENABLE();
+
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+
  8001a04:	b580      	push	{r7, lr}
  8001a06:	af00      	add	r7, sp, #0
-
+    /*
  8001a08:	4b11      	ldr	r3, [pc, #68]	; (8001a50 <MX_USART2_UART_Init+0x4c>)
  8001a0a:	4a12      	ldr	r2, [pc, #72]	; (8001a54 <MX_USART2_UART_Init+0x50>)
  8001a0c:	601a      	str	r2, [r3, #0]
-    RCC_OscInitStruct.OscillatorType =
+       PLL principal
  8001a0e:	4b10      	ldr	r3, [pc, #64]	; (8001a50 <MX_USART2_UART_Init+0x4c>)
  8001a10:	f44f 32e1 	mov.w	r2, #115200	; 0x1c200
  8001a14:	605a      	str	r2, [r3, #4]
-        RCC_OSCILLATORTYPE_HSE;
+       HSE 8MHz
  8001a16:	4b0e      	ldr	r3, [pc, #56]	; (8001a50 <MX_USART2_UART_Init+0x4c>)
  8001a18:	2200      	movs	r2, #0
  8001a1a:	609a      	str	r2, [r3, #8]
@@ -3546,33 +3546,33 @@ void SystemClock_Config(void)
  8001a1c:	4b0c      	ldr	r3, [pc, #48]	; (8001a50 <MX_USART2_UART_Init+0x4c>)
  8001a1e:	2200      	movs	r2, #0
  8001a20:	60da      	str	r2, [r3, #12]
-    RCC_OscInitStruct.HSEState =
+       VCO = 8 / 8 * 336 = 336MHz
  8001a22:	4b0b      	ldr	r3, [pc, #44]	; (8001a50 <MX_USART2_UART_Init+0x4c>)
  8001a24:	2200      	movs	r2, #0
  8001a26:	611a      	str	r2, [r3, #16]
-        RCC_HSE_ON;
+       SYSCLK = 336 / 4 = 84MHz
  8001a28:	4b09      	ldr	r3, [pc, #36]	; (8001a50 <MX_USART2_UART_Init+0x4c>)
  8001a2a:	220c      	movs	r2, #12
  8001a2c:	615a      	str	r2, [r3, #20]
-
+    */
  8001a2e:	4b08      	ldr	r3, [pc, #32]	; (8001a50 <MX_USART2_UART_Init+0x4c>)
  8001a30:	2200      	movs	r2, #0
  8001a32:	619a      	str	r2, [r3, #24]
-    RCC_OscInitStruct.PLL.PLLState =
+
  8001a34:	4b06      	ldr	r3, [pc, #24]	; (8001a50 <MX_USART2_UART_Init+0x4c>)
  8001a36:	2200      	movs	r2, #0
  8001a38:	61da      	str	r2, [r3, #28]
-        RCC_PLL_ON;
+    RCC_OscInitStruct.OscillatorType =
  8001a3a:	4805      	ldr	r0, [pc, #20]	; (8001a50 <MX_USART2_UART_Init+0x4c>)
  8001a3c:	f008 fa16 	bl	8009e6c <HAL_UART_Init>
  8001a40:	4603      	mov	r3, r0
  8001a42:	2b00      	cmp	r3, #0
  8001a44:	d001      	beq.n	8001a4a <MX_USART2_UART_Init+0x46>
+        RCC_OSCILLATORTYPE_HSE;
 
-    RCC_OscInitStruct.PLL.PLLSource =
  8001a46:	f000 f96b 	bl	8001d20 <Error_Handler>
-        RCC_PLLSOURCE_HSE;
-
+    RCC_OscInitStruct.HSEState =
+        RCC_HSE_ON;
  8001a4a:	bf00      	nop
  8001a4c:	bd80      	pop	{r7, pc}
  8001a4e:	bf00      	nop
@@ -3580,15 +3580,15 @@ void SystemClock_Config(void)
  8001a54:	40004400 	.word	0x40004400
 
 08001a58 <MX_USB_DEVICE_Init>:
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-    RCC_OscInitStruct.PLL.PLLQ = 7;
+        RCC_PLL_ON;
 
+    RCC_OscInitStruct.PLL.PLLSource =
+        RCC_PLLSOURCE_HSE;
 
-    if(HAL_RCC_OscConfig(&RCC_OscInitStruct)!=HAL_OK)
-        Error_Handler();
+    RCC_OscInitStruct.PLL.PLLM = 8;
  8001a58:	b580      	push	{r7, lr}
  8001a5a:	af00      	add	r7, sp, #0
-
+    RCC_OscInitStruct.PLL.PLLN = 336;
  8001a5c:	2200      	movs	r2, #0
  8001a5e:	490e      	ldr	r1, [pc, #56]	; (8001a98 <MX_USB_DEVICE_Init+0x40>)
  8001a60:	480e      	ldr	r0, [pc, #56]	; (8001a9c <MX_USB_DEVICE_Init+0x44>)
@@ -3596,10 +3596,10 @@ void SystemClock_Config(void)
  8001a66:	4603      	mov	r3, r0
  8001a68:	2b00      	cmp	r3, #0
  8001a6a:	d001      	beq.n	8001a70 <MX_USB_DEVICE_Init+0x18>
-
-    /*
+    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+    RCC_OscInitStruct.PLL.PLLQ = 7;
  8001a6c:	f000 f958 	bl	8001d20 <Error_Handler>
-       PLLI2S
+
 
  8001a70:	490b      	ldr	r1, [pc, #44]	; (8001aa0 <MX_USB_DEVICE_Init+0x48>)
  8001a72:	480a      	ldr	r0, [pc, #40]	; (8001a9c <MX_USB_DEVICE_Init+0x44>)
@@ -3607,21 +3607,21 @@ void SystemClock_Config(void)
  8001a78:	4603      	mov	r3, r0
  8001a7a:	2b00      	cmp	r3, #0
  8001a7c:	d001      	beq.n	8001a82 <MX_USB_DEVICE_Init+0x2a>
-       8 / 8 * 192 = 192MHz
-       192 / 5 = 38.4MHz I2S clock
+    if(HAL_RCC_OscConfig(&RCC_OscInitStruct)!=HAL_OK)
+        Error_Handler();
  8001a7e:	f000 f94f 	bl	8001d20 <Error_Handler>
 
-       Le prescaler I2S donnera 44.1kHz
+
  8001a82:	4806      	ldr	r0, [pc, #24]	; (8001a9c <MX_USB_DEVICE_Init+0x44>)
  8001a84:	f000 ff9b 	bl	80029be <USBD_Start>
  8001a88:	4603      	mov	r3, r0
  8001a8a:	2b00      	cmp	r3, #0
  8001a8c:	d001      	beq.n	8001a92 <MX_USB_DEVICE_Init+0x3a>
-    */
-
+    /*
+       PLLI2S
  8001a8e:	f000 f947 	bl	8001d20 <Error_Handler>
-    PeriphClkInitStruct.PeriphClockSelection =
-        RCC_PERIPHCLK_I2S;
+
+       8 / 8 * 192 = 192MHz
  8001a92:	bf00      	nop
  8001a94:	bd80      	pop	{r7, pc}
  8001a96:	bf00      	nop
@@ -3630,40 +3630,40 @@ void SystemClock_Config(void)
  8001aa0:	20000738 	.word	0x20000738
 
 08001aa4 <MX_I2C1_Init>:
-    PeriphClkInitStruct.PLLI2S.PLLI2SR = 5;
+       Le prescaler I2S donnera 44.1kHz
+    */
 
+    PeriphClkInitStruct.PeriphClockSelection =
+        RCC_PERIPHCLK_I2S;
+
+ 8001aa4:	b580      	push	{r7, lr}
+ 8001aa6:	af00      	add	r7, sp, #0
 
     if(HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct)!=HAL_OK)
         Error_Handler();
 
- 8001aa4:	b580      	push	{r7, lr}
- 8001aa6:	af00      	add	r7, sp, #0
-        RCC_CLOCKTYPE_SYSCLK |
-        RCC_CLOCKTYPE_HCLK |
-        RCC_CLOCKTYPE_PCLK1 |
-        RCC_CLOCKTYPE_PCLK2;
 
 
  8001aa8:	4b12      	ldr	r3, [pc, #72]	; (8001af4 <MX_I2C1_Init+0x50>)
  8001aaa:	4a13      	ldr	r2, [pc, #76]	; (8001af8 <MX_I2C1_Init+0x54>)
  8001aac:	601a      	str	r2, [r3, #0]
-    RCC_ClkInitStruct.SYSCLKSource =
+    RCC_ClkInitStruct.ClockType =
  8001aae:	4b11      	ldr	r3, [pc, #68]	; (8001af4 <MX_I2C1_Init+0x50>)
  8001ab0:	4a12      	ldr	r2, [pc, #72]	; (8001afc <MX_I2C1_Init+0x58>)
  8001ab2:	605a      	str	r2, [r3, #4]
-        RCC_SYSCLKSOURCE_PLLCLK;
+        RCC_CLOCKTYPE_SYSCLK |
  8001ab4:	4b0f      	ldr	r3, [pc, #60]	; (8001af4 <MX_I2C1_Init+0x50>)
  8001ab6:	2200      	movs	r2, #0
  8001ab8:	609a      	str	r2, [r3, #8]
-
+        RCC_CLOCKTYPE_HCLK |
  8001aba:	4b0e      	ldr	r3, [pc, #56]	; (8001af4 <MX_I2C1_Init+0x50>)
  8001abc:	2200      	movs	r2, #0
  8001abe:	60da      	str	r2, [r3, #12]
-    RCC_ClkInitStruct.AHBCLKDivider =
+        RCC_CLOCKTYPE_PCLK1 |
  8001ac0:	4b0c      	ldr	r3, [pc, #48]	; (8001af4 <MX_I2C1_Init+0x50>)
  8001ac2:	f44f 4280 	mov.w	r2, #16384	; 0x4000
  8001ac6:	611a      	str	r2, [r3, #16]
-        RCC_SYSCLK_DIV1;
+        RCC_CLOCKTYPE_PCLK2;
  8001ac8:	4b0a      	ldr	r3, [pc, #40]	; (8001af4 <MX_I2C1_Init+0x50>)
  8001aca:	2200      	movs	r2, #0
  8001acc:	615a      	str	r2, [r3, #20]
@@ -3671,29 +3671,29 @@ void SystemClock_Config(void)
  8001ace:	4b09      	ldr	r3, [pc, #36]	; (8001af4 <MX_I2C1_Init+0x50>)
  8001ad0:	2200      	movs	r2, #0
  8001ad2:	619a      	str	r2, [r3, #24]
-    RCC_ClkInitStruct.APB1CLKDivider =
+
  8001ad4:	4b07      	ldr	r3, [pc, #28]	; (8001af4 <MX_I2C1_Init+0x50>)
  8001ad6:	2200      	movs	r2, #0
  8001ad8:	61da      	str	r2, [r3, #28]
-        RCC_HCLK_DIV2;
+    RCC_ClkInitStruct.SYSCLKSource =
  8001ada:	4b06      	ldr	r3, [pc, #24]	; (8001af4 <MX_I2C1_Init+0x50>)
  8001adc:	2200      	movs	r2, #0
  8001ade:	621a      	str	r2, [r3, #32]
-
+        RCC_SYSCLKSOURCE_PLLCLK;
  8001ae0:	4804      	ldr	r0, [pc, #16]	; (8001af4 <MX_I2C1_Init+0x50>)
  8001ae2:	f004 faf5 	bl	80060d0 <HAL_I2C_Init>
  8001ae6:	4603      	mov	r3, r0
  8001ae8:	2b00      	cmp	r3, #0
  8001aea:	d001      	beq.n	8001af0 <MX_I2C1_Init+0x4c>
-    RCC_ClkInitStruct.APB2CLKDivider =
-        RCC_HCLK_DIV1;
+
+    RCC_ClkInitStruct.AHBCLKDivider =
  8001aec:	f000 f918 	bl	8001d20 <Error_Handler>
+        RCC_SYSCLK_DIV1;
 
+    RCC_ClkInitStruct.APB1CLKDivider =
+        RCC_HCLK_DIV2;
 
-    if(HAL_RCC_ClockConfig(
-        &RCC_ClkInitStruct,
-        FLASH_LATENCY_2)!=HAL_OK)
-    {
+    RCC_ClkInitStruct.APB2CLKDivider =
  8001af0:	bf00      	nop
  8001af2:	bd80      	pop	{r7, pc}
  8001af4:	20000df0 	.word	0x20000df0
@@ -3701,90 +3701,90 @@ void SystemClock_Config(void)
  8001afc:	000186a0 	.word	0x000186a0
 
 08001b00 <MX_I2S1_Init>:
-}
 
-/**
-  * @brief ADC1 Initialization Function
-  * @param None
-  * @retval None
+    if(HAL_RCC_ClockConfig(
+        &RCC_ClkInitStruct,
+        FLASH_LATENCY_2)!=HAL_OK)
+    {
+        Error_Handler();
  8001b00:	b580      	push	{r7, lr}
  8001b02:	af00      	add	r7, sp, #0
-  */
-static void MX_ADC1_Init(void)
+    }
+}
  8001b04:	4b13      	ldr	r3, [pc, #76]	; (8001b54 <MX_I2S1_Init+0x54>)
  8001b06:	4a14      	ldr	r2, [pc, #80]	; (8001b58 <MX_I2S1_Init+0x58>)
  8001b08:	601a      	str	r2, [r3, #0]
-{
 
-  /* USER CODE BEGIN ADC1_Init 0 */
+/**
+  * @brief ADC1 Initialization Function
  8001b0a:	4b12      	ldr	r3, [pc, #72]	; (8001b54 <MX_I2S1_Init+0x54>)
  8001b0c:	f44f 7200 	mov.w	r2, #512	; 0x200
  8001b10:	605a      	str	r2, [r3, #4]
-
-  /* USER CODE END ADC1_Init 0 */
-
-  ADC_ChannelConfTypeDef sConfig = {0};
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
  8001b12:	4b10      	ldr	r3, [pc, #64]	; (8001b54 <MX_I2S1_Init+0x54>)
  8001b14:	2200      	movs	r2, #0
  8001b16:	609a      	str	r2, [r3, #8]
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+ 8001b18:	4b0e      	ldr	r3, [pc, #56]	; (8001b54 <MX_I2S1_Init+0x54>)
+ 8001b1a:	2200      	movs	r2, #0
+ 8001b1c:	60da      	str	r2, [r3, #12]
 
   /* USER CODE BEGIN ADC1_Init 1 */
 
   /* USER CODE END ADC1_Init 1 */
- 8001b18:	4b0e      	ldr	r3, [pc, #56]	; (8001b54 <MX_I2S1_Init+0x54>)
- 8001b1a:	2200      	movs	r2, #0
- 8001b1c:	60da      	str	r2, [r3, #12]
-  hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
-  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.DiscontinuousConvMode = DISABLE;
+
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
  8001b1e:	4b0d      	ldr	r3, [pc, #52]	; (8001b54 <MX_I2S1_Init+0x54>)
  8001b20:	2200      	movs	r2, #0
  8001b22:	611a      	str	r2, [r3, #16]
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
  8001b24:	4b0b      	ldr	r3, [pc, #44]	; (8001b54 <MX_I2S1_Init+0x54>)
  8001b26:	f64a 4244 	movw	r2, #44100	; 0xac44
  8001b2a:	615a      	str	r2, [r3, #20]
-  hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-  if (HAL_ADC_Init(&hadc1) != HAL_OK)
-  {
+  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
  8001b2c:	4b09      	ldr	r3, [pc, #36]	; (8001b54 <MX_I2S1_Init+0x54>)
  8001b2e:	2200      	movs	r2, #0
  8001b30:	619a      	str	r2, [r3, #24]
-    Error_Handler();
-  }
-
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
  8001b32:	4b08      	ldr	r3, [pc, #32]	; (8001b54 <MX_I2S1_Init+0x54>)
  8001b34:	2200      	movs	r2, #0
  8001b36:	61da      	str	r2, [r3, #28]
-  */
-  sConfig.Channel = ADC_CHANNEL_1;
-  sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_84CYCLES;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
  8001b38:	4b06      	ldr	r3, [pc, #24]	; (8001b54 <MX_I2S1_Init+0x54>)
  8001b3a:	2200      	movs	r2, #0
  8001b3c:	621a      	str	r2, [r3, #32]
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
   }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
  8001b3e:	4805      	ldr	r0, [pc, #20]	; (8001b54 <MX_I2S1_Init+0x54>)
  8001b40:	f005 fbb4 	bl	80072ac <HAL_I2S_Init>
  8001b44:	4603      	mov	r3, r0
  8001b46:	2b00      	cmp	r3, #0
  8001b48:	d001      	beq.n	8001b4e <MX_I2S1_Init+0x4e>
-
- HAL_NVIC_SetPriority(ADC_IRQn, 1, 0);
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = 1;
  8001b4a:	f000 f8e9 	bl	8001d20 <Error_Handler>
- HAL_NVIC_EnableIRQ(ADC_IRQn);
-  /* USER CODE BEGIN ADC1_Init 2 */
+  sConfig.SamplingTime = ADC_SAMPLETIME_84CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
  8001b4e:	bf00      	nop
  8001b50:	bd80      	pop	{r7, pc}
  8001b52:	bf00      	nop
@@ -3792,18 +3792,18 @@ static void MX_ADC1_Init(void)
  8001b58:	40013000 	.word	0x40013000
 
 08001b5c <MX_DMA_Init>:
+  {
+    Error_Handler();
+  }
 
-  /* USER CODE END ADC1_Init 2 */
-
-}
-
-/**
+ HAL_NVIC_SetPriority(ADC_IRQn, 1, 0);
+ HAL_NVIC_EnableIRQ(ADC_IRQn);
  8001b5c:	b580      	push	{r7, lr}
  8001b5e:	b082      	sub	sp, #8
  8001b60:	af00      	add	r7, sp, #0
-  * @brief USART2 Initialization Function (debug console, 115200 8N1)
-  * @param None
-  * @retval None
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
  8001b62:	2300      	movs	r3, #0
  8001b64:	607b      	str	r3, [r7, #4]
  8001b66:	4b0c      	ldr	r3, [pc, #48]	; (8001b98 <MX_DMA_Init+0x3c>)
@@ -3816,19 +3816,19 @@ static void MX_ADC1_Init(void)
  8001b76:	f403 0380 	and.w	r3, r3, #4194304	; 0x400000
  8001b7a:	607b      	str	r3, [r7, #4]
  8001b7c:	687b      	ldr	r3, [r7, #4]
-  */
-static void MX_USART2_UART_Init(void)
-{
-  huart2.Instance = USART2;
+
+}
+
+/**
  8001b7e:	2200      	movs	r2, #0
  8001b80:	2100      	movs	r1, #0
  8001b82:	203a      	movs	r0, #58	; 0x3a
  8001b84:	f003 fd61 	bl	800564a <HAL_NVIC_SetPriority>
-  huart2.Init.BaudRate = 115200;
+  * @brief USART2 Initialization Function (debug console, 115200 8N1)
  8001b88:	203a      	movs	r0, #58	; 0x3a
  8001b8a:	f003 fd7a 	bl	8005682 <HAL_NVIC_EnableIRQ>
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
+  * @param None
+  * @retval None
  8001b8e:	bf00      	nop
  8001b90:	3708      	adds	r7, #8
  8001b92:	46bd      	mov	sp, r7
@@ -3837,16 +3837,16 @@ static void MX_USART2_UART_Init(void)
  8001b98:	40023800 	.word	0x40023800
 
 08001b9c <MX_GPIO_Init>:
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+{
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
  8001b9c:	b580      	push	{r7, lr}
  8001b9e:	b08a      	sub	sp, #40	; 0x28
  8001ba0:	af00      	add	r7, sp, #0
-}
+  huart2.Init.Mode = UART_MODE_TX_RX;
  8001ba2:	f107 0314 	add.w	r3, r7, #20
  8001ba6:	2200      	movs	r2, #0
  8001ba8:	601a      	str	r2, [r3, #0]
@@ -3854,9 +3854,9 @@ static void MX_USART2_UART_Init(void)
  8001bac:	609a      	str	r2, [r3, #8]
  8001bae:	60da      	str	r2, [r3, #12]
  8001bb0:	611a      	str	r2, [r3, #16]
-
-/**
-  * @brief USB Device (MIDI class) Initialization Function
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
  8001bb2:	2300      	movs	r3, #0
  8001bb4:	613b      	str	r3, [r7, #16]
  8001bb6:	4b56      	ldr	r3, [pc, #344]	; (8001d10 <MX_GPIO_Init+0x174>)
@@ -3869,7 +3869,7 @@ static void MX_USART2_UART_Init(void)
  8001bc6:	f003 0304 	and.w	r3, r3, #4
  8001bca:	613b      	str	r3, [r7, #16]
  8001bcc:	693b      	ldr	r3, [r7, #16]
-  * @param None
+  {
  8001bce:	2300      	movs	r3, #0
  8001bd0:	60fb      	str	r3, [r7, #12]
  8001bd2:	4b4f      	ldr	r3, [pc, #316]	; (8001d10 <MX_GPIO_Init+0x174>)
@@ -3882,7 +3882,7 @@ static void MX_USART2_UART_Init(void)
  8001be2:	f003 0380 	and.w	r3, r3, #128	; 0x80
  8001be6:	60fb      	str	r3, [r7, #12]
  8001be8:	68fb      	ldr	r3, [r7, #12]
-  * @retval None
+    Error_Handler();
  8001bea:	2300      	movs	r3, #0
  8001bec:	60bb      	str	r3, [r7, #8]
  8001bee:	4b48      	ldr	r3, [pc, #288]	; (8001d10 <MX_GPIO_Init+0x174>)
@@ -3895,7 +3895,7 @@ static void MX_USART2_UART_Init(void)
  8001bfe:	f003 0301 	and.w	r3, r3, #1
  8001c02:	60bb      	str	r3, [r7, #8]
  8001c04:	68bb      	ldr	r3, [r7, #8]
-  */
+  }
  8001c06:	2300      	movs	r3, #0
  8001c08:	607b      	str	r3, [r7, #4]
  8001c0a:	4b41      	ldr	r3, [pc, #260]	; (8001d10 <MX_GPIO_Init+0x174>)
@@ -3908,145 +3908,145 @@ static void MX_USART2_UART_Init(void)
  8001c1a:	f003 0302 	and.w	r3, r3, #2
  8001c1e:	607b      	str	r3, [r7, #4]
  8001c20:	687b      	ldr	r3, [r7, #4]
-static void MX_USB_DEVICE_Init(void)
-{
-    if (USBD_Init(&hUsbDeviceFS, &MIDI_Desc, 0) != USBD_OK)
-    {
+}
+
+/**
+  * @brief USB Device (MIDI class) Initialization Function
  8001c22:	f242 030f 	movw	r3, #8207	; 0x200f
  8001c26:	617b      	str	r3, [r7, #20]
-        Error_Handler();
-    }
+  * @param None
+  * @retval None
  8001c28:	f44f 1304 	mov.w	r3, #2162688	; 0x210000
  8001c2c:	61bb      	str	r3, [r7, #24]
-    if (USBD_RegisterClass(&hUsbDeviceFS, USBD_MIDI_CLASS) != USBD_OK)
+  */
  8001c2e:	2300      	movs	r3, #0
  8001c30:	61fb      	str	r3, [r7, #28]
-    {
+static void MX_USB_DEVICE_Init(void)
  8001c32:	f107 0314 	add.w	r3, r7, #20
  8001c36:	4619      	mov	r1, r3
  8001c38:	4836      	ldr	r0, [pc, #216]	; (8001d14 <MX_GPIO_Init+0x178>)
  8001c3a:	f004 f8ad 	bl	8005d98 <HAL_GPIO_Init>
-        Error_Handler();
-    }
-    if (USBD_Start(&hUsbDeviceFS) != USBD_OK)
+{
+    if (USBD_Init(&hUsbDeviceFS, &MIDI_Desc, 0) != USBD_OK)
+    {
  8001c3e:	f44f 5380 	mov.w	r3, #4096	; 0x1000
  8001c42:	617b      	str	r3, [r7, #20]
-    {
+        Error_Handler();
  8001c44:	f44f 1304 	mov.w	r3, #2162688	; 0x210000
  8001c48:	61bb      	str	r3, [r7, #24]
-        Error_Handler();
+    }
  8001c4a:	2300      	movs	r3, #0
  8001c4c:	61fb      	str	r3, [r7, #28]
-    }
+    if (USBD_RegisterClass(&hUsbDeviceFS, USBD_MIDI_CLASS) != USBD_OK)
  8001c4e:	f107 0314 	add.w	r3, r7, #20
  8001c52:	4619      	mov	r1, r3
  8001c54:	4830      	ldr	r0, [pc, #192]	; (8001d18 <MX_GPIO_Init+0x17c>)
  8001c56:	f004 f89f 	bl	8005d98 <HAL_GPIO_Init>
-}
-
-/**
+    {
+        Error_Handler();
+    }
  8001c5a:	f44f 63a0 	mov.w	r3, #1280	; 0x500
  8001c5e:	617b      	str	r3, [r7, #20]
-  * @brief I2C1 Initialization Function
+    if (USBD_Start(&hUsbDeviceFS) != USBD_OK)
  8001c60:	f44f 1304 	mov.w	r3, #2162688	; 0x210000
  8001c64:	61bb      	str	r3, [r7, #24]
-  * @param None
+    {
  8001c66:	2300      	movs	r3, #0
  8001c68:	61fb      	str	r3, [r7, #28]
-  * @retval None
+        Error_Handler();
  8001c6a:	f107 0314 	add.w	r3, r7, #20
  8001c6e:	4619      	mov	r1, r3
  8001c70:	482a      	ldr	r0, [pc, #168]	; (8001d1c <MX_GPIO_Init+0x180>)
  8001c72:	f004 f891 	bl	8005d98 <HAL_GPIO_Init>
-  */
-static void MX_I2C1_Init(void)
-{
+    }
+}
+
  8001c76:	f44f 6380 	mov.w	r3, #1024	; 0x400
  8001c7a:	617b      	str	r3, [r7, #20]
-
+/**
  8001c7c:	2300      	movs	r3, #0
  8001c7e:	61bb      	str	r3, [r7, #24]
-  /* USER CODE BEGIN I2C1_Init 0 */
+  * @brief I2C1 Initialization Function
  8001c80:	2300      	movs	r3, #0
  8001c82:	61fb      	str	r3, [r7, #28]
-
+  * @param None
  8001c84:	f107 0314 	add.w	r3, r7, #20
  8001c88:	4619      	mov	r1, r3
  8001c8a:	4822      	ldr	r0, [pc, #136]	; (8001d14 <MX_GPIO_Init+0x178>)
  8001c8c:	f004 f884 	bl	8005d98 <HAL_GPIO_Init>
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
  8001c90:	2320      	movs	r3, #32
  8001c92:	617b      	str	r3, [r7, #20]
-
+{
  8001c94:	2300      	movs	r3, #0
  8001c96:	61bb      	str	r3, [r7, #24]
-  /* USER CODE END I2C1_Init 1 */
+
  8001c98:	2300      	movs	r3, #0
  8001c9a:	61fb      	str	r3, [r7, #28]
-  hi2c1.Instance = I2C1;
+  /* USER CODE BEGIN I2C1_Init 0 */
  8001c9c:	f107 0314 	add.w	r3, r7, #20
  8001ca0:	4619      	mov	r1, r3
  8001ca2:	481d      	ldr	r0, [pc, #116]	; (8001d18 <MX_GPIO_Init+0x17c>)
  8001ca4:	f004 f878 	bl	8005d98 <HAL_GPIO_Init>
-  hi2c1.Init.ClockSpeed = 100000;
-  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
  8001ca8:	2200      	movs	r2, #0
  8001caa:	2102      	movs	r1, #2
  8001cac:	2006      	movs	r0, #6
  8001cae:	f003 fccc 	bl	800564a <HAL_NVIC_SetPriority>
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+
  8001cb2:	2006      	movs	r0, #6
  8001cb4:	f003 fce5 	bl	8005682 <HAL_NVIC_EnableIRQ>
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
  8001cb8:	2200      	movs	r2, #0
  8001cba:	2102      	movs	r1, #2
  8001cbc:	2007      	movs	r0, #7
  8001cbe:	f003 fcc4 	bl	800564a <HAL_NVIC_SetPriority>
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  hi2c1.Init.ClockSpeed = 100000;
  8001cc2:	2007      	movs	r0, #7
  8001cc4:	f003 fcdd 	bl	8005682 <HAL_NVIC_EnableIRQ>
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
  8001cc8:	2200      	movs	r2, #0
  8001cca:	2102      	movs	r1, #2
  8001ccc:	2008      	movs	r0, #8
  8001cce:	f003 fcbc 	bl	800564a <HAL_NVIC_SetPriority>
-    Error_Handler();
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
  8001cd2:	2008      	movs	r0, #8
  8001cd4:	f003 fcd5 	bl	8005682 <HAL_NVIC_EnableIRQ>
-  }
-  /* USER CODE BEGIN I2C1_Init 2 */
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
  8001cd8:	2200      	movs	r2, #0
  8001cda:	2102      	movs	r1, #2
  8001cdc:	2009      	movs	r0, #9
  8001cde:	f003 fcb4 	bl	800564a <HAL_NVIC_SetPriority>
-
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
  8001ce2:	2009      	movs	r0, #9
  8001ce4:	f003 fccd 	bl	8005682 <HAL_NVIC_EnableIRQ>
-  /* USER CODE END I2C1_Init 2 */
-
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
  8001ce8:	2200      	movs	r2, #0
  8001cea:	2102      	movs	r1, #2
  8001cec:	2017      	movs	r0, #23
  8001cee:	f003 fcac 	bl	800564a <HAL_NVIC_SetPriority>
-}
+  {
  8001cf2:	2017      	movs	r0, #23
  8001cf4:	f003 fcc5 	bl	8005682 <HAL_NVIC_EnableIRQ>
-
-/**
+    Error_Handler();
+  }
  8001cf8:	2200      	movs	r2, #0
  8001cfa:	2102      	movs	r1, #2
  8001cfc:	2028      	movs	r0, #40	; 0x28
  8001cfe:	f003 fca4 	bl	800564a <HAL_NVIC_SetPriority>
-  * @brief I2S1 Initialization Function
+  /* USER CODE BEGIN I2C1_Init 2 */
  8001d02:	2028      	movs	r0, #40	; 0x28
  8001d04:	f003 fcbd 	bl	8005682 <HAL_NVIC_EnableIRQ>
-  * @param None
+
  8001d08:	bf00      	nop
  8001d0a:	3728      	adds	r7, #40	; 0x28
  8001d0c:	46bd      	mov	sp, r7
@@ -4057,22 +4057,22 @@ static void MX_I2C1_Init(void)
  8001d1c:	40020000 	.word	0x40020000
 
 08001d20 <Error_Handler>:
-
-    hi2s1.Instance = SPI1;
-
-
-    hi2s1.Init.Mode =
-        I2S_MODE_MASTER_TX;
+/**
+  * @brief I2S1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2S1_Init(void)
  8001d20:	b480      	push	{r7}
  8001d22:	af00      	add	r7, sp, #0
   __ASM volatile ("cpsid i" : : : "memory");
  8001d24:	b672      	cpsid	i
 }
  8001d26:	bf00      	nop
+{
 
+    hi2s1.Instance = SPI1;
 
-    hi2s1.Init.Standard =
-        I2S_STANDARD_PHILIPS;
  8001d28:	e7fe      	b.n	8001d28 <Error_Handler+0x8>
 
 08001d2a <mcp23017_init>:

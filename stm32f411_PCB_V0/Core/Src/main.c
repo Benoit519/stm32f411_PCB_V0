@@ -33,10 +33,13 @@
 /* Reglages du soufflet a ajuster via le printf pression/repos/gain (serie) :
    DEADZONE = jeu/bruit autour du repos a ignorer (son nul au repos) ;
    PULL/PUSH_MAX_DELTA = ecart de pression observe pour un tire/pousse ferme
-   (augmenter si le son plafonne trop bas, diminuer s'il ne monte jamais a fond). */
-#define BELLOWS_DEADZONE        100u
-#define BELLOWS_PULL_MAX_DELTA 500u
-#define BELLOWS_PUSH_MAX_DELTA 500u
+   (augmenter si le son plafonne trop bas, diminuer s'il ne monte jamais a fond) ;
+   CURVE_EXPONENT > 1 rend les faibles pressions (repos) plus discretes tout en
+   gardant un volume max atteignable avec moins d'effort grace au MAX_DELTA reduit. */
+#define BELLOWS_DEADZONE        80u
+#define BELLOWS_PULL_MAX_DELTA 1500u
+#define BELLOWS_PUSH_MAX_DELTA 1500u
+#define BELLOWS_CURVE_EXPONENT  4.0f
 
 #define SUSTAIN_LEVEL 0.8f
 #define AMPLITUDE 28000.0f
@@ -719,6 +722,10 @@ static float Bellows_Gain(void)
 
     if(gain < 0.0f) gain = 0.0f;
     if(gain > 1.0f) gain = 1.0f;
+
+    /* Courbe en puissance : abaisse le volume pour les faibles pressions
+       (repos/legers appuis plus discrets) sans changer les extremes 0 et 1. */
+    gain = powf(gain, BELLOWS_CURVE_EXPONENT);
 
     return gain;
 }
