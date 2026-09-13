@@ -33,16 +33,14 @@
 /* Reglages du soufflet a ajuster via le printf pression/repos/gain (serie) :
    DEADZONE = jeu/bruit autour du repos a ignorer (son nul au repos) ;
    PULL/PUSH_MAX_DELTA = ecart de pression observe pour un tire/pousse ferme
-   (augmenter si le son plafonne trop bas, diminuer s'il ne monte jamais a fond) ;
+   (les deux sens montent au-dessus du repos, mais pas de la meme ampleur) ;
    CURVE_EXPONENT > 1 rend les faibles pressions (repos) plus discretes tout en
    gardant un volume max atteignable avec moins d'effort grace au MAX_DELTA reduit.
-   Mesures reelles (2026-09-09, capteur repare, repos fige a 2009) : bruit au
-   repos ~33, tire a fond ~861, pousse a fond ~1859 - le soufflet pousse
-   desormais beaucoup plus que ne tire le capteur. MAX_DELTA fixes sous le
-   maximum mesure pour atteindre le volume max avant la butee complete. */
-#define BELLOWS_DEADZONE        70u
-#define BELLOWS_PULL_MAX_DELTA 550u
-#define BELLOWS_PUSH_MAX_DELTA 1000u
+   Mesures reelles (2026-09-13) : repos=1000, tire a fond=2700 (delta 1700),
+   pousse a fond=2100 (delta 1100). */
+#define BELLOWS_DEADZONE        50u
+#define BELLOWS_PULL_MAX_DELTA 1700u
+#define BELLOWS_PUSH_MAX_DELTA 1100u
 #define BELLOWS_CURVE_EXPONENT  3.0f
 
 #define SUSTAIN_LEVEL 0.8f
@@ -314,8 +312,8 @@ static void Update_Bellows_Mode(void)
        MCP23
        GPA7 = bit 7 du port A
 
-       0 = PUSH
-       1 = PULL
+       0 = PULL (inverse le 13/09 : le bouton "pousser" active desormais tirer)
+       1 = PUSH
     */
 
     uint8_t gpa7 =
@@ -324,11 +322,11 @@ static void Update_Bellows_Mode(void)
 
     if(gpa7)
     {
-        bellows_mode = MODE_PULL;
+        bellows_mode = MODE_PUSH;
     }
     else
     {
-        bellows_mode = MODE_PUSH;
+        bellows_mode = MODE_PULL;
     }
 }
 
@@ -699,27 +697,16 @@ static uint8_t NoteNameToMidi(const char *name)
     return (uint8_t)midi;
 }
 
-/* Convertit la pression brute en intensite 0..1 selon le sens du soufflet :
-   tirer -> plus fort au-dessus du repos, pousser -> plus fort en-dessous
-   (le capteur est moins presse quand on pousse que quand on tire).
-   Une zone morte autour du repos evite tout son au repos, et l'ecart max
-   attendu (au lieu de toute la plage ADC) permet d'atteindre le volume max
-   avec une pression ferme réaliste plutot qu'avec toute la plage du capteur. */
+/* Convertit la pression brute en intensite 0..1 : l'ecart absolu par rapport
+   au repos donne la magnitude (tire et pousse montent tous deux au-dessus du
+   repos), et le sens courant (bellows_mode) choisit le MAX_DELTA adapte car
+   tire et pousse n'atteignent pas la meme amplitude. Une zone morte autour du
+   repos evite tout son au repos. */
 static float Bellows_Gain(void)
 {
-    float delta;
-    float max_delta;
-
-    if(bellows_mode == MODE_PULL)
-    {
-        delta     = (float)pressure - (float)pressure_rest;
-        max_delta = (float)BELLOWS_PULL_MAX_DELTA;
-    }
-    else
-    {
-        delta     = (float)pressure_rest - (float)pressure;
-        max_delta = (float)BELLOWS_PUSH_MAX_DELTA;
-    }
+    float delta     = fabsf((float)pressure - (float)pressure_rest);
+    float max_delta = (bellows_mode == MODE_PULL) ?
+                       (float)BELLOWS_PULL_MAX_DELTA : (float)BELLOWS_PUSH_MAX_DELTA;
 
     float range = max_delta - (float)BELLOWS_DEADZONE;
     float gain  = (range > 1.0f) ? (delta - (float)BELLOWS_DEADZONE) / range : 0.0f;
