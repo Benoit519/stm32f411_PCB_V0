@@ -36,11 +36,12 @@
    (les deux sens montent au-dessus du repos, mais pas de la meme ampleur) ;
    CURVE_EXPONENT > 1 rend les faibles pressions (repos) plus discretes tout en
    gardant un volume max atteignable avec moins d'effort grace au MAX_DELTA reduit.
-   Mesures reelles (2026-09-13) : repos=1000, tire a fond=2700 (delta 1700),
-   pousse a fond=2100 (delta 1100). */
+   Mesures reelles (2026-09-13/14) : repos=1000, tire a fond=2700 (delta 1700),
+   pousse a fond=500 (delta 500, recalibre le 14 - pousse baisse la pression
+   au lieu de la monter, mais fabsf() dans Bellows_Gain gere ca sans souci). */
 #define BELLOWS_DEADZONE        50u
-#define BELLOWS_PULL_MAX_DELTA 1700u
-#define BELLOWS_PUSH_MAX_DELTA 1100u
+#define BELLOWS_PULL_MAX_DELTA 1000u
+#define BELLOWS_PUSH_MAX_DELTA 1400
 #define BELLOWS_CURVE_EXPONENT  3.0f
 
 #define SUSTAIN_LEVEL 0.8f
