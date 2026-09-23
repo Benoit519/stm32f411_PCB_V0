@@ -40,9 +40,16 @@
    pousse a fond=500 (delta 500, recalibre le 14 - pousse baisse la pression
    au lieu de la monter, mais fabsf() dans Bellows_Gain gere ca sans souci). */
 #define BELLOWS_DEADZONE        50u
-#define BELLOWS_PULL_MAX_DELTA 1000u
-#define BELLOWS_PUSH_MAX_DELTA 1400
-#define BELLOWS_CURVE_EXPONENT  3.0f
+#define BELLOWS_PULL_MAX_DELTA 900u
+#define BELLOWS_PUSH_MAX_DELTA 800
+#define BELLOWS_CURVE_EXPONENT  1.0f
+
+/* Anti-grésillements : lissage de la pression brute (filtre passe-bas EMA sur
+   l'ADC, absorbe le bruit et les a-coups instantanes du capteur) et lissage
+   du gain audio (evite un saut de volume d'un bloc DMA a l'autre). Plus grand
+   = plus lisse mais plus lent a suivre un vrai coup de soufflet. */
+#define PRESSURE_FILTER_SHIFT   3u
+#define GAIN_SMOOTH_COEFF       0.15f
 
 #define SUSTAIN_LEVEL 0.8f
 #define AMPLITUDE 28000.0f
@@ -227,7 +234,7 @@ Button buttons[] =
 {20,0,6, HAND_LEFT, {{"Do4",  NULL}, WT_ACCORDION}, {{"Re4",  NULL}, WT_ACCORDION}},
 {20,0,7, HAND_LEFT, {{"Dod4",  NULL}, WT_ACCORDION}, {{"Red4",  NULL}, WT_ACCORDION}},
 
-{20,1,0, HAND_LEFT, {{"Lad4",  NULL}, WT_ACCORDION}, {{"Red4",  NULL}, WT_ACCORDION}},
+{20,1,0, HAND_LEFT, {{"Red4",  NULL}, WT_ACCORDION}, {{"Sold4",  NULL}, WT_ACCORDION}},
 {20,1,1, HAND_LEFT, {{"Re4",  NULL}, WT_ACCORDION}, {{"Mi4",  NULL}, WT_ACCORDION}},
 {20,1,2, HAND_LEFT, {{"Mi4",  NULL}, WT_ACCORDION}, {{"Fa4",  NULL}, WT_ACCORDION}},
 {20,1,3, HAND_LEFT, {{"Fa4", NULL}, WT_ACCORDION}, {{"Sol4", NULL}, WT_ACCORDION}},
@@ -275,12 +282,12 @@ Button buttons[] =
 {22,1,4, HAND_RIGHT, {{"Fa3",  NULL}, WT_ACCORDION}, {{"Do3",  NULL}, WT_ACCORDION}},
 {22,1,5, HAND_RIGHT, {{"Lad3",  NULL}, WT_ACCORDION}, {{"Lad3",  NULL}, WT_ACCORDION}},
 {22,1,6, HAND_RIGHT, {{"Sold3",  NULL}, WT_ACCORDION}, {{"Red3",  NULL}, WT_ACCORDION}},
-{22,1,7, HAND_RIGHT, {{"Fa3",  "Do3"}, WT_ACCORDION}, {{"Mi3",  "Sol3"}, WT_ACCORDION}},
+{22,1,7, HAND_RIGHT, {{"Fa3",  "Do3"}, WT_ACCORDION}, {{"Do3",  "Sol3"}, WT_ACCORDION}},
 
 /******** MCP23 ********/
 
 {23,1,0, HAND_RIGHT, {{"Lad3",  "Fa3"}, WT_ACCORDION}, {{"Lad3",  "Fa3"}, WT_ACCORDION}},
-{23,1,1, HAND_RIGHT, {{"La8",   NULL}, WT_ACCORDION}, {{"La8",   NULL}, WT_ACCORDION}},
+{23,1,1, HAND_RIGHT, {{"La8",   NULL}, WT_ACCORDION}, {{"Red3",   "Lad3"}, WT_ACCORDION}},
 {23,1,2, HAND_RIGHT, {{"Do3",   NULL}, WT_ACCORDION}, {{"Sol3",   NULL}, WT_ACCORDION}},
 {23,1,3, HAND_RIGHT, {{"La3",   NULL}, WT_ACCORDION}, {{"Re3",   NULL}, WT_ACCORDION}},
 {23,1,4, HAND_RIGHT, {{"Dod3",   NULL}, WT_ACCORDION}, {{"Fad3",   NULL}, WT_ACCORDION}},
@@ -977,7 +984,15 @@ static void Voice_SetWave(Voice *v, WaveTableId wt)
 void render_audio_block(int16_t *buffer,
                         uint32_t samples)
 {
-    float gain = Bellows_Gain();
+    static float smoothed_gain = 0.0f;
+    float target_gain = Bellows_Gain();
+
+    /* Lissage du gain (independant du filtre sur `pressure`) : sans lui, le
+       gain saute instantanement d'un bloc DMA a l'autre (~1.45 ms), ce qui
+       cree un "zipper noise" audible en gresillements des qu'une variation
+       de pression, meme filtree, change sensiblement d'un bloc au suivant. */
+    smoothed_gain += (target_gain - smoothed_gain) * GAIN_SMOOTH_COEFF;
+    float gain = smoothed_gain;
 
     /* I2S = trames stereo L/R : 2 entrees buffer par echantillon audio.
        N'avancer le DDS qu'une fois par trame, sinon la frequence percue double
@@ -1040,12 +1055,28 @@ int __io_putchar(int ch)
    pousse silencieux (delta insuffisant dans les deux sens depuis ce repos). */
 #define PRESSURE_REST_SETTLE_SAMPLES 20u
 static uint16_t pressure_rest_settle_count = 0;
+static uint8_t  pressure_filter_init = 0;
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc == &hadc1)
     {
-        pressure = HAL_ADC_GetValue(hadc);
+        uint16_t raw = HAL_ADC_GetValue(hadc);
+
+        /* Filtre passe-bas (EMA) sur la pression brute : sans ca, chaque
+           echantillon ADC bruite/instable se repercute directement sur le gain
+           audio (Bellows_Gain lit `pressure`), ce qui cree des sauts de volume
+           audibles en grésillements des qu'on bouge le soufflet brusquement. */
+        if(!pressure_filter_init)
+        {
+            pressure = raw;
+            pressure_filter_init = 1;
+        }
+        else
+        {
+            int32_t delta = (int32_t)raw - (int32_t)pressure;
+            pressure = (uint16_t)((int32_t)pressure + (delta >> PRESSURE_FILTER_SHIFT));
+        }
 
         if(!pressure_rest_captured)
         {
