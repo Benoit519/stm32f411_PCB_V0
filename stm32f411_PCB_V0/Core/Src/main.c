@@ -26,6 +26,7 @@
 #include "note.h"
 #include "usbd_desc.h"
 #include "usbd_midi.h"
+#include "core_cm4.h"   /* DWT->CYCCNT : mesure de charge CPU de render_audio_block() */
 
 #define ATTACK_TIME_MS   20.0f
 #define RELEASE_TIME_MS 120.0f
@@ -55,6 +56,22 @@
 #define AMPLITUDE 28000.0f
 
 #define MAX_VOICES 16
+
+/* Musette (2e anche detunee, main droite uniquement - registre melodie) :
+   ratio precalcule pour ~+7 cents (2^(7/1200)), evite un powf() par NoteOn. */
+#define MUSETTE_DETUNE_RATIO 1.00405f
+#define MUSETTE_MIX          0.35f
+
+/* Chiff d'attaque : leger sag de hauteur (anche pas encore stabilisee) qui
+   se resorbe au fur et a mesure que env_level monte vers le sustain. */
+#define ATTACK_PITCH_SAG 0.02f
+
+/* Panoramique fixe par main (largeur stereo, mono->stereo n'etait qu'une
+   duplication avant) : gauche legerement a gauche, droite legerement a droite. */
+#define PAN_LEFT_L  1.0f
+#define PAN_LEFT_R  0.7f
+#define PAN_RIGHT_L 0.7f
+#define PAN_RIGHT_R 1.0f
 
 typedef enum
 {
@@ -97,6 +114,11 @@ typedef struct
     uint32_t phase_acc;
     uint32_t phase_inc_nom;
 
+    /* Musette (2e anche detunee) : uniquement pour has_musette=1 (main droite),
+       cout nul pour les autres voix (branche sautee dans render_audio_block). */
+    uint8_t  has_musette;
+    uint32_t phase_acc2;
+    uint32_t phase_inc_detuned;
 
     /*
        enveloppe ADSR
@@ -107,7 +129,7 @@ typedef struct
     float env_level;
 
     float attack_step;
-    float release_step;
+    float release_coeff;   /* decroissance multiplicative (exponentielle) en RELEASE */
 
 
     float sustain_level;
@@ -115,6 +137,15 @@ typedef struct
 
     float amplitude;
 
+    /* Panoramique fixe (par main) applique en fin de mixage stereo. */
+    float pan_l;
+    float pan_r;
+
+    /* Position musicale + niveau band-limited courant, pour re-selection
+       dynamique du timbre (plus brillant sous forte pression) une fois par
+       bloc audio dans render_audio_block(), sans regenerer de table. */
+    uint8_t wave_index;
+    int8_t  bl_index_current;
 
     const int16_t *wave;
 
@@ -427,6 +458,17 @@ void NoteOn(const char *note,
     voices[slot].phase_inc_nom =
         (uint32_t)(freq * 4294967296.0f / SAMPLE_RATE);
 
+    /* Musette : 2e anche detunee uniquement main droite (registre melodie),
+       cout nul sur les voix main gauche (has_musette=0 -> branche sautee). */
+    voices[slot].has_musette = (hand == HAND_RIGHT) ? 1 : 0;
+    voices[slot].phase_acc2  = 0;
+    voices[slot].phase_inc_detuned =
+        (uint32_t)(voices[slot].phase_inc_nom * MUSETTE_DETUNE_RATIO);
+
+    /* Panoramique fixe par main (largeur stereo). */
+    voices[slot].pan_l = (hand == HAND_LEFT) ? PAN_LEFT_L : PAN_RIGHT_L;
+    voices[slot].pan_r = (hand == HAND_LEFT) ? PAN_LEFT_R : PAN_RIGHT_R;
+
     /* Enveloppe : attaque directement jusqu'au sustain (pas de discontinuité 1.0→0.8) */
 
     voices[slot].env_state     = ENV_ATTACK;
@@ -437,10 +479,11 @@ void NoteOn(const char *note,
         SUSTAIN_LEVEL /
         ((ATTACK_TIME_MS * SAMPLE_RATE) / 1000.0f);
 
-    /* SUSTAIN_LEVEL / duree : la release part du niveau sustain -> 0 en RELEASE_TIME_MS */
-    voices[slot].release_step =
-        SUSTAIN_LEVEL /
-        ((RELEASE_TIME_MS * SAMPLE_RATE) / 1000.0f);
+    /* Decroissance exponentielle (multiplicative) : plus naturelle qu'une rampe
+       lineaire pour simuler l'amortissement d'une anche reelle. Coefficient tel
+       que le niveau tombe a 1% du sustain en RELEASE_TIME_MS. */
+    voices[slot].release_coeff =
+        powf(0.01f, 1000.0f / (RELEASE_TIME_MS * SAMPLE_RATE));
 
     Voice_SetWave(&voices[slot], wavetable);
 
@@ -497,10 +540,9 @@ static float Envelope_Update(Voice *v)
 
     case ENV_RELEASE:
 
-        v->env_level -= v->release_step;
+        v->env_level *= v->release_coeff;
 
-
-        if(v->env_level <= 0.0f)
+        if(v->env_level <= 0.0005f)
         {
             v->env_level = 0.0f;
             v->env_state = ENV_OFF;
@@ -973,14 +1015,23 @@ static void Voice_SetWave(Voice *v, WaveTableId wt)
     {
         int wi = get_wave_index(v->frequency);
         int bi = get_bl_index(v->frequency);
+        v->wave_index       = (uint8_t)wi;
+        v->bl_index_current = (int8_t)bi;
         v->wave = wavetable_accordion[wi][bi];
         break;
     }
     default:
+        v->wave_index       = 0;
+        v->bl_index_current = 0;
         v->wave = wavetable_accordion[0][0];
         break;
     }
 }
+
+/* Re-selection du niveau band-limited selon la pression (musette dynamique) :
+   desactivee pour l'instant, le changement de table etait trop audible/brutal.
+   Voir get_bl_index()/Voice_SetWave() pour le niveau band-limited fixe actuel. */
+
 void render_audio_block(int16_t *buffer,
                         uint32_t samples)
 {
@@ -994,12 +1045,16 @@ void render_audio_block(int16_t *buffer,
     smoothed_gain += (target_gain - smoothed_gain) * GAIN_SMOOTH_COEFF;
     float gain = smoothed_gain;
 
+    /* Timbre dynamique (Voice_UpdateBrightness) desactive pour l'instant :
+       le changement de niveau band-limited etait trop brutal a l'oreille. */
+
     /* I2S = trames stereo L/R : 2 entrees buffer par echantillon audio.
        N'avancer le DDS qu'une fois par trame, sinon la frequence percue double
        (octave trop aigue) puisque la phase progresserait 2x plus vite que le temps reel. */
     for(uint32_t i = 0; i < samples; i += 2)
     {
-        float sample = 0.0f;
+        float left  = 0.0f;
+        float right = 0.0f;
 
         for(int v = 0; v < MAX_VOICES; v++)
         {
@@ -1018,27 +1073,74 @@ void render_audio_block(int16_t *buffer,
                 float s1 = (float)voices[v].wave[index_next];
                 float wave_sample = s0 + (s1 - s0) * frac;
 
+                /* Chiff d'attaque : sag de hauteur qui se resorbe vers le sustain. */
+                float pitch_mod = 1.0f;
+                if(voices[v].env_state == ENV_ATTACK)
+                {
+                    pitch_mod = 1.0f - ATTACK_PITCH_SAG *
+                        (1.0f - voices[v].env_level / voices[v].sustain_level);
+                }
+
+                /* Musette : 2e anche legerement desaccordee, meme table, meme
+                   enveloppe (pas de 2e Envelope_Update, cout minimal). */
+                if(voices[v].has_musette)
+                {
+                    uint32_t acc2 = voices[v].phase_acc2;
+                    uint16_t idx2      = (uint16_t)(acc2 >> 23);
+                    uint16_t idx2_next = (idx2 + 1) & (WAVETABLE_SIZE - 1);
+                    float frac2 = (float)(acc2 & 0x7FFFFFu) * (1.0f / 8388608.0f);
+
+                    float d0 = (float)voices[v].wave[idx2];
+                    float d1 = (float)voices[v].wave[idx2_next];
+                    float detuned_sample = d0 + (d1 - d0) * frac2;
+
+                    wave_sample = wave_sample * (1.0f - MUSETTE_MIX) +
+                                  detuned_sample * MUSETTE_MIX;
+
+                    voices[v].phase_acc2 +=
+                        (uint32_t)(voices[v].phase_inc_detuned * pitch_mod);
+                }
+
                 float envelope =
                     Envelope_Update(&voices[v]);
 
-                sample +=
+                float voice_sample =
                     (wave_sample / 32768.0f) *
                     voices[v].amplitude *
                     envelope;
 
-                voices[v].phase_acc += voices[v].phase_inc_nom;
+                left  += voice_sample * voices[v].pan_l;
+                right += voice_sample * voices[v].pan_r;
+
+                voices[v].phase_acc +=
+                    (uint32_t)(voices[v].phase_inc_nom * pitch_mod);
             }
         }
 
-        float output = sample * gain * AMPLITUDE;
+        float out_left  = left  * gain * AMPLITUDE;
+        float out_right = right * gain * AMPLITUDE;
 
-        if(output > 32767.0f)  output = 32767.0f;
-        if(output < -32768.0f) output = -32768.0f;
+        if(out_left  > 32767.0f)  out_left  = 32767.0f;
+        if(out_left  < -32768.0f) out_left  = -32768.0f;
+        if(out_right > 32767.0f)  out_right = 32767.0f;
+        if(out_right < -32768.0f) out_right = -32768.0f;
 
-        int16_t out16 = (int16_t)output;
-        buffer[i]     = out16;   /* canal gauche */
-        buffer[i + 1] = out16;   /* canal droit (duplication mono -> stereo) */
+        buffer[i]     = (int16_t)out_left;
+        buffer[i + 1] = (int16_t)out_right;
     }
+}
+
+/* Phase A - mesure de charge CPU : cycles DWT consommes par render_audio_block(),
+   max jamais observe depuis le boot (jauge pour valider la marge temps reel
+   ISR I2S apres l'ajout du musette/timbre dynamique/stereo ci-dessus). */
+static volatile uint32_t max_render_cycles = 0;
+
+static inline void Render_Audio_Timed(int16_t *buf)
+{
+    uint32_t start = DWT->CYCCNT;
+    render_audio_block(buf, HALF_BUFFER_SIZE);
+    uint32_t elapsed = DWT->CYCCNT - start;
+    if(elapsed > max_render_cycles) max_render_cycles = elapsed;
 }
 
 /* Redirige printf() vers l'UART2 (115200 8N1) - cf. syscalls.c: _write() -> __io_putchar() */
@@ -1101,7 +1203,7 @@ if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
     HAL_ADC_Start_IT(&hadc1);
 }
 
-    render_audio_block((int16_t *)&bufferDMA[0], HALF_BUFFER_SIZE);
+    Render_Audio_Timed((int16_t *)&bufferDMA[0]);
 }
 
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
@@ -1112,7 +1214,7 @@ if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_REG_BUSY) == 0)
     HAL_ADC_Start_IT(&hadc1);
 }
 
-    render_audio_block((int16_t *)&bufferDMA[HALF_BUFFER_SIZE], HALF_BUFFER_SIZE);
+    Render_Audio_Timed((int16_t *)&bufferDMA[HALF_BUFFER_SIZE]);
 }
 
 /* USER CODE END 0 */
@@ -1133,7 +1235,10 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  /* Phase A : compteur de cycles DWT (mesure de charge CPU de render_audio_block). */
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0;
+  DWT->CTRL  |= DWT_CTRL_CYCCNTENA_Msk;
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -1215,10 +1320,16 @@ while (1)
     if ((HAL_GetTick() - last_pressure_print) >= 300)
     {
         last_pressure_print = HAL_GetTick();
-        printf("pression=%u repos=%u sens=%s gain=%d%%\r\n",
+
+        /* Budget cycles par callback I2S = (trames/bloc) * (cycles CPU / echantillon audio). */
+        uint32_t budget_cycles = (HALF_BUFFER_SIZE / 2) * (SystemCoreClock / (uint32_t)SAMPLE_RATE);
+
+        printf("pression=%u repos=%u sens=%s gain=%d%% cpu_render=%lu/%lu (%lu%%)\r\n",
                pressure, pressure_rest,
                (bellows_mode == MODE_PULL) ? "tire" : "pousse",
-               (int)(Bellows_Gain() * 100.0f));
+               (int)(Bellows_Gain() * 100.0f),
+               (unsigned long)max_render_cycles, (unsigned long)budget_cycles,
+               (unsigned long)(100UL * max_render_cycles / budget_cycles));
     }
 
     __WFI();   /* dort jusqu'a la prochaine IRQ (bouton MCP, audio I2S/DMA, ADC) */
