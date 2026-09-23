@@ -1009,12 +1009,6 @@ void render_audio_block(int16_t *buffer,
         {
             if(voices[v].active)
             {
-                /* Attaque vs maintien : meme moteur DDS, seule la table
-                   source change selon l'etat de l'enveloppe (deja lu ici). */
-                const int16_t *tbl =
-                    (voices[v].env_state == ENV_ATTACK) ?
-                    voices[v].wave_attack : voices[v].wave;
-
                 /* Lecture wavetable DDS avec interpolation lineaire :
                    bits [31:23] = index (0-511), bits [22:0] = fraction inter-echantillon.
                    Supprime le bruit de quantification "en escalier" du nearest-neighbor,
@@ -1024,9 +1018,36 @@ void render_audio_block(int16_t *buffer,
                 uint16_t index_next = (index + 1) & (WAVETABLE_SIZE - 1);
                 float frac = (float)(acc & 0x7FFFFFu) * (1.0f / 8388608.0f);
 
-                float s0 = (float)tbl[index];
-                float s1 = (float)tbl[index_next];
-                float wave_sample = s0 + (s1 - s0) * frac;
+                float wave_sample;
+
+                if(voices[v].env_state == ENV_ATTACK)
+                {
+                    /* Crossfade attaque->maintien : lit les DEUX tables et les
+                       mélange au prorata de la progression de l'enveloppe
+                       (0=attaque pure, 1=maintien pur) - sans ça, le saut de
+                       pointeur de table au passage en ENV_SUSTAIN produit une
+                       discontinuité d'amplitude audible ("clic"). Surcoût
+                       limité à la fenêtre d'attaque (~20ms), pas au maintien. */
+                    float t = voices[v].env_level / voices[v].sustain_level;
+                    if(t < 0.0f) t = 0.0f;
+                    if(t > 1.0f) t = 1.0f;
+
+                    float a0 = (float)voices[v].wave_attack[index];
+                    float a1 = (float)voices[v].wave_attack[index_next];
+                    float attack_sample = a0 + (a1 - a0) * frac;
+
+                    float s0 = (float)voices[v].wave[index];
+                    float s1 = (float)voices[v].wave[index_next];
+                    float sustain_sample = s0 + (s1 - s0) * frac;
+
+                    wave_sample = attack_sample * (1.0f - t) + sustain_sample * t;
+                }
+                else
+                {
+                    float s0 = (float)voices[v].wave[index];
+                    float s1 = (float)voices[v].wave[index_next];
+                    wave_sample = s0 + (s1 - s0) * frac;
+                }
 
                 float envelope =
                     Envelope_Update(&voices[v]);
