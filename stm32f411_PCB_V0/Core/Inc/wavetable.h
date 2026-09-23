@@ -14,6 +14,12 @@
    Exemple : wavetable_accordion[2][1] = do4 avec niveau BL1             */
 extern int16_t wavetable_accordion[ACCORDION_NUM_WAVES][ACCORDION_NUM_BL][WAVETABLE_SIZE];
 
+/* Table d'attaque (debut de note, avant que le timbre soit stabilise) :
+   un seul niveau (pas de band-limiting par frequence comme le maintien) -
+   jouee brievement (ENV_ATTACK), l'aliasing y est peu perceptible.
+   wavetable_accordion_attack[position_musicale][echantillon] */
+extern int16_t wavetable_accordion_attack[ACCORDION_NUM_WAVES][WAVETABLE_SIZE];
+
 /* Sinus pur utilise par le LFO global */
 extern int16_t wavetable_sine[WAVETABLE_SIZE];
 

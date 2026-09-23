@@ -1,6 +1,6 @@
-../Core/Src/wavetable.c:35:13:bit_reverse_shuffle	40	static
-../Core/Src/wavetable.c:52:13:fft_forward	88	static
-../Core/Src/wavetable.c:80:13:fft_inverse	40	static
-../Core/Src/wavetable.c:93:14:resample_periodic	40	static
-../Core/Src/wavetable.c:115:13:generate_bl_wavetable	96	static
-../Core/Src/wavetable.c:192:6:Wavetable_Init	56	static
+../Core/Src/wavetable.c:38:13:bit_reverse_shuffle	40	static
+../Core/Src/wavetable.c:55:13:fft_forward	88	static
+../Core/Src/wavetable.c:83:13:fft_inverse	40	static
+../Core/Src/wavetable.c:96:14:resample_periodic	40	static
+../Core/Src/wavetable.c:118:13:generate_bl_wavetable	96	static
+../Core/Src/wavetable.c:195:6:Wavetable_Init	88	static

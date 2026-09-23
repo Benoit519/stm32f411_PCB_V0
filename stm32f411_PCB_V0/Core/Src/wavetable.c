@@ -24,6 +24,9 @@ int16_t wavetable_sine[WAVETABLE_SIZE];
 /* [position_musicale : 0=do3..5=sol5][niveau_BL : 0=plein..3=sinus][echantillon] */
 int16_t wavetable_accordion[ACCORDION_NUM_WAVES][ACCORDION_NUM_BL][WAVETABLE_SIZE];
 
+/* [position_musicale][echantillon] - un seul niveau (plein spectre), voir wavetable.h */
+int16_t wavetable_accordion_attack[ACCORDION_NUM_WAVES][WAVETABLE_SIZE];
+
 /* ==========================================================================
  * FFT radix-2 Cooley-Tukey (float, sur place)
  * Buffers statiques : 2 x 2048 x 4 = 16 Ko — utilises uniquement a Wavetable_Init.
@@ -210,7 +213,7 @@ void Wavetable_Init(void)
     }
 
 
-    /* -- Generation des 6 x 4 = 24 wavetables band-limited ---------------- */
+    /* -- Generation des 6 x 4 = 24 wavetables band-limited (maintien) ----- */
     const int16_t * const sources[ACCORDION_NUM_WAVES] = {
         do3, sol3, do4, sol4, do5, sol5
     };
@@ -228,6 +231,24 @@ void Wavetable_Init(void)
                 wavetable_accordion[w][b],
                 bl_max_harmonic[b]);
         }
+    }
+
+    /* -- Generation des 6 wavetables d'attaque (plein spectre, un seul niveau) -- */
+    const int16_t * const sources_attack[ACCORDION_NUM_WAVES] = {
+        do3_attack, sol3_attack, do4_attack, sol4_attack, do5_attack, sol5_attack
+    };
+
+    static const int source_sizes_attack[ACCORDION_NUM_WAVES] = {
+        DO3_ATTACK_SIZE, SOL3_ATTACK_SIZE, DO4_ATTACK_SIZE,
+        SOL4_ATTACK_SIZE, DO5_ATTACK_SIZE, SOL5_ATTACK_SIZE
+    };
+
+    for(int w = 0; w < ACCORDION_NUM_WAVES; w++)
+    {
+        generate_bl_wavetable(
+            sources_attack[w], source_sizes_attack[w],
+            wavetable_accordion_attack[w],
+            bl_max_harmonic[0]);
     }
 }
 
