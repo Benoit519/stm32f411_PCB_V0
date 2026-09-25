@@ -132,6 +132,7 @@ FENETRES_CANDIDATES_ATTAQUE_S = (
     0.12,
     0.16,
     0.20,
+    0.30,
 )
 
 #
@@ -258,7 +259,10 @@ SUFFIXE_MAINTIEN = "b"
 # tels quels comme caracteristique de cette anche/cet instrument).
 #
 FREQUENCES_MANUELLES: dict[str, float] = {
+    "do4a.wav": 392.0,
     "do4b.wav": 392.0,
+    "sol5a.wav": 392.0,
+    "sol5b.wav": 392.0,
 }
 
 #

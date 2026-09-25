@@ -7,43 +7,43 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         0000e218  080001a0  080001a0  000101a0  2**4
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00001f24  0800e3b8  0800e3b8  0001e3b8  2**2
+  2 .rodata       00001f5c  0800e3b8  0800e3b8  0001e3b8  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  080102dc  080102dc  0003084c  2**0
+  3 .ARM.extab    00000000  08010314  08010314  0003084c  2**0
                   CONTENTS
-  4 .ARM          00000008  080102dc  080102dc  000202dc  2**2
+  4 .ARM          00000008  08010314  08010314  00020314  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  5 .preinit_array 00000000  080102e4  080102e4  0003084c  2**0
+  5 .preinit_array 00000000  0801031c  0801031c  0003084c  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  080102e4  080102e4  000202e4  2**2
+  6 .init_array   00000004  0801031c  0801031c  0002031c  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  7 .fini_array   00000004  080102e8  080102e8  000202e8  2**2
+  7 .fini_array   00000004  08010320  08010320  00020320  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  8 .data         0000084c  20000000  080102ec  00030000  2**2
+  8 .data         0000084c  20000000  08010324  00030000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          0000cde8  2000084c  08010b38  0003084c  2**2
+  9 .bss          0000cde8  2000084c  08010b70  0003084c  2**2
                   ALLOC
- 10 ._user_heap_stack 00000604  2000d634  08010b38  0003d634  2**0
+ 10 ._user_heap_stack 00000604  2000d634  08010b70  0003d634  2**0
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  0003084c  2**0
                   CONTENTS, READONLY
- 12 .debug_info   0001bd80  00000000  00000000  0003087c  2**0
+ 12 .debug_info   0001bd2c  00000000  00000000  0003087c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 000040b6  00000000  00000000  0004c5fc  2**0
+ 13 .debug_abbrev 000040b6  00000000  00000000  0004c5a8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 00001648  00000000  00000000  000506b8  2**3
+ 14 .debug_aranges 00001648  00000000  00000000  00050660  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_macro  0001bd87  00000000  00000000  00051d00  2**0
+ 15 .debug_macro  0001bd87  00000000  00000000  00051ca8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_line   0001deeb  00000000  00000000  0006da87  2**0
+ 16 .debug_line   0001deeb  00000000  00000000  0006da2f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_str    0009c950  00000000  00000000  0008b972  2**0
+ 17 .debug_str    0009c952  00000000  00000000  0008b91a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .comment      00000050  00000000  00000000  001282c2  2**0
+ 18 .comment      00000050  00000000  00000000  0012826c  2**0
                   CONTENTS, READONLY
- 19 .debug_ranges 000014c0  00000000  00000000  00128318  2**3
+ 19 .debug_ranges 000014c0  00000000  00000000  001282c0  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_frame  000066b8  00000000  00000000  001297d8  2**2
+ 20 .debug_frame  000066b8  00000000  00000000  00129780  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -5245,7 +5245,7 @@ float Note_GetFrequency(const char* name)
  8002592:	3710      	adds	r7, #16
  8002594:	46bd      	mov	sp, r7
  8002596:	bd80      	pop	{r7, pc}
- 8002598:	0800fa54 	.word	0x0800fa54
+ 8002598:	0800fa8c 	.word	0x0800fa8c
 
 0800259c <HAL_MspInit>:
 /* USER CODE END 0 */
@@ -12813,11 +12813,11 @@ void Wavetable_Init(void)
  800510c:	46fffe00 	.word	0x46fffe00
  8005110:	20001a20 	.word	0x20001a20
  8005114:	0800eb04 	.word	0x0800eb04
- 8005118:	0800fe3c 	.word	0x0800fe3c
+ 8005118:	0800fe74 	.word	0x0800fe74
  800511c:	20001e20 	.word	0x20001e20
- 8005120:	0800fe2c 	.word	0x0800fe2c
+ 8005120:	0800fe64 	.word	0x0800fe64
  8005124:	0800eb1c 	.word	0x0800eb1c
- 8005128:	0800fe54 	.word	0x0800fe54
+ 8005128:	0800fe8c 	.word	0x0800fe8c
  800512c:	20007e20 	.word	0x20007e20
 
 08005130 <Reset_Handler>:
@@ -12905,7 +12905,7 @@ LoopFillZerobss:
   ldr r1, =_edata
  8005170:	2000084c 	.word	0x2000084c
   ldr r2, =_sidata
- 8005174:	080102ec 	.word	0x080102ec
+ 8005174:	08010324 	.word	0x08010324
   ldr r2, =_sbss
  8005178:	2000084c 	.word	0x2000084c
   ldr r4, =_ebss
@@ -16295,7 +16295,7 @@ static uint32_t DMA_CalcBaseAndBitshift(DMA_HandleTypeDef *hdma)
  80063a0:	4770      	bx	lr
  80063a2:	bf00      	nop
  80063a4:	aaaaaaab 	.word	0xaaaaaaab
- 80063a8:	0800fe6c 	.word	0x0800fe6c
+ 80063a8:	0800fea4 	.word	0x0800fea4
 
 080063ac <DMA_CheckFifoParam>:
   * @param  hdma       pointer to a DMA_HandleTypeDef structure that contains
@@ -26687,7 +26687,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  800a04e:	bf00      	nop
  800a050:	40023c00 	.word	0x40023c00
  800a054:	40023800 	.word	0x40023800
- 800a058:	0800fe14 	.word	0x0800fe14
+ 800a058:	0800fe4c 	.word	0x0800fe4c
  800a05c:	200006e8 	.word	0x200006e8
  800a060:	200007e0 	.word	0x200007e0
 
@@ -26989,7 +26989,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  800a2a4:	4618      	mov	r0, r3
  800a2a6:	bd80      	pop	{r7, pc}
  800a2a8:	40023800 	.word	0x40023800
- 800a2ac:	0800fe24 	.word	0x0800fe24
+ 800a2ac:	0800fe5c 	.word	0x0800fe5c
 
 0800a2b0 <HAL_RCC_GetPCLK2Freq>:
   * @note   Each time PCLK2 changes, this function must be called to update the
@@ -27015,7 +27015,7 @@ uint32_t HAL_RCC_GetPCLK2Freq(void)
  800a2cc:	4618      	mov	r0, r3
  800a2ce:	bd80      	pop	{r7, pc}
  800a2d0:	40023800 	.word	0x40023800
- 800a2d4:	0800fe24 	.word	0x0800fe24
+ 800a2d4:	0800fe5c 	.word	0x0800fe5c
 
 0800a2d8 <HAL_RCCEx_PeriphCLKConfig>:
   *        domain (RTC and RCC_BDCR register expect BKPSRAM) will be reset
@@ -32404,10 +32404,10 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800c5d6:	4798      	blx	r3
  800c5d8:	3601      	adds	r6, #1
  800c5da:	e7f2      	b.n	800c5c2 <__libc_init_array+0x1e>
- 800c5dc:	080102e4 	.word	0x080102e4
- 800c5e0:	080102e4 	.word	0x080102e4
- 800c5e4:	080102e4 	.word	0x080102e4
- 800c5e8:	080102e8 	.word	0x080102e8
+ 800c5dc:	0801031c 	.word	0x0801031c
+ 800c5e0:	0801031c 	.word	0x0801031c
+ 800c5e4:	0801031c 	.word	0x0801031c
+ 800c5e8:	08010320 	.word	0x08010320
 
 0800c5ec <memset>:
  800c5ec:	4402      	add	r2, r0
@@ -32536,9 +32536,9 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800c6f6:	6022      	str	r2, [r4, #0]
  800c6f8:	701d      	strb	r5, [r3, #0]
  800c6fa:	e7db      	b.n	800c6b4 <_puts_r+0x88>
- 800c6fc:	0800fe98 	.word	0x0800fe98
- 800c700:	0800feb8 	.word	0x0800feb8
- 800c704:	0800fe78 	.word	0x0800fe78
+ 800c6fc:	0800fed0 	.word	0x0800fed0
+ 800c700:	0800fef0 	.word	0x0800fef0
+ 800c704:	0800feb0 	.word	0x0800feb0
 
 0800c708 <puts>:
  800c708:	4b02      	ldr	r3, [pc, #8]	; (800c714 <puts+0xc>)
@@ -32620,9 +32620,9 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800c7a8:	f04f 37ff 	mov.w	r7, #4294967295
  800c7ac:	e7ea      	b.n	800c784 <__swbuf_r+0x6c>
  800c7ae:	bf00      	nop
- 800c7b0:	0800fe98 	.word	0x0800fe98
- 800c7b4:	0800feb8 	.word	0x0800feb8
- 800c7b8:	0800fe78 	.word	0x0800fe78
+ 800c7b0:	0800fed0 	.word	0x0800fed0
+ 800c7b4:	0800fef0 	.word	0x0800fef0
+ 800c7b8:	0800feb0 	.word	0x0800feb0
 
 0800c7bc <__swsetup_r>:
  800c7bc:	4b32      	ldr	r3, [pc, #200]	; (800c888 <__swsetup_r+0xcc>)
@@ -32714,9 +32714,9 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800c884:	e7f7      	b.n	800c876 <__swsetup_r+0xba>
  800c886:	bf00      	nop
  800c888:	200007e8 	.word	0x200007e8
- 800c88c:	0800fe98 	.word	0x0800fe98
- 800c890:	0800feb8 	.word	0x0800feb8
- 800c894:	0800fe78 	.word	0x0800fe78
+ 800c88c:	0800fed0 	.word	0x0800fed0
+ 800c890:	0800fef0 	.word	0x0800fef0
+ 800c894:	0800feb0 	.word	0x0800feb0
 
 0800c898 <__sflush_r>:
  800c898:	898a      	ldrh	r2, [r1, #12]
@@ -32892,9 +32892,9 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800ca0a:	bf08      	it	eq
  800ca0c:	68ec      	ldreq	r4, [r5, #12]
  800ca0e:	e7da      	b.n	800c9c6 <_fflush_r+0x22>
- 800ca10:	0800fe98 	.word	0x0800fe98
- 800ca14:	0800feb8 	.word	0x0800feb8
- 800ca18:	0800fe78 	.word	0x0800fe78
+ 800ca10:	0800fed0 	.word	0x0800fed0
+ 800ca14:	0800fef0 	.word	0x0800fef0
+ 800ca18:	0800feb0 	.word	0x0800feb0
 
 0800ca1c <std>:
  800ca1c:	2300      	movs	r3, #0
@@ -33019,7 +33019,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800cb2e:	61a3      	str	r3, [r4, #24]
  800cb30:	e7d2      	b.n	800cad8 <__sinit+0xc>
  800cb32:	bf00      	nop
- 800cb34:	0800fe74 	.word	0x0800fe74
+ 800cb34:	0800feac 	.word	0x0800feac
  800cb38:	0800ca65 	.word	0x0800ca65
 
 0800cb3c <__sfp>:
@@ -33074,7 +33074,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800cbba:	603b      	str	r3, [r7, #0]
  800cbbc:	e7ee      	b.n	800cb9c <__sfp+0x60>
  800cbbe:	bf00      	nop
- 800cbc0:	0800fe74 	.word	0x0800fe74
+ 800cbc0:	0800feac 	.word	0x0800feac
  800cbc4:	ffff0001 	.word	0xffff0001
 
 0800cbc8 <_fwalk_reent>:
@@ -33686,14 +33686,14 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800d124:	f000 f880 	bl	800d228 <_printf_i>
  800d128:	e7e4      	b.n	800d0f4 <_vfiprintf_r+0x208>
  800d12a:	bf00      	nop
- 800d12c:	0800fe98 	.word	0x0800fe98
- 800d130:	0800feb8 	.word	0x0800feb8
- 800d134:	0800fe78 	.word	0x0800fe78
- 800d138:	0800fed8 	.word	0x0800fed8
- 800d13c:	0800fee2 	.word	0x0800fee2
+ 800d12c:	0800fed0 	.word	0x0800fed0
+ 800d130:	0800fef0 	.word	0x0800fef0
+ 800d134:	0800feb0 	.word	0x0800feb0
+ 800d138:	0800ff10 	.word	0x0800ff10
+ 800d13c:	0800ff1a 	.word	0x0800ff1a
  800d140:	00000000 	.word	0x00000000
  800d144:	0800cec7 	.word	0x0800cec7
- 800d148:	0800fede 	.word	0x0800fede
+ 800d148:	0800ff16 	.word	0x0800ff16
 
 0800d14c <_printf_common>:
  800d14c:	e92d 47f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, lr}
@@ -34029,8 +34029,8 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800d464:	f104 0619 	add.w	r6, r4, #25
  800d468:	e7f5      	b.n	800d456 <_printf_i+0x22e>
  800d46a:	bf00      	nop
- 800d46c:	0800fee9 	.word	0x0800fee9
- 800d470:	0800fefa 	.word	0x0800fefa
+ 800d46c:	0800ff21 	.word	0x0800ff21
+ 800d470:	0800ff32 	.word	0x0800ff32
 
 0800d474 <_sbrk_r>:
  800d474:	b538      	push	{r3, r4, r5, lr}
@@ -34511,11 +34511,11 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800d984:	2e85a308 	.word	0x2e85a308
  800d988:	43490f80 	.word	0x43490f80
  800d98c:	3f22f984 	.word	0x3f22f984
- 800d990:	0800ff0c 	.word	0x0800ff0c
+ 800d990:	0800ff44 	.word	0x0800ff44
  800d994:	2e85a300 	.word	0x2e85a300
  800d998:	248d3132 	.word	0x248d3132
  800d99c:	43800000 	.word	0x43800000
- 800d9a0:	0800ff8c 	.word	0x0800ff8c
+ 800d9a0:	0800ffc4 	.word	0x0800ffc4
 
 0800d9a4 <__kernel_cosf>:
  800d9a4:	ee10 3a10 	vmov	r3, s0
@@ -34837,8 +34837,8 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800dd5a:	e7ec      	b.n	800dd36 <__kernel_rem_pio2f+0x2d2>
  800dd5c:	3c01      	subs	r4, #1
  800dd5e:	e775      	b.n	800dc4c <__kernel_rem_pio2f+0x1e8>
- 800dd60:	080102d0 	.word	0x080102d0
- 800dd64:	080102a4 	.word	0x080102a4
+ 800dd60:	08010308 	.word	0x08010308
+ 800dd64:	080102dc 	.word	0x080102dc
  800dd68:	43800000 	.word	0x43800000
  800dd6c:	3b800000 	.word	0x3b800000
  800dd70:	00000000 	.word	0x00000000
@@ -35200,7 +35200,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800e1a6:	4802      	ldr	r0, [pc, #8]	; (800e1b0 <logf+0x58>)
  800e1a8:	f000 b8f4 	b.w	800e394 <nanf>
  800e1ac:	ff800000 	.word	0xff800000
- 800e1b0:	0800fedd 	.word	0x0800fedd
+ 800e1b0:	0800ff15 	.word	0x0800ff15
 
 0800e1b4 <__ieee754_logf>:
  800e1b4:	ee10 3a10 	vmov	r3, s0
